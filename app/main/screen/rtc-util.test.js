@@ -116,3 +116,18 @@ test('summarize: sender uses framesPerSecond and remote-inbound rtt fallback', (
   assert.equal(r.fps, 58);
   assert.equal(r.latencyMs, 5);
 });
+
+test('iceSummary: addresses offered and connectivity checks, for the failure log', () => {
+  const { iceSummary } = require('./viewer/rtc-util');
+  const line = iceSummary([
+    { type: 'local-candidate', protocol: 'udp', address: '192.168.1.5' },
+    { type: 'local-candidate', protocol: 'udp', address: '192.168.1.5' },
+    { type: 'remote-candidate', protocol: 'udp', address: '192.168.1.20' },
+    { type: 'remote-candidate', protocol: 'tcp', address: 'fd00::2' },
+    { type: 'candidate-pair', state: 'failed', requestsSent: 7, responsesReceived: 0 },
+    { type: 'candidate-pair', state: 'failed', requestsSent: 5 },
+    { type: 'inbound-rtp' },
+  ]);
+  assert.equal(line, 'local udp 192.168.1.5 | remote udp 192.168.1.20 tcp fd00::2 | pairs failed 2 | checks 12 sent, 0 answered');
+  assert.equal(iceSummary([]), 'local none | remote none | pairs none | checks 0 sent, 0 answered');
+});

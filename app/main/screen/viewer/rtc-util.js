@@ -176,5 +176,31 @@
     return { fps: Math.round(fps || 0), latencyMs, snap };
   }
 
-  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank };
+  // One log line for a failed connection: the addresses each side offered and how the
+  // connectivity checks went, e.g.
+  // "local udp 192.168.1.5 | remote udp 192.168.1.20,fd00::2 | pairs failed 4 | checks 12 sent, 0 answered"
+  function iceSummary(stats) {
+    const addrs = (type) => {
+      const m = new Map();
+      for (const r of stats) {
+        if (r.type !== type) continue;
+        const k = r.protocol || 'udp';
+        if (!m.has(k)) m.set(k, new Set());
+        m.get(k).add(String(r.address || r.ip || '?'));
+      }
+      return [...m].map(([proto, set]) => `${proto} ${[...set].join(',')}`).join(' ') || 'none';
+    };
+    const states = new Map();
+    let sent = 0, answered = 0;
+    for (const r of stats) {
+      if (r.type !== 'candidate-pair') continue;
+      states.set(r.state, (states.get(r.state) || 0) + 1);
+      sent += r.requestsSent || 0;
+      answered += r.responsesReceived || 0;
+    }
+    const pairs = [...states].map(([st, n]) => `${st} ${n}`).join(', ') || 'none';
+    return `local ${addrs('local-candidate')} | remote ${addrs('remote-candidate')} | pairs ${pairs} | checks ${sent} sent, ${answered} answered`;
+  }
+
+  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary };
 }));

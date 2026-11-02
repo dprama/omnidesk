@@ -33,7 +33,13 @@
     };
     pc.onconnectionstatechange = () => {
       const s = pc && pc.connectionState;
-      if (s === 'failed' || s === 'closed') fail(`connection ${s}`);
+      if (s === 'closed') fail('connection closed');
+      else if (s === 'failed') {
+        // Say which addresses were tried before giving up (shows up in the app log).
+        const p = pc;
+        p.getStats().then((r) => send({ type: 'log', message: `ice failed: ${U.iceSummary(Array.from(r.values()))}` }))
+          .catch(() => {}).finally(() => fail('connection failed'));
+      }
     };
     pc.ontrack = (e) => {
       // Lowest possible playout delay: this is a live desktop, not a film.

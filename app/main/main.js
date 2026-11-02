@@ -23,6 +23,12 @@ const BG = '#0c0e13';
 
 // userData folder name "OmniDesk", fixed forever. Smoke tests use a temp folder.
 app.setName('OmniDesk');
+// Second screen and camera are LAN-only WebRTC with no STUN/TURN, so the two computers
+// must see each other's real local addresses. By default Chromium replaces them with random
+// `.local` mDNS names, which Windows and macOS often fail to resolve for each other: the
+// session then ends with "connection failed". Only OmniDesk's own pages (strict CSP, no
+// remote content) can read these addresses.
+app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns');
 app.setPath('userData', SMOKE ? fs.mkdtempSync(path.join(os.tmpdir(), 'omnidesk-smoke-')) : path.join(app.getPath('appData'), 'OmniDesk'));
 
 security.registerScheme(protocol);

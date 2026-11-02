@@ -152,10 +152,11 @@ export default {
       const d = dirOf(key);
       if (!d) { C.card.hidden = true; return; }
       C.card.hidden = false;
-      setText(C.title, `Use ${d.dst.name} as a screen for ${d.src.name}`);
+      // Two titles that can't be mixed up: which computer gains a monitor, which one shows it.
+      setText(C.title, key === 'extend' ? `Extend this computer onto ${d.dst.name}` : `Be an extra screen for ${d.src.name}`);
       setText(C.hint, key === 'extend'
-        ? `${d.dst.name} shows an extra monitor for this computer. Its own desktop waits underneath.`
-        : `This computer shows an extra monitor for ${d.src.name}, full screen. Press Esc twice to stop.`);
+        ? `This computer gets a new monitor, shown full screen on ${d.dst.name}. ${d.dst.name}'s own desktop waits underneath.`
+        : `${d.src.name} gets a new monitor, shown full screen here. Press Esc twice to stop.`);
       const artSig = [kindOf(d.src), kindOf(d.dst), d.src.online, d.dst.online].join();
       const s = sessionFor(d.src.id, d.dst.id);
       if (C.artSig !== artSig + !!s) {
@@ -185,7 +186,7 @@ export default {
       } else {
         C.btn.classList.add('btn-primary');
         C.btn.append(icon('power'), pending ? 'Starting…' : 'Start');
-        C.btn.setAttribute('aria-label', `Start: use ${d.dst.name} as a screen for ${d.src.name}`);
+        C.btn.setAttribute('aria-label', key === 'extend' ? `Start: extend this computer onto ${d.dst.name}` : `Start: be an extra screen for ${d.src.name}`);
         const blocked = !can.ok || !!other || !d.src.online || !d.dst.online;
         C.btn.disabled = pending || blocked;
         C.stats.hidden = true;

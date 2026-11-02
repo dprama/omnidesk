@@ -51,7 +51,13 @@
     pc.onconnectionstatechange = () => {
       const s = pc && pc.connectionState;
       if (s === 'connected') send({ type: 'state', state: 'connected' });
-      if (s === 'failed' || s === 'closed') fail(`connection ${s}`);
+      if (s === 'closed') fail('connection closed');
+      else if (s === 'failed') {
+        // Say which addresses were tried before giving up (shows up in the app log).
+        const p = pc;
+        p.getStats().then((r) => send({ type: 'log', message: `ice failed: ${U.iceSummary(Array.from(r.values()))}` }))
+          .catch(() => {}).finally(() => fail('connection failed'));
+      }
     };
 
     const tr = pc.addTransceiver(track, {

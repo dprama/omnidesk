@@ -93,7 +93,7 @@ function createMedia({ electron, allowMedia, log = () => {}, isPackaged = false 
       const timer = setTimeout(() => { handle.close(); reject(Object.assign(new Error('The screen window did not load.'), { code: 'window-timeout' })); }, 10000);
       routes.set(id, (msg) => {
         if (msg.type === 'ready') { clearTimeout(timer); resolve(handle); return; }
-        if (msg.type === 'log') { log(`screen ${file}: ${String(msg.message).slice(0, 200)}`); return; }
+        if (msg.type === 'log') { log(`screen ${file}: ${String(msg.message).slice(0, 400)}`); return; }
         onMsg(msg);
       });
       wc.on('render-process-gone', (_e, d) => { if (!closed) { clearTimeout(timer); onMsg({ type: 'end', reason: `window crashed (${d.reason})` }); } });
