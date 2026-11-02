@@ -144,3 +144,20 @@ test('perfLine: encoder/decoder and per-stage time, for the 10 s log line', () =
   'recv 1920x1080 59fps dec VideoToolbox hw 2.0ms jitter 18.0ms dropped 2 lost 0 rtt 6ms');
   assert.equal(perfLine([]), 'no video yet');
 });
+
+test('chooseCodecOrder: H.264 only when it is encoded in hardware', () => {
+  const { chooseCodecOrder } = require('./viewer/rtc-util');
+  const sw = { supported: true, powerEfficient: false };
+  const hw = { supported: true, powerEfficient: true };
+  assert.deepEqual(chooseCodecOrder({ H264: hw, VP8: sw }).order, ['H264', 'VP8']);
+  assert.deepEqual(chooseCodecOrder({ H264: sw, VP8: sw }), { order: ['VP8', 'H264'], why: 'no hardware encoder: VP8 in software' });
+  assert.deepEqual(chooseCodecOrder({ H264: sw, VP8: hw }).order, ['VP8', 'H264']);
+  assert.deepEqual(chooseCodecOrder({}).order, ['VP8', 'H264']);
+});
+
+test('codecOrderFromSdp: the sender\'s order, without rtx/red/ulpfec', () => {
+  const { codecOrderFromSdp, preferCodecsInSdp } = require('./viewer/rtc-util');
+  assert.deepEqual(codecOrderFromSdp(preferCodecsInSdp(OFFER, ['VP8', 'H264'])).slice(0, 2), ['VP8', 'H264']);
+  assert.deepEqual(codecOrderFromSdp(preferCodecsInSdp(OFFER)).slice(0, 2), ['H264', 'VP8']);
+  assert.deepEqual(codecOrderFromSdp('v=0\r\n'), ['H264', 'VP8']);
+});

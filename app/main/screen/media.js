@@ -125,6 +125,8 @@ function createMedia({ electron, allowMedia, log = () => {}, isPackaged = false 
 
   async function openSource(cfg, onMsg) {
     ensureSession();
+    // Whether Chromium may use the GPU for video encoding here (else every codec is software).
+    try { const g = electron.app.getGPUFeatureStatus(); log(`screen: gpu video_encode=${g.video_encode} gpu_compositing=${g.gpu_compositing}`); } catch { /* no app in tests */ }
     const win = new BrowserWindow({ show: false, width: 320, height: 200, skipTaskbar: true, focusable: false, title: 'OmniDesk capture', webPreferences: webPreferences() });
     const h = await open(win, 'capture.html', onMsg, { capture: true });
     h.send({ type: 'start', role: 'source', ...cfg });

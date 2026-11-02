@@ -78,14 +78,16 @@
     if (!pc) start();
     if (kind === 'offer') {
       await pc.setRemoteDescription({ type: 'offer', sdp: U.hostOnlySdp(data.sdp) });
+      // Answer in the sender's order: it knows which codec it can encode in hardware.
+      const order = U.codecOrderFromSdp(data.sdp);
       for (const t of pc.getTransceivers()) {
         try {
           const caps = RTCRtpReceiver.getCapabilities('video');
-          if (caps && t.setCodecPreferences) t.setCodecPreferences(U.sortCodecs(caps.codecs));
+          if (caps && t.setCodecPreferences) t.setCodecPreferences(U.sortCodecs(caps.codecs, order));
         } catch { /* SDP order from the offer is used */ }
       }
       const answer = await pc.createAnswer();
-      const sdp = U.preferCodecsInSdp(U.hostOnlySdp(answer.sdp));
+      const sdp = U.preferCodecsInSdp(U.hostOnlySdp(answer.sdp), order);
       await pc.setLocalDescription({ type: 'answer', sdp });
       send({ type: 'signal', kind: 'answer', data: { type: 'answer', sdp } });
       for (const c of pendingIce.splice(0)) await pc.addIceCandidate(c).catch(() => {});

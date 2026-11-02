@@ -12,6 +12,7 @@
   let statsTimer = null;
   let prevSnap = null;
   let perfTick = 0;
+  let order = U.CODEC_ORDER;
   let pendingIce = [];
   let codecLogged = false;
 
@@ -73,10 +74,19 @@
       streams: [stream],
       sendEncodings: [{ maxBitrate: preset.maxBitrate, maxFramerate: Math.min(preset.maxFramerate, c.refresh), scaleResolutionDownBy: preset.scaleResolutionDownBy }],
     });
-    // H.264 first (hardware encoders), VP8 as fallback.
+    // H.264 only if this computer encodes it in hardware, else VP8 (see chooseCodecOrder).
+    const info = {};
+    for (const name of ['H264', 'VP8']) {
+      try {
+        info[name] = await navigator.mediaCapabilities.encodingInfo({ type: 'webrtc', video: { contentType: `video/${name}`, width: c.width, height: c.height, bitrate: preset.maxBitrate, framerate: c.refresh } });
+      } catch { info[name] = null; }
+    }
+    const pick = U.chooseCodecOrder(info);
+    order = pick.order;
+    send({ type: 'log', message: `codec order ${order.join(' > ')} (${pick.why})` });
     try {
       const caps = RTCRtpSender.getCapabilities('video');
-      if (caps && tr.setCodecPreferences) tr.setCodecPreferences(U.sortCodecs(caps.codecs));
+      if (caps && tr.setCodecPreferences) tr.setCodecPreferences(U.sortCodecs(caps.codecs, order));
     } catch { /* fall back to SDP munging below */ }
     try {
       const p = tr.sender.getParameters();
@@ -85,7 +95,7 @@
     } catch { /* not supported everywhere */ }
 
     const offer = await pc.createOffer();
-    const sdp = U.setVideoBitrate(U.preferCodecsInSdp(U.hostOnlySdp(offer.sdp)), preset.maxBitrate);
+    const sdp = U.setVideoBitrate(U.preferCodecsInSdp(U.hostOnlySdp(offer.sdp), order), preset.maxBitrate);
     await pc.setLocalDescription({ type: 'offer', sdp });
     send({ type: 'signal', kind: 'offer', data: { type: 'offer', sdp } });
 

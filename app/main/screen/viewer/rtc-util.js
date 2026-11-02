@@ -14,11 +14,42 @@
   // Quality presets. maxBitrate in bits/s.
   const PRESETS = Object.freeze({
     latency: Object.freeze({ scaleResolutionDownBy: 1.5, maxFramerate: 60, maxBitrate: 6000000, degradationPreference: 'maintain-framerate', contentHint: 'motion' }),
-    balanced: Object.freeze({ scaleResolutionDownBy: 1, maxFramerate: 60, maxBitrate: 12000000, degradationPreference: 'balanced', contentHint: 'detail' }),
+    // 'motion', not 'detail': with 'detail' WebRTC keeps resolution and lets the frame rate fall.
+    balanced: Object.freeze({ scaleResolutionDownBy: 1, maxFramerate: 60, maxBitrate: 12000000, degradationPreference: 'balanced', contentHint: 'motion' }),
     sharp: Object.freeze({ scaleResolutionDownBy: 1, maxFramerate: 60, maxBitrate: 25000000, degradationPreference: 'maintain-resolution', contentHint: 'text' }),
   });
 
   const CODEC_ORDER = Object.freeze(['H264', 'VP8']);
+
+  // Codec order for the sender from mediaCapabilities.encodingInfo answers
+  // ({ H264: { supported, powerEfficient }, VP8: {...} }). H.264 only when it is encoded in
+  // hardware: software H.264 (OpenH264) managed 2-17 fps at 1080p on a real PC and in a
+  // test here, where software VP8 kept ~58 fps at 12 ms a frame.
+  function chooseCodecOrder(info) {
+    const hw = (c) => !!(info && info[c] && info[c].supported && info[c].powerEfficient);
+    if (hw('H264')) return { order: ['H264', 'VP8'], why: 'H.264 in hardware' };
+    if (hw('VP8')) return { order: ['VP8', 'H264'], why: 'VP8 in hardware' };
+    return { order: ['VP8', 'H264'], why: 'no hardware encoder: VP8 in software' };
+  }
+
+  // Video codec names in the order of the first m=video line, e.g. ['VP8', 'rtx', 'H264', ...]
+  // without rtx/red/ulpfec: the receiver answers in the sender's order.
+  function codecOrderFromSdp(sdp) {
+    const lines = splitLines(sdp);
+    const sec = sections(lines).find((x) => x.kind === 'video');
+    if (!sec) return [...CODEC_ORDER];
+    const names = {};
+    for (let i = sec.start + 1; i < sec.end; i++) {
+      const m = /^a=rtpmap:(\d+) ([^/]+)\//.exec(lines[i]);
+      if (m) names[m[1]] = m[2];
+    }
+    const out = [];
+    for (const pt of lines[sec.start].split(' ').slice(3)) {
+      const n = names[pt];
+      if (n && !/^(rtx|red|ulpfec|flexfec-03)$/i.test(n) && !out.some((o) => o.toUpperCase() === n.toUpperCase())) out.push(n);
+    }
+    return out.length ? out : [...CODEC_ORDER];
+  }
 
   // LAN only: no STUN/TURN, so only host candidates exist; this also drops any
   // srflx/relay/prflx line that might be signalled anyway.
@@ -225,5 +256,5 @@
     return 'no video yet';
   }
 
-  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine };
+  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine, chooseCodecOrder, codecOrderFromSdp };
 }));
