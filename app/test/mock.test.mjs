@@ -17,7 +17,9 @@ function load(scenario = 'default', { hidden = false } = {}) {
   const win = {
     location: { search: scenario === 'default' ? '' : `?mock-scenario=${scenario}` },
     document: { hidden, addEventListener: (t, f) => { listeners[t] = f; } },
-    setTimeout: (f, ms) => { const h = setTimeout(f, ms); h.unref(); return h; },
+    // Short one-shots stay ref'd: tests await mock calls that resolve on them (pairEnter, 900 ms),
+    // and Node 22 ends a test whose only pending work is unref'd. Long ones (code expiry) don't hold exit.
+    setTimeout: (f, ms) => { const h = setTimeout(f, ms); if (ms >= 10000) h.unref(); return h; },
     clearTimeout, clearInterval,
     setInterval: (f, ms) => { const h = setInterval(f, ms); h.unref(); return h; },
     URL, URLSearchParams,
