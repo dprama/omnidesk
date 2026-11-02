@@ -64,7 +64,8 @@ function createPlatform({ electron, log = () => {}, isPackaged = false, resource
   }
 
   // Wait for a display that wasn't there before (Windows: the VDD monitor).
-  function waitForNewDisplay(before, { width, height }, timeoutMs = 12000) {
+  // 20 s: the first start after install loads the user-mode driver, which can be slow.
+  function waitForNewDisplay(before, { width, height }, timeoutMs = 20000) {
     return new Promise((resolve, reject) => {
       const t0 = Date.now();
       const tick = () => {
@@ -73,7 +74,12 @@ function createPlatform({ electron, log = () => {}, isPackaged = false, resource
         const exact = fresh.find((d) => { const [w, h] = px(d); return w === width && h === height; });
         const pick = exact || fresh.find((d) => /vdd|virtual/i.test(d.label || '')) || fresh[0];
         if (pick) return resolve(pick);
-        if (Date.now() - t0 > timeoutMs) return reject(Object.assign(new Error('The virtual display did not appear.'), { code: 'display-missing' }));
+        if (Date.now() - t0 > timeoutMs) {
+          // What Windows reports, for the log: a monitor in Duplicate mode, for example, is no new display.
+          const all = electronScreen.getAllDisplays().map((d) => `${d.id} "${d.label || ''}" ${d.size.width}x${d.size.height}@${d.scaleFactor} at ${d.bounds.x},${d.bounds.y}`);
+          log(`virtual display missing after ${Math.round(timeoutMs / 1000)}s; displays now: ${all.join('; ')}; before: ${[...before].join(',')}`);
+          return reject(Object.assign(new Error('The virtual display did not appear. If Windows is set to Duplicate these displays, switch it to Extend (Windows key + P).'), { code: 'display-missing' }));
+        }
         setTimeout(tick, 200);
       };
       tick();

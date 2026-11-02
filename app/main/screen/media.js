@@ -27,6 +27,10 @@ function createMedia({ electron, allowMedia, log = () => {}, isPackaged = false 
   const { BrowserWindow, session, ipcMain, desktopCapturer, screen: electronScreen } = electron;
   const routes = new Map(); // webContents.id -> onMsg
   const mediaOk = new Set(); // webContents ids allowed to capture
+  // Viewer windows: no capture, but the permission *check* for 'media' says yes. Without it
+  // Chromium gathers WebRTC candidates on the default route only, which on a PC with a VPN
+  // adapter is the VPN address, so the other computer on the LAN never gets an answer.
+  const routesOk = new Set();
   let ses = null;
 
   function isOurUrl(u) { try { const x = new URL(u); return x.protocol === 'app:' && x.host === HOST; } catch { return false; } }
@@ -50,7 +54,8 @@ function createMedia({ electron, allowMedia, log = () => {}, isPackaged = false 
       if (!ok) log(`screen: permission denied: ${permission}`);
       cb(ok);
     });
-    ses.setPermissionCheckHandler((wc, permission, origin) => decide(wc, permission, origin && `${origin}/`));
+    ses.setPermissionCheckHandler((wc, permission, origin) => decide(wc, permission, origin && `${origin}/`)
+      || (!!wc && routesOk.has(wc.id) && permission === 'media' && isOurUrl(origin ? `${origin}/` : wc.getURL())));
     if (ses.setDevicePermissionHandler) ses.setDevicePermissionHandler(() => false);
     ses.webRequest.onBeforeRequest((d, cb) => cb({ cancel: !(d.url.startsWith(`${ORIGIN}/`) || d.url.startsWith('devtools:')) }));
     return ses;
@@ -79,13 +84,13 @@ function createMedia({ electron, allowMedia, log = () => {}, isPackaged = false 
     const id = wc.id;
     let closed = false;
     let revoke = () => {};
-    if (capture) { mediaOk.add(id); revoke = allowMedia(wc) || (() => {}); }
+    if (capture) { mediaOk.add(id); revoke = allowMedia(wc) || (() => {}); } else routesOk.add(id);
     const handle = {
       send(cmd) { if (!closed && !wc.isDestroyed()) wc.send('omnidesk-screen:cmd', cmd); },
       close() {
         if (closed) return;
         closed = true;
-        routes.delete(id); mediaOk.delete(id); try { revoke(); } catch { /* gone */ }
+        routes.delete(id); mediaOk.delete(id); routesOk.delete(id); try { revoke(); } catch { /* gone */ }
         if (!win.isDestroyed()) { try { wc.send('omnidesk-screen:cmd', { type: 'stop' }); } catch { /* gone */ } win.destroy(); }
       },
     };
@@ -97,7 +102,7 @@ function createMedia({ electron, allowMedia, log = () => {}, isPackaged = false 
         onMsg(msg);
       });
       wc.on('render-process-gone', (_e, d) => { if (!closed) { clearTimeout(timer); onMsg({ type: 'end', reason: `window crashed (${d.reason})` }); } });
-      win.on('closed', () => { if (!closed) { closed = true; routes.delete(id); mediaOk.delete(id); onMsg({ type: 'end', reason: 'window closed' }); } });
+      win.on('closed', () => { if (!closed) { closed = true; routes.delete(id); mediaOk.delete(id); routesOk.delete(id); onMsg({ type: 'end', reason: 'window closed' }); } });
       win.loadURL(`${ORIGIN}/${file}`).catch((e) => { clearTimeout(timer); handle.close(); reject(e); });
     });
   }
