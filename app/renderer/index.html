@@ -1,0 +1,82 @@
+<!doctype html>
+<!--
+  SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
+  SPDX-License-Identifier: GPL-2.0-only
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'self'; script-src 'self'; connect-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>OmniDesk</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/shell.css">
+  <script type="module" src="shell/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <div class="spectrum" aria-hidden="true"></div>
+  <div class="frost" aria-hidden="true"></div>
+
+  <div class="app" id="app">
+    <aside class="side" id="side" aria-label="Sidebar">
+      <a class="brand" href="#home" aria-label="OmniDesk home">
+        <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="gSpec" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#5fd4e8"/><stop offset=".3" stop-color="#a98bff"/><stop offset=".55" stop-color="#f483a6"/><stop offset=".8" stop-color="#f2b860"/><stop offset="1" stop-color="#52d6aa"/>
+            </linearGradient>
+          </defs>
+          <rect x="4" y="7" width="24" height="19" rx="5" fill="none" stroke="url(#gSpec)" stroke-width="2.4"/>
+          <rect x="12" y="14" width="24" height="19" rx="5" fill="rgba(215,219,227,.16)" stroke="rgba(235,238,244,.85)" stroke-width="1.6"/>
+          <path d="M20 19.5v8l2.3-2 1.8 3.6 1.5-.7-1.8-3.5h3z" fill="#eef1f6"/>
+        </svg>
+        <span><b>OmniDesk</b><small>One desk for all your computers</small></span>
+      </a>
+      <nav id="nav" aria-label="Pages"></nav>
+      <div class="side-foot" id="sideFoot" hidden></div>
+    </aside>
+    <div class="drawer-scrim" id="drawerScrim" aria-hidden="true"></div>
+
+    <main class="main" id="main">
+      <div class="mainbar">
+        <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <div class="crumb" id="crumb"></div>
+        <button class="cmd-btn" id="cmdBtn" type="button" aria-label="Open command bar" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
+          <span class="lab-long">Search or run a command</span><span class="lab-short">Commands</span>
+          <kbd id="kbdHint">Ctrl K</kbd>
+        </button>
+      </div>
+      <div class="tabs-wrap" id="tabsWrap"><nav class="tabs" id="tabs" aria-label="Folder tabs"></nav></div>
+      <div class="stack" id="stack"></div>
+    </main>
+
+    <footer class="status" aria-label="Status">
+      <div class="status-in" id="status"></div>
+    </footer>
+  </div>
+
+  <div class="cmd-scrim" id="cmdScrim" hidden>
+    <div class="cmd" id="cmd" role="dialog" aria-modal="true" aria-label="Command bar">
+      <div class="cmd-in">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
+        <input id="cmdInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type a command or a page…"
+          role="combobox" aria-expanded="true" aria-controls="cmdList" aria-autocomplete="list" aria-label="Command">
+        <kbd>esc</kbd>
+      </div>
+      <ul id="cmdList" role="listbox" aria-label="Commands"></ul>
+      <div class="cmd-foot" aria-hidden="true"><span>↑ ↓ to move</span><span>Enter to run</span><span>Esc to close</span></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <div class="sr-only" id="announce" role="alert"></div>
+</body>
+</html>

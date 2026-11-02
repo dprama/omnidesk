@@ -230,4 +230,29 @@ void ClipboardTests::equalClipboards()
   clipboard2.close();
 }
 
+void ClipboardTests::hasAnyFormat_emptyAndFilled()
+{
+  // OmniDesk: a files-only copy reaches the engine as a clipboard with no formats;
+  // it must not be copied over (and so wipe) the other computer's clipboard
+  Clipboard empty;
+  QVERIFY(!IClipboard::hasAnyFormat(&empty));
+  QVERIFY(!IClipboard::hasAnyFormat(nullptr));
+
+  Clipboard text;
+  text.open(0);
+  text.add(IClipboard::Format::Text, "hi");
+  text.close();
+  QVERIFY(IClipboard::hasAnyFormat(&text));
+  // and it leaves the clipboard closed and usable
+  QVERIFY(text.open(0));
+  QCOMPARE(text.get(IClipboard::Format::Text), std::string("hi"));
+  text.close();
+
+  Clipboard image;
+  image.open(0);
+  image.add(IClipboard::Format::Bitmap, std::string(54, '\0'));
+  image.close();
+  QVERIFY(IClipboard::hasAnyFormat(&image));
+}
+
 QTEST_MAIN(ClipboardTests)

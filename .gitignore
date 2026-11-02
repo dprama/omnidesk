@@ -1,0 +1,12 @@
+# Built engine binaries copied in for packaging
+engine-dist/
+app/engine-dist/
+engine/build/
+node_modules/
+.DS_Store
+site/test/shots/
+rustdesk/
+native/macos-virtual-display/dist/
+native/windows-vdd/dist/
+app/dist/
+*.log

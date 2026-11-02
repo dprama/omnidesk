@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers.
  * SPDX-FileCopyrightText: (C) 2012 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -10,6 +11,7 @@
 
 #include "base/IEventQueue.h"
 #include "base/Log.h"
+#include "common/Settings.h"
 #include "deskflow/AppUtil.h"
 #include "deskflow/Computer.h"
 #include "deskflow/DeskflowException.h"
@@ -18,6 +20,7 @@
 #include "deskflow/PacketStreamFilter.h"
 #include "deskflow/ProtocolTypes.h"
 #include "deskflow/StreamChunker.h"
+#include "deskflow/ipc/CoreControls.h"
 #include "deskflow/ipc/CoreIpc.h"
 #include "net/TCPSocket.h"
 #include "server/ClientListener.h"
@@ -25,16 +28,49 @@
 #include "server/ClientProxyUnknown.h"
 #include "server/PrimaryClient.h"
 
-#ifdef _WIN32
+#include <QJsonDocument>
+#include <QJsonObject>
+
 #include <algorithm>
 #include <array>
-#endif
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 
 using namespace deskflow::server;
+using omnidesk::log::NoCrossReason;
+using CoreControls = deskflow::core::ipc::CoreControls;
+
+namespace {
+
+int64_t steadyMs()
+{
+  using namespace std::chrono;
+  return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+int64_t epochMs()
+{
+  using namespace std::chrono;
+  return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+// little-endian int32 from a BMP info header
+int32_t readLe32(const std::string &data, size_t offset)
+{
+  if (data.size() < offset + 4) {
+    return 0;
+  }
+  const auto *p = reinterpret_cast<const unsigned char *>(data.data() + offset);
+  return static_cast<int32_t>(
+      static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8) | (static_cast<uint32_t>(p[2]) << 16) |
+      (static_cast<uint32_t>(p[3]) << 24)
+  );
+}
+
+} // namespace
 
 //
 // Server
@@ -119,6 +155,9 @@ Server::Server(ServerConfig &config, PrimaryClient *primaryClient, deskflow::Com
   m_events->addHandler(EventTypes::PrimaryComputerFakeInputEnd, m_inputFilter, [this](const auto &) {
     m_primaryClient->fakeInputEnd();
   });
+  m_events->addHandler(EventTypes::ServerOmniDeskControlsChanged, this, [this](const auto &) {
+    handleOmniDeskControlsChanged();
+  });
 
   // add connection
   addClient(m_primaryClient);
@@ -148,12 +187,22 @@ Server::Server(ServerConfig &config, PrimaryClient *primaryClient, deskflow::Com
     LOG_INFO("default computer lock is on, locking cursor to computer");
     m_lockedToComputer = true;
   }
+
+  // OmniDesk: runtime switches set by the app over local IPC. the callback runs on
+  // the IPC thread, so it only queues an event for this (core) thread.
+  CoreControls::instance().setChangedCallback([events = m_events, target = this] {
+    events->addEvent(Event(EventTypes::ServerOmniDeskControlsChanged, target));
+  });
+  handleOmniDeskControlsChanged();
 }
 
 Server::~Server()
 {
+  CoreControls::instance().setChangedCallback({});
+
   // remove event handlers and timers
   using enum EventTypes;
+  m_events->removeHandler(ServerOmniDeskControlsChanged, this);
   m_events->removeHandler(KeyStateKeyDown, m_inputFilter);
   m_events->removeHandler(KeyStateKeyUp, m_inputFilter);
   m_events->removeHandler(KeyStateKeyRepeat, m_inputFilter);
@@ -499,6 +548,10 @@ void Server::switchComputer(BaseClientProxy *dst, int32_t x, int32_t y, bool for
         if (m_clipboards[id].m_clipboard.marshall().size() > (m_maximumClipboardSize * 1024)) {
           continue;
         }
+        // OmniDesk: an empty clipboard (e.g. files only) would wipe the other side's
+        if (!IClipboard::hasAnyFormat(&m_clipboards[id].m_clipboard)) {
+          continue;
+        }
         m_active->setClipboard(id, &m_clipboards[id].m_clipboard);
       }
     }
@@ -508,6 +561,8 @@ void Server::switchComputer(BaseClientProxy *dst, int32_t x, int32_t y, bool for
   } else {
     m_active->mouseMove(x, y);
   }
+
+  sendCursorIpc(true);
 }
 
 void Server::jumpToComputer(BaseClientProxy *newComputer)
@@ -792,6 +847,41 @@ bool Server::isSwitchOkay(
     // there's no neighbor.  we don't want to switch and we don't
     // want to try to switch later.
     LOG_VERBOSE("no neighbor %s", Config::dirName(dir));
+    logNoCross(noNeighbourReason(dir, xActive, yActive), dir, xActive, yActive);
+    stopSwitch();
+    return false;
+  }
+
+  // are we in a locked corner?  first check if computer has the option set
+  // and, if not, check the global options.
+  const Config::ScreenOptions *options = m_config->getOptions(getName(m_active));
+  if (options == nullptr || !options->contains(kOptionComputerSwitchCorners)) {
+    options = m_config->getOptions("");
+  }
+  if (options != nullptr && options->contains(kOptionComputerSwitchCorners)) {
+    // get corner mask and size
+    Config::ScreenOptions::const_iterator i = options->find(kOptionComputerSwitchCorners);
+    auto corners = static_cast<uint32_t>(i->second);
+    i = options->find(kOptionComputerSwitchCornerSize);
+    int32_t size = 0;
+    if (i != options->end()) {
+      size = i->second;
+    }
+    // see if we're in a locked corner
+    if ((getCorner(m_active, xActive, yActive, size) & corners) != 0) {
+      // yep, no switching
+      LOG_VERBOSE("locked in corner");
+      logNoCross(NoCrossReason::OutsideZone, dir, xActive, yActive);
+      stopSwitch();
+      return false;
+    }
+  }
+
+  // OmniDesk rules: sharing off, locked, button held, arrival guard, cooldown.
+  // don't try to switch later either; the next push is checked again.
+  if (int64_t remainingMs = 0; const auto reason = crossingBlockedReason(dir, remainingMs)) {
+    LOG_VERBOSE("no switch: %s", omnidesk::log::reasonName(*reason));
+    logNoCross(*reason, dir, xActive, yActive, remainingMs);
     stopSwitch();
     return false;
   }
@@ -807,6 +897,8 @@ bool Server::isSwitchOkay(
     m_switchDir = dir;
     m_switchComputer = newComputer;
   }
+  m_switchFromX = xActive;
+  m_switchFromY = yActive;
 
   // is this a double tap and do we care?
   if (!allowSwitch && m_switchTwoTapDelay > 0.0) {
@@ -829,38 +921,179 @@ bool Server::isSwitchOkay(
     preventSwitch = true;
   }
 
-  // are we in a locked corner?  first check if computer has the option set
-  // and, if not, check the global options.
-  const Config::ScreenOptions *options = m_config->getOptions(getName(m_active));
-  if (options == nullptr || !options->contains(kOptionComputerSwitchCorners)) {
-    options = m_config->getOptions("");
-  }
-  if (options != nullptr && options->contains(kOptionComputerSwitchCorners)) {
-    // get corner mask and size
-    Config::ScreenOptions::const_iterator i = options->find(kOptionComputerSwitchCorners);
-    auto corners = static_cast<uint32_t>(i->second);
-    i = options->find(kOptionComputerSwitchCornerSize);
-    int32_t size = 0;
-    if (i != options->end()) {
-      size = i->second;
-    }
-    // see if we're in a locked corner
-    if ((getCorner(m_active, xActive, yActive, size) & corners) != 0) {
-      // yep, no switching
-      LOG_VERBOSE("locked in corner");
-      preventSwitch = true;
-      stopSwitch();
-    }
-  }
-
-  // ignore if mouse is locked to computer and don't try to switch later
-  if (!preventSwitch && isLockedToComputer()) {
-    LOG_VERBOSE("locked to computer");
-    preventSwitch = true;
-    stopSwitch();
-  }
-
   return !preventSwitch;
+}
+
+std::optional<NoCrossReason> Server::crossingBlockedReason(Direction dir, int64_t &remainingMs) const
+{
+  PushState state;
+  state.sharingOn = CoreControls::instance().mouseSharing();
+  // scroll lock / lockCursorToScreen / app lock (unless disabled in the config)
+  state.locked = !m_disableLockToComputer && isLockedToComputerServer();
+  // always applies, on the primary and on a client computer
+  state.buttonHeld = isButtonHeld();
+  return m_edgeRules.check(state, dir, &remainingMs);
+}
+
+NoCrossReason Server::noNeighbourReason(Direction dir, int32_t x, int32_t y) const
+{
+  if (!CoreControls::instance().mouseSharing()) {
+    return NoCrossReason::SharingOff;
+  }
+  if (!hasAnyNeighbor(m_active, dir)) {
+    return NoCrossReason::NoNeighbour;
+  }
+  // a computer is linked on this side, but not at this point of the edge
+  // (link ranges like `right(0,50) = laptop`)
+  const float t = mapToFraction(m_active, dir, x, y);
+  if (m_config->getNeighbor(getName(m_active), dir, t, nullptr).empty()) {
+    return NoCrossReason::OutsideZone;
+  }
+  // linked here, but not connected
+  return NoCrossReason::NoNeighbour;
+}
+
+std::vector<MonitorRect> Server::activeMonitors() const
+{
+  if (m_active == m_primaryClient) {
+    if (auto monitors = m_primaryClient->getMonitorRects(); !monitors.empty()) {
+      return monitors;
+    }
+  }
+  // the protocol only carries a client's bounding box; the app can send the
+  // client's monitors over its own channel (`peerMonitors=` IPC)
+  MonitorRect shape;
+  m_active->getShape(shape.x, shape.y, shape.w, shape.h);
+  if (auto monitors = CoreControls::instance().peerMonitors(getName(m_active)); !monitors.empty()) {
+    // only while they still describe the client's current desktop: after a display
+    // change the client reports its new shape at once, the app's list may come later
+    // (or never), and a stale list would let the cursor wander off the real screens
+    if (EdgeRules::boundingBox(monitors) == shape) {
+      return monitors;
+    }
+    LOG_DEBUG(
+        "ignoring peer monitors of \"%s\": %s do not span its shape %d,%d %dx%d", getName(m_active).c_str(),
+        omnidesk::log::formatMonitors(monitors).c_str(), shape.x, shape.y, shape.w, shape.h
+    );
+  }
+  return {shape};
+}
+
+void Server::logNoCross(NoCrossReason reason, Direction dir, int32_t x, int32_t y, int64_t remainingMs)
+{
+  if (!m_edgeRules.allowNoCrossLog()) {
+    return;
+  }
+  const auto line = omnidesk::log::formatNoCross(reason, dir, x, y, activeMonitors(), remainingMs);
+  LOG_INFO("%s", line.c_str());
+}
+
+bool Server::crossTo(BaseClientProxy *dst, Direction dir, int32_t x, int32_t y, int32_t fromX, int32_t fromY)
+{
+  const auto line = omnidesk::log::formatCross(dir, fromX, fromY, getName(dst), m_edgeRules.cooldownMs());
+  switchComputer(dst, x, y, false);
+  if (m_active != dst) {
+    // couldn't leave the active computer
+    return false;
+  }
+  LOG_INFO("%s", line.c_str());
+  m_edgeRules.onCrossed(dir);
+  return true;
+}
+
+bool Server::isButtonHeld() const
+{
+  // PrimaryClient::isLockedToComputer() is the platform's "any mouse button
+  // down" check.  it reads the real button state, so it also works while the
+  // cursor is on a client computer.
+  return m_primaryClient->isLockedToComputer();
+}
+
+void Server::sendCursorIpc(bool force)
+{
+  const int64_t now = steadyMs();
+  if (!force && now - m_lastCursorIpcMs < 50) {
+    return;
+  }
+  auto message = QStringLiteral("%1,%2,%3").arg(QString::fromStdString(getName(m_active))).arg(m_x).arg(m_y);
+  auto text = message.toStdString();
+  if (text == m_lastCursorIpc) {
+    return;
+  }
+  m_lastCursorIpcMs = now;
+  m_lastCursorIpc = std::move(text);
+  ipcSendTransient(QStringLiteral("cursor"), message);
+}
+
+void Server::sendClipboardItemIpc(const std::string &from, ClipboardID id)
+{
+  // only the main clipboard; the X11 selection changes with every text selection
+  if (id != kClipboardClipboard) {
+    return;
+  }
+
+  const Clipboard &clipboard = m_clipboards[id].m_clipboard;
+  if (!clipboard.open(0)) {
+    return;
+  }
+
+  QJsonObject item;
+  using enum IClipboard::Format;
+  if (clipboard.has(Text) || clipboard.has(HTML)) {
+    const auto data = clipboard.get(clipboard.has(Text) ? Text : HTML);
+    item.insert("kind", "text");
+    // a preview: 200 code points, cut on a character boundary (QString::left counts
+    // UTF-16 units and could split a surrogate pair, e.g. an emoji)
+    item.insert("text", QString::fromStdString(omnidesk::log::utf8Prefix(data, 200)));
+    item.insert("bytes", static_cast<qint64>(data.size()));
+  } else if (clipboard.has(Bitmap)) {
+    // BMP without the file header: BITMAPINFOHEADER width at 4, height at 8
+    const auto data = clipboard.get(Bitmap);
+    item.insert("kind", "image");
+    item.insert("width", readLe32(data, 4));
+    item.insert("height", std::abs(readLe32(data, 8)));
+    item.insert("bytes", static_cast<qint64>(data.size()));
+  }
+  clipboard.close();
+
+  if (item.isEmpty()) {
+    return;
+  }
+
+  // `to` is the computer that gets the data now; "*" when the sender is the
+  // active computer (the others get it when the cursor enters them)
+  const auto active = getName(m_active);
+  item.insert("from", QString::fromStdString(from));
+  item.insert("to", active == from ? QStringLiteral("*") : QString::fromStdString(active));
+  item.insert("at", static_cast<qint64>(epochMs()));
+  ipcSendTransient(
+      QStringLiteral("clipboardItem"), QString::fromUtf8(QJsonDocument(item).toJson(QJsonDocument::Compact))
+  );
+}
+
+void Server::handleOmniDeskControlsChanged()
+{
+  const auto &controls = CoreControls::instance();
+
+  if (const auto clipboard = controls.clipboard(); clipboard.has_value() && *clipboard != m_enableClipboard) {
+    m_enableClipboard = *clipboard;
+    LOG_INFO("clipboard sharing %s", m_enableClipboard ? "enabled" : "disabled");
+  }
+
+  if (const auto lock = controls.lockCursor(); lock.has_value() && *lock != m_lockedToComputer) {
+    m_lockedToComputer = *lock;
+    LOG_INFO("cursor %s current computer", m_lockedToComputer ? "locked to" : "unlocked from");
+    m_primaryClient->reconfigure(getActivePrimarySides());
+    if (!isLockedToComputerServer()) {
+      stopRelativeMoves();
+    }
+  }
+
+  // mouse sharing off: bring the cursor home and stop watching the edges
+  if (!controls.mouseSharing() && m_active != m_primaryClient) {
+    LOG_INFO("mouse sharing off, returning cursor to \"%s\"", getName(m_primaryClient).c_str());
+    jumpToComputer(m_primaryClient);
+  }
 }
 
 void Server::noSwitch(int32_t x, int32_t y)
@@ -1086,6 +1319,9 @@ void Server::processOptions()
   }
 
   bool newRelativeMoves = m_relativeMoves;
+  // Deskflow.conf `server/omnidesk*` (defaults 250/150); `section: options` lines override below
+  m_edgeRules.setCooldownMs(Settings::value(Settings::Server::OmniDeskCrossCooldown).toInt());
+  m_edgeRules.setArrivalGuardMs(Settings::value(Settings::Server::OmniDeskArrivalGuard).toInt());
   for (auto [optionId, optionValue] : *options) {
     const OptionID id = optionId;
     const OptionValue value = optionValue;
@@ -1112,6 +1348,10 @@ void Server::processOptions()
       if (!m_enableClipboard) {
         LOG_INFO("clipboard sharing is disabled");
       }
+    } else if (id == kOptionOmniDeskCrossCooldown) {
+      m_edgeRules.setCooldownMs(value);
+    } else if (id == kOptionOmniDeskArrivalGuard) {
+      m_edgeRules.setArrivalGuardMs(value);
     } else if (id == kOptionClipboardSharingSize) {
       if (value <= 0) {
         m_maximumClipboardSize = 0;
@@ -1129,6 +1369,15 @@ void Server::processOptions()
   }
   m_relativeMoves = newRelativeMoves;
   m_protocol = Settings::networkProtocol();
+
+  // an IPC override from the app wins over the config file
+  if (const auto clipboard = CoreControls::instance().clipboard(); clipboard.has_value()) {
+    m_enableClipboard = *clipboard;
+  }
+  LOG_DEBUG(
+      "crossing cooldown=%lldms arrival guard=%lldms", static_cast<long long>(m_edgeRules.cooldownMs()),
+      static_cast<long long>(m_edgeRules.arrivalGuardMs())
+  );
 }
 
 void Server::handleShapeChanged(BaseClientProxy *client)
@@ -1153,6 +1402,7 @@ void Server::handleShapeChanged(BaseClientProxy *client)
 
   // handle resolution change to primary computer
   if (client == m_primaryClient) {
+    CoreControls::instance().setLocalMonitors(m_primaryClient->getMonitorRects());
     if (client == m_active) {
       onMouseMovePrimary(m_x, m_y);
     } else {
@@ -1282,8 +1532,20 @@ void Server::handleSwitchWaitTimeout()
     return;
   }
 
+  if (m_switchComputer == nullptr) {
+    return;
+  }
+
+  // OmniDesk rules still apply when the delay runs out
+  const Direction dir = m_switchDir;
+  if (int64_t remainingMs = 0; const auto reason = crossingBlockedReason(dir, remainingMs)) {
+    logNoCross(*reason, dir, m_switchFromX, m_switchFromY, remainingMs);
+    stopSwitch();
+    return;
+  }
+
   // switch computer
-  switchComputer(m_switchComputer, m_switchWaitX, m_switchWaitY, false);
+  crossTo(m_switchComputer, dir, m_switchWaitX, m_switchWaitY, m_switchFromX, m_switchFromY);
 }
 
 void Server::handleClientDisconnected(BaseClientProxy *client)
@@ -1475,8 +1737,15 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     client->setClipboardDirty(id, client != sender);
   }
 
-  // send the new clipboard to the active computer
-  m_active->setClipboard(id, &clipboard.m_clipboard);
+  // send the new clipboard to the active computer (OmniDesk: unless it has no data we
+  // can carry, e.g. files only, which would just empty the active computer's clipboard)
+  if (IClipboard::hasAnyFormat(&clipboard.m_clipboard)) {
+    m_active->setClipboard(id, &clipboard.m_clipboard);
+  } else {
+    LOG_DEBUG("not sending clipboard %d from \"%s\": no data", id, clipboard.m_clipboardOwner.c_str());
+  }
+
+  sendClipboardItemIpc(clipboard.m_clipboardOwner, id);
 }
 
 void Server::onScreensaver(bool activated)
@@ -1627,8 +1896,12 @@ bool Server::onMouseMovePrimary(int32_t x, int32_t y)
   m_yDelta = y - m_y;
 
   // save position
+  const int32_t xFrom = m_x;
+  const int32_t yFrom = m_y;
   m_x = x;
   m_y = y;
+
+  sendCursorIpc(false);
 
   // get computer shape
   int32_t ax;
@@ -1638,70 +1911,74 @@ bool Server::onMouseMovePrimary(int32_t x, int32_t y)
   m_active->getShape(ax, ay, aw, ah);
   int32_t zoneSize = getJumpZoneSize(m_active);
 
-  // clamp position to computer
-  int32_t xc = x;
-  int32_t yc = y;
-  if (xc < ax + zoneSize) {
-    xc = ax;
-  } else if (xc >= ax + aw - zoneSize) {
-    xc = ax + aw - 1;
-  }
-  if (yc < ay + zoneSize) {
-    yc = ay;
-  } else if (yc >= ay + ah - zoneSize) {
-    yc = ay + ah - 1;
+  // OmniDesk: find the edges per monitor, not on the bounding box of all
+  // monitors.  an edge only counts if no other monitor of this computer
+  // continues past it at the cursor's position (outer edge).  hit.x/hit.y
+  // is the cursor clamped onto its monitor.
+  const auto monitors = activeMonitors();
+  const EdgeHit hit = EdgeRules::classify(monitors, x, y, zoneSize, xFrom, yFrom);
+  if (!hit.any()) {
+    // still on local computer
+    noSwitch(x, y);
+    return false;
   }
 
   // see if we should change computers
   // when the cursor is in a corner, there may be a computer either
   // horizontally or vertically.  check both directions.
   using enum Direction;
-  auto dirh = NoDirection;
-  auto dirv = NoDirection;
-  int32_t xh = x;
-  int32_t yv = y;
-  if (x < ax + zoneSize) {
-    xh -= zoneSize;
-    dirh = Left;
-  } else if (x >= ax + aw - zoneSize) {
-    xh += zoneSize;
-    dirh = Right;
-  }
-  if (y < ay + zoneSize) {
-    yv -= zoneSize;
-    dirv = Top;
-  } else if (y >= ay + ah - zoneSize) {
-    yv += zoneSize;
-    dirv = Bottom;
-  }
-  if (dirh == NoDirection && dirv == NoDirection) {
-    // still on local computer
-    noSwitch(x, y);
-    return false;
-  }
-
-  // check both horizontally and vertically
-  std::array<Direction, 2> dirs = {dirh, dirv};
-  std::array<int32_t, 2> xs = {xh, x};
-  std::array<int32_t, 2> ys = {y, yv};
+  bool atOuterEdge = false;
+  std::array<Direction, 2> dirs = {hit.horizontal, hit.vertical};
+  std::array<bool, 2> outer = {hit.horizontalOuter, hit.verticalOuter};
   for (int i = 0; i < 2; ++i) {
     Direction dir = dirs.at(i);
     if (dir == NoDirection) {
       continue;
     }
-    x = xs.at(i);
-    y = ys.at(i);
+    if (!outer.at(i)) {
+      // another monitor continues past this edge: the cursor just moves on
+      if (hasAnyNeighbor(m_active, dir)) {
+        logNoCross(NoCrossReason::NotOuterEdge, dir, hit.x, hit.y);
+      }
+      continue;
+    }
+    atOuterEdge = true;
+
+    // place the point just past the bounding box on that side, so the
+    // neighbour lookup works for monitors that don't touch the bounding box
+    int32_t xn = hit.x;
+    int32_t yn = hit.y;
+    switch (dir) {
+    case Left:
+      xn = ax - zoneSize;
+      break;
+    case Right:
+      xn = ax + aw - 1 + zoneSize;
+      break;
+    case Top:
+      yn = ay - zoneSize;
+      break;
+    case Bottom:
+      yn = ay + ah - 1 + zoneSize;
+      break;
+    default:
+      break;
+    }
+
     // get jump destination
-    BaseClientProxy *newComputer = mapToNeighbor(m_active, dir, x, y);
+    BaseClientProxy *newComputer = mapToNeighbor(m_active, dir, xn, yn);
 
     // should we switch or not?
-    if (isSwitchOkay(newComputer, dir, x, y, xc, yc)) {
+    if (isSwitchOkay(newComputer, dir, xn, yn, hit.x, hit.y)) {
       // switch computer
-      switchComputer(newComputer, x, y, false);
-      return true;
+      return crossTo(newComputer, dir, xn, yn, hit.x, hit.y);
     }
   }
 
+  if (!atOuterEdge) {
+    // only edges between monitors: still on local computer
+    noSwitch(x, y);
+  }
   return false;
 }
 
@@ -1764,115 +2041,93 @@ void Server::onMouseMoveSecondary(int32_t dx, int32_t dy)
   int32_t ah;
   m_active->getShape(ax, ay, aw, ah);
 
-  // find direction of neighbor and get the neighbor
-  bool jump = true;
-  BaseClientProxy *newComputer;
-  do {
-    // clamp position to computer
-    int32_t xc = m_x;
-    int32_t yc = m_y;
-    if (xc < ax) {
-      xc = ax;
-    } else if (xc >= ax + aw) {
-      xc = ax + aw - 1;
-    }
-    if (yc < ay) {
-      yc = ay;
-    } else if (yc >= ay + ah) {
-      yc = ay + ah - 1;
-    }
+  // OmniDesk: move over the client's monitors (from the app's `peerMonitors=`,
+  // else its bounding box).  only an outer monitor edge can lead to a crossing;
+  // moving into a gap between monitors clamps onto the monitor the cursor was on.
+  const auto monitors = activeMonitors();
+  const MoveStep step = EdgeRules::moveOnMonitors(monitors, xOld, yOld, m_x, m_y);
 
-    Direction dir;
+  if (step.leaves) {
     using enum Direction;
-    if (m_x < ax) {
-      dir = Left;
-    } else if (m_x > ax + aw - 1) {
-      dir = Right;
-    } else if (m_y < ay) {
-      dir = Top;
-    } else if (m_y > ay + ah - 1) {
-      dir = Bottom;
-    } else {
-      // we haven't left the computer
-      newComputer = m_active;
-      jump = false;
+    const Direction dir = step.dir;
 
-      // if waiting and mouse is not on the border we're waiting
-      // on then stop waiting.  also if it's not on the border
-      // then arm the double tap.
-      if (m_switchComputer != nullptr) {
-        bool clearWait;
-        int32_t zoneSize = m_primaryClient->getJumpZoneSize();
-        switch (m_switchDir) {
-        case Left:
-          clearWait = (m_x >= ax + zoneSize);
-          break;
-
-        case Right:
-          clearWait = (m_x <= ax + aw - 1 - zoneSize);
-          break;
-
-        case Top:
-          clearWait = (m_y >= ay + zoneSize);
-          break;
-
-        case Bottom:
-          clearWait = (m_y <= ay + ah - 1 + zoneSize);
-          break;
-
-        default:
-          clearWait = false;
-          break;
-        }
-        if (clearWait) {
-          // still on local computer
-          noSwitch(m_x, m_y);
-        }
-      }
-
-      // skip rest of block
+    // place the point past the bounding box on that side (keeping any
+    // overshoot), so the neighbour lookup works for monitors that don't
+    // touch the bounding box
+    int32_t xn = step.x;
+    int32_t yn = step.y;
+    switch (dir) {
+    case Left:
+      xn = std::min(m_x, ax - 1);
+      break;
+    case Right:
+      xn = std::max(m_x, ax + aw);
+      break;
+    case Top:
+      yn = std::min(m_y, ay - 1);
+      break;
+    case Bottom:
+      yn = std::max(m_y, ay + ah);
+      break;
+    default:
       break;
     }
 
     // try to switch computer.  get the neighbor.
-    newComputer = mapToNeighbor(m_active, dir, m_x, m_y);
+    BaseClientProxy *newComputer = mapToNeighbor(m_active, dir, xn, yn);
 
     // see if we should switch
-    if (!isSwitchOkay(newComputer, dir, m_x, m_y, xc, yc)) {
-      newComputer = m_active;
-      jump = false;
+    if (isSwitchOkay(newComputer, dir, xn, yn, step.x, step.y)) {
+      crossTo(newComputer, dir, xn, yn, step.x, step.y);
+      return;
     }
-  } while (false);
+  } else if (m_switchComputer != nullptr) {
+    // if waiting and mouse is not on the border we're waiting
+    // on then stop waiting.  also if it's not on the border
+    // then arm the double tap.
+    using enum Direction;
+    bool clearWait;
+    int32_t zoneSize = m_primaryClient->getJumpZoneSize();
+    switch (m_switchDir) {
+    case Left:
+      clearWait = (m_x >= ax + zoneSize);
+      break;
 
-  if (jump) {
-    int32_t newX = m_x;
-    int32_t newY = m_y;
+    case Right:
+      clearWait = (m_x <= ax + aw - 1 - zoneSize);
+      break;
 
-    // switch computers
-    switchComputer(newComputer, newX, newY, false);
-  } else {
-    // same computer.  clamp mouse to edge.
-    m_x = xOld + dx;
-    m_y = yOld + dy;
-    if (m_x < ax) {
-      m_x = ax;
-      LOG_VERBOSE("clamp to left of \"%s\"", getName(m_active).c_str());
-    } else if (m_x > ax + aw - 1) {
-      m_x = ax + aw - 1;
-      LOG_VERBOSE("clamp to right of \"%s\"", getName(m_active).c_str());
+    case Top:
+      clearWait = (m_y >= ay + zoneSize);
+      break;
+
+    case Bottom:
+      clearWait = (m_y <= ay + ah - 1 + zoneSize);
+      break;
+
+    default:
+      clearWait = false;
+      break;
     }
-    if (m_y < ay) {
-      m_y = ay;
-      LOG_VERBOSE("clamp to top of \"%s\"", getName(m_active).c_str());
-    } else if (m_y > ay + ah - 1) {
-      m_y = ay + ah - 1;
-      LOG_VERBOSE("clamp to bottom of \"%s\"", getName(m_active).c_str());
+    if (clearWait) {
+      // still on local computer
+      noSwitch(m_x, m_y);
+    }
+  }
+
+  {
+    // same computer.  clamp mouse onto its monitor.
+    m_x = step.x;
+    m_y = step.y;
+    if (m_x != xOld + dx || m_y != yOld + dy) {
+      LOG_VERBOSE("clamp to edge of \"%s\" at %d,%d", getName(m_active).c_str(), m_x, m_y);
     }
 
     // warp cursor if it moved.
     if (m_x != xOld || m_y != yOld) {
       LOG_VERBOSE("move on %s to %d,%d", getName(m_active).c_str(), m_x, m_y);
       m_active->mouseMove(m_x, m_y);
+      sendCursorIpc(false);
     }
   }
 }

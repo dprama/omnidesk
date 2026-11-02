@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors -->
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; media-src 'self' blob:">
+  <title>OmniDesk second screen</title>
+  <link rel="stylesheet" href="viewer.css">
+  <script src="rtc-util.js"></script>
+  <script src="viewer.js" defer></script>
+</head>
+<body>
+  <video id="screen" autoplay muted playsinline disablepictureinpicture></video>
+  <div id="hint" class="hint">Connecting… Press Esc twice to stop.</div>
+</body>
+</html>

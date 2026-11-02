@@ -151,6 +151,19 @@ bool IClipboard::copy(IClipboard *dst, const IClipboard *src, Time time)
   return success;
 }
 
+bool IClipboard::hasAnyFormat(const IClipboard *clipboard)
+{
+  if (clipboard == nullptr || !clipboard->open(0)) {
+    return false;
+  }
+  bool any = false;
+  for (int32_t format = 0; format != static_cast<int>(Format::TotalFormats) && !any; ++format) {
+    any = clipboard->has(static_cast<Format>(format));
+  }
+  clipboard->close();
+  return any;
+}
+
 uint32_t IClipboard::readUInt32(const char *buf)
 {
   const auto *ubuf = reinterpret_cast<const unsigned char *>(buf);

@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -14,6 +15,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -91,6 +93,7 @@ public:
   int32_t getJumpZoneSize() const override;
   bool isAnyMouseButtonDown(uint32_t &buttonID) const override;
   void getCursorCenter(int32_t &x, int32_t &y) const override;
+  std::vector<MonitorRect> getMonitorRects() const override;
 
   // ISecondaryComputer overrides
   void fakeMouseButton(ButtonID id, bool press) override;
@@ -269,6 +272,9 @@ private:
   int32_t m_h = 0;
   int32_t m_xCenter = 0;
   int32_t m_yCenter = 0;
+
+  // every monitor (EnumDisplayMonitors), same coordinates as m_x/m_y
+  std::vector<MonitorRect> m_monitors;
 
   // true if system appears to have multiple monitors
   bool m_multimon = false;

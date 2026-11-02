@@ -26,6 +26,8 @@
 #include <QCoreApplication>
 #include <QThread>
 
+#include <string>
+
 using namespace deskflow::core;
 
 void handleError(const char *message = "Unrecognized error.");
@@ -131,6 +133,6 @@ void handleError(const char *message)
 
 #if defined(Q_OS_WIN)
   // Show a message box for when run from MSI in Win32 subsystem.
-  MessageBoxA(nullptr, message, "Deskflow daemon error", MB_OK | MB_ICONERROR);
+  MessageBoxA(nullptr, message, (std::string(kDisplayName) + " service error").c_str(), MB_OK | MB_ICONERROR);
 #endif
 }

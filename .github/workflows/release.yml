@@ -1,0 +1,445 @@
+# SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
+# SPDX-License-Identifier: GPL-2.0-only
+# Release: tag vX.Y.Z -> build the engine per target -> package the Electron app per target
+# -> create/update the public GitHub release with the installers and latest.json.
+#
+# Targets (docs/BUILD-PLAN.md): Windows NSIS x64 + arm64, macOS dmg Intel x64 only, Linux AppImage x64.
+#
+# Runner labels (checked against GitHub's "GitHub-hosted runners" reference, 2026-11-01):
+#   windows-latest  Windows x64
+#   windows-11-arm  Windows on Arm64 (native arm64 build; same label the engine's upstream CI uses)
+#   macos-15-intel  Intel x64 macOS. GitHub lists exactly two Intel images: macos-15-intel and
+#                   macos-26-intel; macos-13 is gone. macos-15-intel is what upstream Deskflow
+#                   builds its x64 package on (with Xcode 16.4 SDK), so we use it too.
+#   ubuntu-latest   Ubuntu 24.04 x64 (packaging + release). The Linux engine itself is built in a
+#                   debian:13 container: the engine needs Qt >= 6.7, libei >= 1.3 and
+#                   libportal >= 0.9.1, which Ubuntu 24.04 does not ship.
+#
+# Every third-party action is pinned to a full commit SHA (version in the trailing comment).
+# Nothing in this workflow commits to the repo.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)build and release, e.g. v2.5.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  NODE_VERSION: "22"
+  # Qt versions match the engine's upstream CI (engine/.github/workflows/continuous-integration.yml).
+  QT_WIN: "6.12"
+  QT_MAC_X64: "6.9.3"
+  AQT_SOURCE: git+https://github.com/miurahr/aqtinstall.git@16db45a70b5905ad596941b223469bc86a56901e
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Engine: deskflow-core (+ deskflow-daemon on Windows) with runtime libs next to it.
+  #    Artifact "engine-<os>-<arch>" holds the contents of engine-dist/<os>-<arch>/.
+  # ---------------------------------------------------------------------------
+  engine-windows:
+    name: engine win-${{ matrix.arch }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runs-on: windows-latest
+            msvc-arch: amd64
+            triplet: x64-windows-release
+          - arch: arm64
+            runs-on: windows-11-arm
+            msvc-arch: arm64
+            triplet: arm64-windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: MSVC environment
+        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
+        with:
+          arch: ${{ matrix.msvc-arch }}
+          spectre: true
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
+        env:
+          AQT_CONFIG: ${{ github.workspace }}/engine/.github/actions/install-dependencies/aqt.ini
+        with:
+          version: ${{ env.QT_WIN }}
+          cache: true
+          cache-key-prefix: qt-win-${{ matrix.arch }}-${{ env.QT_WIN }}
+          aqtsource: ${{ env.AQT_SOURCE }}
+
+      - name: OpenSSL (vcpkg)
+        id: vcpkg
+        uses: johnwason/vcpkg-action@04c68c847bf5196ecaa72331ecf51208583916ef # v8.0.0
+        with:
+          pkgs: openssl
+          extra-args: --classic --host-triplet=${{ matrix.triplet }}
+          triplet: ${{ matrix.triplet }}
+          token: ${{ github.token }}
+          revision: master
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S engine -B build-engine -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DSKIP_BUILD_TESTS=ON
+          -DBUILD_INSTALLER=OFF
+          ${{ steps.vcpkg.outputs.vcpkg-cmake-config }}
+
+      - name: Build deskflow-core and deskflow-daemon
+        shell: pwsh
+        run: cmake --build build-engine --config Release --target deskflow-core deskflow-daemon
+
+      - name: Deploy runtime next to the binaries
+        shell: pwsh
+        run: >
+          ./build/engine/deploy-windows.ps1
+          -BuildDir build-engine
+          -OutDir engine-dist/win-${{ matrix.arch }}
+          -Arch ${{ matrix.arch }}
+          -Triplet ${{ matrix.triplet }}
+
+      - name: Smoke test (deskflow-core --version)
+        shell: pwsh
+        run: |
+          $exe = "engine-dist/win-${{ matrix.arch }}/deskflow-core.exe"
+          $p = Start-Process -FilePath $exe -ArgumentList '--version' -NoNewWindow -PassThru -Wait `
+                 -RedirectStandardOutput version.txt
+          Get-Content version.txt
+          # 0xC0000135 = STATUS_DLL_NOT_FOUND, 0xC000007B = bad image (wrong arch DLL)
+          if ($p.ExitCode -ne 0) { throw "deskflow-core --version exited with $($p.ExitCode)" }
+
+      - name: Upload engine
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: engine-win-${{ matrix.arch }}
+          path: engine-dist/win-${{ matrix.arch }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  engine-macos:
+    name: engine mac-x64
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: OpenSSL (Homebrew, linked statically by the engine on macOS)
+        run: brew install --quiet openssl@3
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4.5.0
+        env:
+          AQT_CONFIG: ${{ github.workspace }}/engine/.github/actions/install-dependencies/aqt.ini
+        with:
+          version: ${{ env.QT_MAC_X64 }}
+          cache: true
+          cache-key-prefix: qt-mac-x64-${{ env.QT_MAC_X64 }}
+          aqtsource: ${{ env.AQT_SOURCE }}
+
+      - name: Configure
+        run: |
+          sdk=/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+          extra=()
+          if [ -d "$sdk" ]; then extra+=("-DCMAKE_OSX_SYSROOT=$sdk"); fi
+          cmake -S engine -B build-engine \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSKIP_BUILD_TESTS=ON \
+            -DBUILD_INSTALLER=OFF \
+            -DBUILD_OSX_BUNDLE=OFF \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12 \
+            -DCMAKE_EXE_LINKER_FLAGS=-Wl,-headerpad_max_install_names \
+            -DOPENSSL_ROOT_DIR="$(brew --prefix openssl@3)" \
+            "${extra[@]}"
+
+      - name: Build deskflow-core
+        run: cmake --build build-engine --config Release --target deskflow-core -j "$(sysctl -n hw.ncpu)"
+
+      - name: Deploy runtime next to the binary
+        run: bash build/engine/deploy-macos.sh build-engine engine-dist/mac-x64
+
+      - name: Smoke test (deskflow-core --version)
+        run: |
+          file engine-dist/mac-x64/deskflow-core | grep -q x86_64
+          engine-dist/mac-x64/deskflow-core --version
+
+      # Upload as a tarball: artifacts drop symlinks and exec bits, and Qt frameworks need both.
+      - name: Pack
+        run: tar -C engine-dist/mac-x64 -czf engine-mac-x64.tgz .
+
+      - name: Upload engine
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: engine-mac-x64
+          path: engine-mac-x64.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  engine-linux:
+    name: engine linux-x64
+    runs-on: ubuntu-latest
+    container: debian:13-slim
+    timeout-minutes: 60
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            ca-certificates git cmake build-essential ninja-build pkg-config file patchelf binutils \
+            xorg-dev libx11-dev libxtst-dev libxinerama-dev libxrandr-dev libxkbfile-dev \
+            libssl-dev qt6-base-dev qt6-base-dev-tools qt6-tools-dev qt6-wayland \
+            libxkbregistry-dev libxkbcommon-dev libxkbcommon-x11-dev libei-dev libportal-dev
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Configure
+        run: >
+          cmake -S engine -B build-engine -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DSKIP_BUILD_TESTS=ON
+          -DBUILD_INSTALLER=OFF
+
+      - name: Build deskflow-core
+        run: cmake --build build-engine --target deskflow-core
+
+      - name: Deploy runtime next to the binary (includes --version smoke test)
+        run: bash build/engine/deploy-linux.sh build-engine engine-dist/linux-x64
+
+      - name: Pack
+        run: tar -C engine-dist/linux-x64 -czf engine-linux-x64.tgz .
+
+      - name: Upload engine
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: engine-linux-x64
+          path: engine-linux-x64.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # 2. App: electron-builder per target, publish never. Installers get canonical names
+  #    OmniDesk-<version>-<os>-<arch>.<ext> (what latest.json and the site expect).
+  # ---------------------------------------------------------------------------
+  package:
+    name: app ${{ matrix.os }}-${{ matrix.arch }}
+    needs: [engine-windows, engine-macos, engine-linux]
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: win, arch: x64, runs-on: windows-latest, eb: "--win nsis --x64", ext: exe }
+          - { os: win, arch: arm64, runs-on: windows-11-arm, eb: "--win nsis --arm64", ext: exe }
+          - { os: mac, arch: x64, runs-on: macos-15-intel, eb: "--mac dmg --x64", ext: dmg }
+          - { os: linux, arch: x64, runs-on: ubuntu-latest, eb: "--linux AppImage --x64", ext: AppImage }
+    defaults:
+      run:
+        shell: bash
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false" # unsigned builds for now (see OMNIDESK-ARCHITECTURE.md)
+      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Version from tag
+        id: v
+        run: |
+          version="${TAG#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          pkg=$(node -p "require('./app/package.json').version")
+          if [ "$pkg" != "$version" ]; then
+            echo "::warning::app/package.json version ($pkg) differs from tag ($TAG); packaging as $version"
+          fi
+
+      - name: Download engine
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: engine-${{ matrix.os }}-${{ matrix.arch }}
+          path: engine-download
+
+      # engine-dist/<os>-<arch>/ at the repo root, plus the same tree under app/ so the
+      # electron-builder config can use either '../engine-dist' or 'engine-dist'.
+      - name: Place engine in engine-dist/${{ matrix.os }}-${{ matrix.arch }}
+        run: |
+          dest="engine-dist/${{ matrix.os }}-${{ matrix.arch }}"
+          mkdir -p "$dest"
+          if ls engine-download/*.tgz >/dev/null 2>&1; then
+            tar -xzf engine-download/*.tgz -C "$dest"
+          else
+            cp -R engine-download/. "$dest/"
+          fi
+          mkdir -p app/engine-dist
+          cp -R "$dest" app/engine-dist/
+          ls -la "$dest"
+
+      - name: Render dmg background and icons from HTML/SVG (headless Chrome)
+        if: matrix.os == 'mac'
+        run: |
+          node build/dmg/render.mjs
+          node build/icons/make.mjs
+
+      # Second screen, macOS: the Swift CGVirtualDisplay helper, x86_64 (Intel runner).
+      # electron-builder ships native/macos-virtual-display/dist/ as <resources>/native/.
+      - name: Build the virtual-display helper (x86_64)
+        if: matrix.os == 'mac'
+        run: |
+          bash native/macos-virtual-display/build.sh
+          file native/macos-virtual-display/dist/omnidesk-virtual-display | grep -q x86_64
+
+      # Second screen, Windows: pinned, SHA-256-checked Virtual Display Driver.
+      # electron-builder ships it as <resources>/vdd/; build/installer.nsh installs it.
+      - name: Fetch the Virtual Display Driver
+        if: matrix.os == 'win'
+        run: |
+          node native/windows-vdd/fetch.mjs native/windows-vdd/dist
+          ls -la native/windows-vdd/dist/VirtualDisplayDriver
+
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Package with electron-builder
+        working-directory: app
+        run: >
+          npx electron-builder --config electron-builder.config.js ${{ matrix.eb }}
+          --publish never
+          -c.extraMetadata.version=${{ steps.v.outputs.version }}
+
+      - name: Collect installer
+        id: out
+        run: |
+          name="OmniDesk-${{ steps.v.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.${{ matrix.ext }}"
+          mkdir -p out
+          # electron-builder writes to app/<directories.output> (default app/dist).
+          find app -path app/node_modules -prune -o -type f \
+            -name "*.${{ matrix.ext }}" -not -path '*/engine-dist/*' -not -path '*-unpacked/*' \
+            -not -iname '*uninstall*' -newer app/package.json -print > found.txt
+          cat found.txt
+          if [ "$(wc -l < found.txt | tr -d ' ')" != 1 ]; then
+            echo "expected exactly one .${{ matrix.ext }} from electron-builder" >&2
+            exit 1
+          fi
+          cp "$(head -1 found.txt)" "out/$name"
+          ls -la out
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload installer
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: app-${{ matrix.os }}-${{ matrix.arch }}
+          path: out/${{ steps.out.outputs.name }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # 3. Release: public (not draft); prerelease only for tags with a suffix (v2.5.0-rc.1).
+  # ---------------------------------------------------------------------------
+  release:
+    name: GitHub release
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      # Not used for any commit today; set so nothing could ever be attributed to a personal email.
+      - name: Git identity (bot)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download installers
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: app-*
+          path: release-files
+          merge-multiple: true
+
+      - name: Check all four installers are present
+        run: |
+          v="${TAG#v}"
+          for f in "OmniDesk-$v-win-x64.exe" "OmniDesk-$v-win-arm64.exe" "OmniDesk-$v-mac-x64.dmg" "OmniDesk-$v-linux-x64.AppImage"; do
+            test -s "release-files/$f" || { echo "missing $f" >&2; exit 1; }
+          done
+          ls -la release-files
+
+      - name: latest.json
+        run: node build/release/latest-json.mjs --dir release-files --tag "$TAG" --repo "$GH_REPO"
+
+      - name: SHA256SUMS
+        working-directory: release-files
+        run: sha256sum OmniDesk-* > SHA256SUMS.txt && cat SHA256SUMS.txt
+
+      - name: Create or update release
+        run: |
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then pre=false; else pre=true; fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists: updating"
+            gh release edit "$TAG" --draft=false --prerelease="$pre" $([ "$pre" = false ] && echo --latest)
+          else
+            args=(--title "OmniDesk ${TAG#v}" --generate-notes --verify-tag)
+            if [ "$pre" = true ]; then args+=(--prerelease); else args+=(--latest); fi
+            gh release create "$TAG" "${args[@]}"
+          fi
+          gh release upload "$TAG" --clobber \
+            release-files/OmniDesk-* release-files/latest.json release-files/SHA256SUMS.txt
+          gh release view "$TAG" --json url,isDraft,isPrerelease,assets \
+            --jq '{url, isDraft, isPrerelease, assets: [.assets[].name]}'

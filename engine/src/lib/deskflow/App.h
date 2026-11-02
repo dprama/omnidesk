@@ -122,6 +122,15 @@ public:
 protected:
   void runEventsLoop(const void *);
 
+  //! Log the OmniDesk `start mode=... helper=... version=... pid=...` line (see base/OmniDeskLog.h)
+  void logStartLine() const;
+
+  //! `server` or `client`, for the start line
+  virtual const char *startMode() const
+  {
+    return "unknown";
+  }
+
   struct LoopErrorCode
   {
     int m_errorCode;

@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: (C) 2025 - 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2004 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -16,6 +17,7 @@
 #include "base/Log.h"
 #include "base/TMethodJob.h"
 #include "client/Client.h"
+#include "common/Constants.h"
 #include "common/ExitCodes.h"
 #include "common/Settings.h"
 #include "deskflow/ClientApp.h"
@@ -132,7 +134,10 @@ OSXComputer::OSXComputer(IEventQueue *events, bool isPrimary, bool enableLangSyn
     if (m_isPrimary) {
       // we can't pass options to show the dialog, this must be done by the gui.
       if (!AXIsProcessTrusted()) {
-        throw std::runtime_error("assistive devices does not trust this process, allow it in system settings.");
+        throw std::runtime_error(
+            std::string("assistive devices does not trust this process, allow ") + kDisplayName +
+            " in System Settings > Privacy & Security > Accessibility."
+        );
       }
     }
 
@@ -317,6 +322,15 @@ void OSXComputer::getCursorCenter(int32_t &x, int32_t &y) const
 {
   x = m_xCenter;
   y = m_yCenter;
+}
+
+std::vector<MonitorRect> OSXComputer::getMonitorRects() const
+{
+  std::scoped_lock lock(m_monitorsMutex);
+  if (m_monitors.empty()) {
+    return {MonitorRect{m_x, m_y, m_w, m_h}};
+  }
+  return m_monitors;
 }
 
 uint32_t OSXComputer::registerHotKey(KeyID key, KeyModifierMask mask)
@@ -800,9 +814,10 @@ void OSXComputer::enter()
     // reset buttons
     m_buttonState.reset();
 
-    const auto result = IOPMAssertionDeclareUserActivity(
-        CFSTR("Deskflow client entry"), kIOPMUserActiveLocal, &m_userActivityAssertionID
-    );
+    const std::string reason = std::string(kDisplayName) + " client entry";
+    CFStringRef reasonRef = CFStringCreateWithCString(kCFAllocatorDefault, reason.c_str(), kCFStringEncodingUTF8);
+    const auto result = IOPMAssertionDeclareUserActivity(reasonRef, kIOPMUserActiveLocal, &m_userActivityAssertionID);
+    CFRelease(reasonRef);
     if (result != kIOReturnSuccess) {
       LOG_WARN("failed to declare user activity: %d", result);
     }
@@ -836,6 +851,11 @@ void OSXComputer::leave()
 bool OSXComputer::setClipboard(ClipboardID, const IClipboard *src)
 {
   if (src != nullptr) {
+    // OmniDesk: nothing we can represent (e.g. a files-only copy elsewhere): keep the pasteboard
+    if (!IClipboard::hasAnyFormat(src)) {
+      LOG_DEBUG("not setting clipboard, source has no data");
+      return true;
+    }
     LOG_DEBUG("setting clipboard");
     Clipboard::copy(&m_pasteboard, src);
   }
@@ -1001,7 +1021,17 @@ bool OSXComputer::onMouseMove(CGEventRef event)
     CGFloat x = mx - m_xCursor;
     CGFloat y = my - m_yCursor;
 
-    if ((x == 0 && y == 0) || (mx == m_xCenter && mx == m_yCenter)) {
+    if (x == 0 && y == 0) {
+      // the cursor is pinned against a screen edge but the user is still
+      // pushing.  report it again so the server can re-check the crossing
+      // rules (e.g. once a cooldown or arrival guard has ended).
+      if (CGEventGetIntegerValueField(event, kCGMouseEventDeltaX) != 0 ||
+          CGEventGetIntegerValueField(event, kCGMouseEventDeltaY) != 0) {
+        sendEvent(EventTypes::PrimaryComputerMotionOnPrimary, MotionInfo::alloc(m_xCursor, m_yCursor));
+      }
+      return true;
+    }
+    if (mx == m_xCenter && mx == m_yCenter) {
       return true;
     }
 
@@ -1331,11 +1361,23 @@ bool OSXComputer::updateComputerShape()
     return false;
   }
 
-  // get smallest rect enclosing all display rects
+  // get smallest rect enclosing all display rects, and keep each display
+  // so the server can tell outer desktop edges from edges between displays
   CGRect totalBounds = CGRectZero;
+  std::vector<MonitorRect> monitors;
   for (CGDisplayCount i = 0; i < displayCount; ++i) {
     CGRect bounds = CGDisplayBounds(displays[i]);
     totalBounds = CGRectUnion(totalBounds, bounds);
+    monitors.push_back(
+        MonitorRect{
+            (int32_t)bounds.origin.x, (int32_t)bounds.origin.y, (int32_t)bounds.size.width,
+            (int32_t)bounds.size.height
+        }
+    );
+  }
+  {
+    std::scoped_lock lock(m_monitorsMutex);
+    m_monitors = std::move(monitors);
   }
 
   // get shape of default computer

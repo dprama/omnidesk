@@ -387,6 +387,12 @@ QVariant Settings::defaultValue(const QString &key)
   if (key == Server::ClipboardSize)
     return 3; // 3 MiB
 
+  if (key == Server::OmniDeskCrossCooldown)
+    return 250;
+
+  if (key == Server::OmniDeskArrivalGuard)
+    return 150;
+
   return QVariant();
 }
 

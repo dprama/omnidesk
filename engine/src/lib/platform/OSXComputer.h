@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2004 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -22,6 +23,7 @@
 #include <bitset>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -71,6 +73,7 @@ public:
   int32_t getJumpZoneSize() const override;
   bool isAnyMouseButtonDown(uint32_t &buttonID) const override;
   void getCursorCenter(int32_t &x, int32_t &y) const override;
+  std::vector<MonitorRect> getMonitorRects() const override;
 
   // ISecondaryComputer overrides
   void fakeMouseButton(ButtonID id, bool press) override;
@@ -232,6 +235,11 @@ private:
   int32_t m_x, m_y;
   int32_t m_w, m_h;
   int32_t m_xCenter, m_yCenter;
+
+  // every active display (CGDisplayBounds), same coordinates as m_x/m_y;
+  // written from the display reconfiguration callback
+  mutable std::mutex m_monitorsMutex;
+  std::vector<MonitorRect> m_monitors;
 
   // mouse state
   mutable int32_t m_xCursor, m_yCursor;

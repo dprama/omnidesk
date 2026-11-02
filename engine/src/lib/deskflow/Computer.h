@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "base/MonitorRect.h"
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/IComputer.h"
 #include "deskflow/KeyTypes.h"
@@ -14,6 +15,7 @@
 #include "deskflow/OptionTypes.h"
 
 #include <string>
+#include <vector>
 
 class IClipboard;
 class IPlatformComputer;
@@ -243,6 +245,9 @@ public:
   the computer that cause the cursor to jump to another computer.
   */
   int32_t getJumpZoneSize() const;
+
+  //! Get the monitor rectangles (see IPlatformComputer::getMonitorRects())
+  std::vector<MonitorRect> getMonitorRects() const;
 
   //! Get cursor center position
   /*!

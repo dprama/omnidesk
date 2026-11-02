@@ -158,6 +158,10 @@ enum class EventTypes : uint32_t
   ServerAppForceReconnect,
   ServerAppResetServer,
 
+  /// OmniDesk: a runtime control (clipboard, mouse sharing, cursor lock) was changed over local IPC.
+  /// No event data; read deskflow::core::ipc::CoreControls.
+  ServerOmniDeskControlsChanged,
+
   /// This event is sent when key is down. Event data is a pointer to KeyInfo (count == 1)
   KeyStateKeyDown,
   /// This event is sent when key is up. Event data is a pointer to KeyInfo (count == 1)

@@ -1,0 +1,152 @@
+# SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
+# SPDX-License-Identifier: GPL-2.0-only
+# CI on every push and pull request: app unit tests, mock-backend tests, the renderer
+# test window (every page against the mock backend in headless Chrome), engine unit tests
+# on Linux, and a check that the CI-owned build assets still render.
+#
+# Every third-party action is pinned to a full commit SHA (version in the trailing comment).
+# Nothing in this workflow commits to the repo.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"] # tags run release.yml
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  app:
+    name: app tests (unit + mock + test window)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Mock backend tests
+        run: npm run --if-present test:mock
+
+      # Ubuntu 24.04 blocks unprivileged user namespaces through AppArmor, which Chrome's
+      # sandbox needs. Relax it on this throw-away runner instead of running Chrome unsandboxed.
+      - name: Allow Chrome's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+
+      - name: Renderer test window (all pages, mock backend)
+        working-directory: .
+        run: |
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          echo "Chrome: $CHROME_PATH ($("$CHROME_PATH" --version))"
+          node app/test/run.mjs --all --shots test-window-shots
+
+      - name: Upload test-window screenshots
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-window-shots
+          path: test-window-shots/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  engine-linux:
+    name: engine unit tests (Linux)
+    runs-on: ubuntu-latest
+    # Same base as the release build: Qt >= 6.7, libei >= 1.3, libportal >= 0.9.1.
+    container: debian:13-slim
+    timeout-minutes: 45
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            ca-certificates git cmake build-essential ninja-build pkg-config \
+            xorg-dev libx11-dev libxtst-dev libxinerama-dev libxrandr-dev libxkbfile-dev \
+            libssl-dev qt6-base-dev qt6-base-dev-tools qt6-tools-dev \
+            libxkbregistry-dev libxkbcommon-dev libxkbcommon-x11-dev libei-dev libportal-dev
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure
+        run: >
+          cmake -S engine -B build-engine -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DSKIP_BUILD_TESTS=ON
+          -DBUILD_INSTALLER=OFF
+
+      - name: Build
+        run: cmake --build build-engine
+
+      - name: Unit tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build-engine/src/unittests --output-on-failure
+
+  build-assets:
+    name: build assets render (icons + dmg background)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Render (icon.icns is only rebuilt on macOS; the committed one is kept here)
+        run: |
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          node build/dmg/render.mjs
+          node build/icons/make.mjs
+          node -e '
+            const fs = require("fs");
+            for (const [f, w, h] of [["build/dmg/background.png",660,400],["build/dmg/background@2x.png",1320,800],["build/icons/icon.png",1024,1024],["build/icons/512x512.png",512,512]]) {
+              const b = fs.readFileSync(f); const W = b.readUInt32BE(16), H = b.readUInt32BE(20);
+              if (W !== w || H !== h) { console.error(`${f}: ${W}x${H}, want ${w}x${h}`); process.exit(1); }
+              console.log(f, W + "x" + H);
+            }'
+
+      - name: Upload rendered assets
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-assets
+          path: |
+            build/dmg/*.png
+            build/icons/*.png
+            build/icons/png/*.png
+            build/icons/icon.ico
+          retention-days: 7

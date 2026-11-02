@@ -1,0 +1,197 @@
+{
+  "url": "https://api.github.com/repos/dprama/omnidesk/releases/190000001",
+  "html_url": "https://github.com/dprama/omnidesk/releases/tag/v2.5.0",
+  "id": 190000001,
+  "tag_name": "v2.5.0",
+  "target_commitish": "main",
+  "name": "OmniDesk 2.5.0",
+  "draft": false,
+  "prerelease": false,
+  "created_at": "2026-11-01T11:40:00Z",
+  "published_at": "2026-11-01T12:05:00Z",
+  "assets": [
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000001",
+      "id": 301000001,
+      "node_id": "RA_kwDOOmni301000001",
+      "name": "OmniDesk-2.5.0-win-x64.exe",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/x-msdownload",
+      "state": "uploaded",
+      "size": 103217664,
+      "digest": "sha256:814694fa68b3aec954bcded8022fb2b6b882a7ca24c835a30717cbc74bda0c2c",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-win-x64.exe"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000002",
+      "id": 301000002,
+      "node_id": "RA_kwDOOmni301000002",
+      "name": "OmniDesk-2.5.0-win-x64.exe.blockmap",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/octet-stream",
+      "state": "uploaded",
+      "size": 108544,
+      "digest": "sha256:92b925e026770a895ab7f1de5a587a0791bb93727a6c7521f499567bd5be9769",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-win-x64.exe.blockmap"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000003",
+      "id": 301000003,
+      "node_id": "RA_kwDOOmni301000003",
+      "name": "OmniDesk-2.5.0-win-arm64.exe",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/x-msdownload",
+      "state": "uploaded",
+      "size": 99876352,
+      "digest": "sha256:5c8a40f5d639e6bc236bc9e4d5f34485e72a7bf2cf189488e2f3f5f5c6b8620b",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-win-arm64.exe"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000004",
+      "id": 301000004,
+      "node_id": "RA_kwDOOmni301000004",
+      "name": "OmniDesk-2.5.0-mac-x64.dmg",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/x-apple-diskimage",
+      "state": "uploaded",
+      "size": 117440512,
+      "digest": "sha256:2671db5e1cc5e3f72a73ed1977e7993ba1cd9c600902c7372985d3042b261f38",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-mac-x64.dmg"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000005",
+      "id": 301000005,
+      "node_id": "RA_kwDOOmni301000005",
+      "name": "OmniDesk-2.5.0-mac-x64.dmg.blockmap",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/octet-stream",
+      "state": "uploaded",
+      "size": 122880,
+      "digest": "sha256:ce18dea0195e090974ece56e1f4177478f93e4acb0fc1c296b450be9eaf4f761",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-mac-x64.dmg.blockmap"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000006",
+      "id": 301000006,
+      "node_id": "RA_kwDOOmni301000006",
+      "name": "OmniDesk-2.5.0-linux-x64.AppImage",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/octet-stream",
+      "state": "uploaded",
+      "size": 126353408,
+      "digest": "sha256:a6589dbe8a5f8c3bb8546c4bc130b7b624e8db19fc13ecc7ecdf3a0659e9dc08",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-linux-x64.AppImage"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000007",
+      "id": 301000007,
+      "node_id": "RA_kwDOOmni301000007",
+      "name": "latest.yml",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/x-yaml",
+      "state": "uploaded",
+      "size": 412,
+      "digest": "sha256:2758525bcdc33febdc4efed8e067ae29b9077d6014ea5ecbc61a03e8d8b4ab8c",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/latest.yml"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000008",
+      "id": 301000008,
+      "node_id": "RA_kwDOOmni301000008",
+      "name": "latest.json",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "application/json",
+      "state": "uploaded",
+      "size": 1290,
+      "digest": "sha256:b8308695435769ec1730cee70510131863d6e7c6e246c2db04ef0c03ae76cb97",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/latest.json"
+    },
+    {
+      "url": "https://api.github.com/repos/dprama/omnidesk/releases/assets/301000009",
+      "id": 301000009,
+      "node_id": "RA_kwDOOmni301000009",
+      "name": "SHA256SUMS.txt",
+      "label": "",
+      "uploader": {
+        "login": "github-actions[bot]",
+        "id": 41898282,
+        "type": "Bot"
+      },
+      "content_type": "text/plain",
+      "state": "uploaded",
+      "size": 420,
+      "digest": "sha256:d19ad569309f5a932d58492b1faf24e6ba17a70e54cc0b2267e1be64b45e9e38",
+      "download_count": 0,
+      "created_at": "2026-11-01T12:00:00Z",
+      "updated_at": "2026-11-01T12:00:00Z",
+      "browser_download_url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/SHA256SUMS.txt"
+    }
+  ],
+  "tarball_url": "https://api.github.com/repos/dprama/omnidesk/tarball/v2.5.0",
+  "zipball_url": "https://api.github.com/repos/dprama/omnidesk/zipball/v2.5.0",
+  "body": "One desk for all your computers."
+}

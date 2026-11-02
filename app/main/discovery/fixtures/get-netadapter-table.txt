@@ -1,0 +1,8 @@
+
+Name                         InterfaceDescription                      MediaType
+----                         --------------------                      ---------
+Wi-Fi                        Intel(R) Wi-Fi 6 AX201 160MHz             Native 802.11
+Ethernet                     Intel(R) Ethernet Connection (7) I219-V   802.3
+Ethernet 2                   Realtek USB GbE Family Controller         802.3
+Bluetooth Network Connection Bluetooth Device (Personal Area Network) 802.3
+

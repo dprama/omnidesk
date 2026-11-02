@@ -1,6 +1,7 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2026 Synergy App Ltd
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -17,6 +18,16 @@ void ipcSendToClient(const QString &command, const QString &args)
   auto &server = deskflow::core::ipc::CoreIpcServer::instance();
   QMetaObject::invokeMethod(
       &server, [command, args] { deskflow::core::ipc::CoreIpcServer::instance().broadcastCommand(command, args); },
+      Qt::QueuedConnection
+  );
+}
+
+void ipcSendTransient(const QString &command, const QString &args)
+{
+  auto &server = deskflow::core::ipc::CoreIpcServer::instance();
+  QMetaObject::invokeMethod(
+      &server,
+      [command, args] { deskflow::core::ipc::CoreIpcServer::instance().broadcastCommand(command, args, false); },
       Qt::QueuedConnection
   );
 }

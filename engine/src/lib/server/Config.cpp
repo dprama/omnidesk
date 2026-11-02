@@ -9,6 +9,7 @@
 #include "server/Config.h"
 
 #include "base/IEventQueue.h"
+#include "base/Log.h"
 #include "common/KeyboardModifier.h"
 #include "deskflow/KeyMap.h"
 #include "deskflow/KeyTypes.h"
@@ -554,6 +555,8 @@ void Config::readSectionOptions(ConfigReadContext &s)
   addOption("", kOptionWin32KeepForeground, Settings::value(Settings::Server::Win32KeepForeground).toBool());
   addOption("", kOptionClipboardSharing, Settings::value(Settings::Server::EnableClipboard).toBool());
   addOption("", kOptionClipboardSharingSize, Settings::value(Settings::Server::ClipboardSize).toUInt() * 1024);
+  addOption("", kOptionOmniDeskCrossCooldown, Settings::value(Settings::Server::OmniDeskCrossCooldown).toInt());
+  addOption("", kOptionOmniDeskArrivalGuard, Settings::value(Settings::Server::OmniDeskArrivalGuard).toInt());
 
   if (const auto address = Settings::value(Settings::Core::Interface).toString(); !address.isEmpty()) {
     m_deskflowAddress = NetworkAddress(address.toStdString(), Settings::value(Settings::Core::Port).toInt());
@@ -571,7 +574,12 @@ void Config::readSectionOptions(ConfigReadContext &s)
     if (line == "end") {
       return;
     } else if (const auto l = QString::fromStdString(line).simplified();
-               !l.startsWith(QStringLiteral("keystroke")) && !l.startsWith(QStringLiteral("mousepress"))) {
+               l.startsWith(QStringLiteral("omnidesk"), Qt::CaseInsensitive)) {
+      readOmniDeskOption(s, l);
+      continue;
+    } else if (!l.startsWith(QStringLiteral("keystroke")) && !l.startsWith(QStringLiteral("mousebutton"))) {
+      // OmniDesk: the mouse hotkey condition is `mousebutton(...)` (parseCondition, and what
+      // operator<< writes); upstream checked for `mousepress`, so those hotkeys were dropped on read
       continue;
     }
 
@@ -625,6 +633,35 @@ void Config::readSectionOptions(ConfigReadContext &s)
     m_inputFilter.addFilterRule(rule);
   }
   throw ServerConfigReadException(s, "unexpected end of options section");
+}
+
+void Config::readOmniDeskOption(const ConfigReadContext &s, const QString &line)
+{
+  // `omnideskCrossCooldown = <ms>` / `omnideskArrivalGuard = <ms>`; these lines override
+  // the Deskflow.conf values added above
+  const auto eq = line.indexOf('=');
+  if (eq < 0) {
+    throw ServerConfigReadException(s, "missing value in \"%{1}\"", line.toStdString());
+  }
+  const auto name = line.left(eq).trimmed();
+  const auto valueText = line.mid(eq + 1).trimmed();
+
+  OptionID id = 0;
+  if (name.compare(QStringLiteral("omnideskCrossCooldown"), Qt::CaseInsensitive) == 0) {
+    id = kOptionOmniDeskCrossCooldown;
+  } else if (name.compare(QStringLiteral("omnideskArrivalGuard"), Qt::CaseInsensitive) == 0) {
+    id = kOptionOmniDeskArrivalGuard;
+  } else {
+    LOG_WARN("ignoring unknown option \"%s\"", qPrintable(name));
+    return;
+  }
+
+  bool ok = false;
+  const int value = valueText.toInt(&ok);
+  if (!ok || value < 0) {
+    throw ServerConfigReadException(s, "invalid milliseconds value in \"%{1}\"", line.toStdString());
+  }
+  m_globalOptions[id] = value;
 }
 
 void Config::readSectionScreens(ConfigReadContext &s)
@@ -1273,6 +1310,12 @@ std::ostream &operator<<(std::ostream &s, const Config &config)
 
   if (config.m_deskflowAddress.isValid()) {
     s << "\taddress = " << config.m_deskflowAddress.getHostname().c_str() << std::endl;
+  }
+  if (const auto i = config.m_globalOptions.find(kOptionOmniDeskCrossCooldown); i != config.m_globalOptions.end()) {
+    s << "\tomnideskCrossCooldown = " << i->second << std::endl;
+  }
+  if (const auto i = config.m_globalOptions.find(kOptionOmniDeskArrivalGuard); i != config.m_globalOptions.end()) {
+    s << "\tomnideskArrivalGuard = " << i->second << std::endl;
   }
   s << config.m_inputFilter.format("\t");
   s << "end" << std::endl;

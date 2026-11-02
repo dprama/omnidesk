@@ -33,6 +33,8 @@ add_library(base STATIC ${PLATFORM_CODE}
   LogOutputters.h
   Log.cpp
   Log.h
+  MonitorRect.h
+  OmniDeskLog.h
   PriorityQueue.h
   SimpleEventQueueBuffer.cpp
   SimpleEventQueueBuffer.h

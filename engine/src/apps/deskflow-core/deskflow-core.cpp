@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2016, 2025 - 2026 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -13,6 +14,7 @@
 #include "base/Log.h"
 #include "common/Constants.h"
 #include "common/ExitCodes.h"
+#include "common/VersionInfo.h"
 #include "deskflow/ClientApp.h"
 #include "deskflow/ServerApp.h"
 #include "deskflow/ipc/CoreIpcServer.h"
@@ -94,6 +96,12 @@ int main(int argc, char **argv)
     return s_exitSuccess;
   }
 
+  // exactly one line, so the app can match it with the IPC hello id on release builds
+  if (parser.ipcVersion()) {
+    QTextStream(stdout) << kIpcVersionId << "\n";
+    return s_exitSuccess;
+  }
+
   if (parser.version()) {
     QTextStream(stdout) << parser.versionText();
     return s_exitSuccess;
@@ -110,7 +118,7 @@ int main(int argc, char **argv)
     sharedMemory.detach();
 
   if (!sharedMemory.create(1) && parser.singleInstanceOnly()) {
-    LOG_WARN("an instance of deskflow core is already running");
+    LOG_WARN("an instance of the %s engine is already running", kDisplayName);
     return s_exitDuplicate;
   }
 

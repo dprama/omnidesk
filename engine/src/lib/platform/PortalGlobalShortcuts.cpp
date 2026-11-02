@@ -7,6 +7,7 @@
 #include "platform/PortalGlobalShortcuts.h"
 #include "base/Log.h"
 #include "base/TMethodJob.h"
+#include "common/Constants.h"
 #include "platform/EiComputer.h"
 #include <inttypes.h>
 
@@ -114,7 +115,7 @@ PortalGlobalShortcuts::Binding PortalGlobalShortcuts::makeBinding(const HotKey &
   const std::string trigger = makePreferredTrigger(hotkey.key, hotkey.mask);
   // This is not the prettiest way, but we currently have no direct access to the Hotkey object
   // of lib/gui/Hotkey.cpp, so we cannot use Hotkey::text()
-  binding.description = trigger.empty() ? "Deskflow hotkey #" + std::to_string(hotkey.id) : "Hotkey " + trigger;
+  binding.description = trigger.empty() ? std::string(kDisplayName) + " hotkey #" + std::to_string(hotkey.id) : "Hotkey " + trigger;
   binding.preferredTrigger = trigger;
 
   return binding;

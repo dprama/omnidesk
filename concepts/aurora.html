@@ -1,0 +1,1240 @@
+<title>OmniDesk · Aurora glass</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+@property --a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+:root{
+  color-scheme: dark;
+  --bg:#04060c;
+  --ink:#eef1f8;
+  --ink-2:#aab2c6;
+  --ink-3:#6c7590;
+  --line:rgba(255,255,255,.08);
+  --line-2:rgba(255,255,255,.14);
+  --glass:rgba(13,17,30,.52);
+  --glass-2:rgba(20,25,42,.46);
+  --glass-3:rgba(255,255,255,.035);
+  --hi:rgba(255,255,255,.075);
+  --good:#62dca4;
+  --warn:#f0c46e;
+  --bad:#ff8080;
+  --c-conn:#5fd4f0;
+  --c-mouse:#a58bff;
+  --c-clip:#f2b866;
+  --c-screen:#4fd6b0;
+  --c-cam:#f28aa8;
+  --c-multi:#6f9bff;
+  --acc:#9db4ff;
+  --r:20px;
+  --r-sm:12px;
+  --font:"Onest","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 14px/1.5 var(--font);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:inherit}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:10px}
+
+/* backdrop */
+#aurora{position:fixed;inset:0;width:100%;height:100%;z-index:0;filter:blur(28px) saturate(115%);transform:scale(1.08);pointer-events:none}
+.veil{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 40%,transparent 30%,rgba(2,3,8,.72) 100%)}
+.noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);
+  -webkit-backdrop-filter:blur(26px) saturate(140%);backdrop-filter:blur(26px) saturate(140%);
+  box-shadow:inset 0 1px 0 var(--hi),0 20px 50px -30px rgba(0,0,0,.8)}
+
+/* app frame */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:256px minmax(0,1fr);gap:18px;min-height:100vh;min-height:100dvh;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) 18px max(16px,env(safe-area-inset-left,0px))}
+.side{position:sticky;top:18px;height:calc(100dvh - 36px);display:flex;flex-direction:column;padding:18px 14px;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 16px}
+.brand svg{width:30px;height:30px;flex:none}
+.brand b{font-weight:600;font-size:16px;letter-spacing:-.01em}
+.brand small{display:block;color:var(--ink-3);font-size:11.5px;margin-top:-2px}
+.cmdbtn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:var(--glass-3);color:var(--ink-2);cursor:pointer;text-align:left;box-shadow:inset 0 1px 0 var(--hi);transition:border-color .3s,background .3s}
+.cmdbtn:hover{border-color:var(--line-2);background:rgba(255,255,255,.06)}
+.cmdbtn span{flex:1}
+.kbd{font:500 11px var(--mono);padding:2px 6px;border-radius:6px;border:1px solid var(--line-2);color:var(--ink-2);background:rgba(255,255,255,.04)}
+.nav{margin-top:14px;display:flex;flex-direction:column;gap:2px}
+.nav h6{margin:16px 10px 6px;font:500 11px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:999px;text-decoration:none;color:var(--ink-2);border:1px solid transparent;transition:background .3s,color .3s,border-color .3s}
+.nav a:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.nav a .ic{width:18px;height:18px;color:var(--pa,var(--ink-3));opacity:.85}
+.nav a[aria-current="page"]{color:var(--ink);background:rgba(255,255,255,.07);border-color:var(--line);box-shadow:inset 0 1px 0 var(--hi)}
+.nav a[aria-current="page"] .ic{opacity:1;filter:drop-shadow(0 0 6px var(--pa))}
+.nav .badge{margin-left:auto;font-size:10.5px;padding:1px 7px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-3)}
+.side-foot{margin-top:auto;padding:14px 10px 2px;color:var(--ink-3);font-size:12px;display:flex;align-items:center;gap:8px}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+.topbar{display:none}
+.main{min-width:0;display:flex;flex-direction:column;gap:18px}
+#view{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:20px;align-items:center;padding:26px 28px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 120% at 85% 50%,color-mix(in srgb,var(--acc) 16%,transparent),transparent 70%);pointer-events:none}
+.hero > *{position:relative}
+.eyebrow{display:flex;align-items:center;gap:8px;color:var(--ink-3);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 var(--acc);animation:breathe 2.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 60%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
+.hero h1{margin:10px 0 6px;font-weight:500;font-size:32px;letter-spacing:-.025em;line-height:1.1}
+.hero p{margin:0;color:var(--ink-2);max-width:46ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12.5px;color:var(--ink-2);box-shadow:inset 0 1px 0 var(--hi);white-space:nowrap}
+.chip b{font:500 12px var(--mono);color:var(--ink)}
+.chip .led{width:6px;height:6px;border-radius:50%;background:var(--good)}
+.chip.acc{border-color:color-mix(in srgb,var(--acc) 40%,transparent);color:var(--ink)}
+.chip.acc .led{background:var(--acc)}
+.mono{font-family:var(--mono)}
+
+/* scenes */
+.scn{width:100%;height:auto;display:block;overflow:visible}
+.kit{fill:none;stroke:var(--ink-2);stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+.kit .scr{fill:rgba(255,255,255,.025);stroke:var(--line-2)}
+.kit.dim{opacity:.38;stroke-dasharray:3 3}
+.acc-s{fill:none;stroke:var(--acc);stroke-width:1.4;stroke-linecap:round}
+.acc-f{fill:var(--acc)}
+.lbl{fill:var(--ink-3);font:500 9px var(--font);letter-spacing:.02em}
+.lbl.sm{font:400 7px var(--mono)}
+.lbl.ink{fill:var(--ink-2)}
+.flow{stroke-dasharray:2 6;animation:dash 2.6s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-32}}
+.sweep{transform-box:fill-box;transform-origin:center;animation:spin360 5s linear infinite}
+@keyframes spin360{to{transform:rotate(360deg)}}
+.blip{opacity:.5;animation:blip 5s linear infinite}
+@keyframes blip{0%{opacity:1}35%{opacity:.35}100%{opacity:.35}}
+.fly{animation:fly 7s cubic-bezier(.5,0,.3,1) infinite}
+@keyframes fly{0%,12%{transform:translate(0,0);opacity:0}20%{opacity:1}55%{transform:translate(78px,-34px)}80%,88%{transform:translate(156px,0);opacity:1}100%{transform:translate(156px,0);opacity:0}}
+.slide{animation:slide 10s cubic-bezier(.6,0,.2,1) infinite}
+.slide.rev{animation-name:slideRev}
+@keyframes slide{0%,15%{transform:translate(0,0)}45%,85%{transform:translate(152px,10px)}100%{transform:translate(0,0)}}
+@keyframes slideRev{0%,15%{transform:translate(152px,10px)}45%,85%{transform:translate(0,0)}100%{transform:translate(152px,10px)}}
+.dock{animation:dock 10s ease-in-out infinite;opacity:.15}
+@keyframes dock{0%,40%{opacity:.08}50%,82%{opacity:.5}95%,100%{opacity:.08}}
+.ring{transform-box:fill-box;transform-origin:center;animation:ring 4.2s ease-out infinite}
+.ring.d2{animation-delay:1.4s}.ring.d3{animation-delay:2.8s}
+@keyframes ring{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+.snap{animation:snap 6s cubic-bezier(.6,0,.2,1) infinite}
+@keyframes snap{0%,10%{transform:translate(46px,18px)}40%,90%{transform:translate(0,0)}100%{transform:translate(46px,18px)}}
+.snapedge{animation:snapedge 6s ease infinite;opacity:.2}
+@keyframes snapedge{0%,38%{opacity:.1}45%,85%{opacity:1}100%{opacity:.1}}
+.coin{animation:coin 5s cubic-bezier(.5,0,.6,1) infinite}
+@keyframes coin{0%{transform:translate(0,-40px);opacity:0}15%{opacity:1}55%{transform:translate(0,42px);opacity:1}70%,100%{transform:translate(0,42px);opacity:0}}
+.tline{transform-box:fill-box;transform-origin:left center;animation:tline 6s ease-in-out infinite}
+.tline.l2{animation-delay:.6s}.tline.l3{animation-delay:1.2s}
+@keyframes tline{0%{transform:scaleX(.05)}30%,80%{transform:scaleX(1)}100%{transform:scaleX(.05)}}
+.orbit{transform-box:fill-box;transform-origin:center;animation:spin360 60s linear infinite}
+.pulse{animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* map */
+.map .mon{fill:rgba(255,255,255,.03);stroke:var(--line-2);stroke-width:1}
+.map .inner{stroke:var(--ink-3);stroke-dasharray:2 3;stroke-width:1}
+.map .edge{stroke:var(--acc);stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 0 3px var(--acc))}
+.map .edge.off{stroke:var(--ink-3);filter:none;opacity:.5}
+.map .halo{fill:var(--acc);opacity:.18}
+.map .arrow{fill:var(--ink);stroke:#000;stroke-width:.6}
+
+/* cards */
+.grid{display:grid;gap:18px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.span2{grid-column:1/-1}
+.card{padding:22px 22px}
+.card h2{margin:0 0 4px;font-weight:500;font-size:16px;letter-spacing:-.01em}
+.card h2 + p,.muted{color:var(--ink-2);margin:0}
+.card .sub{color:var(--ink-3);font-size:12.5px;margin:0}
+.row{display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .grow{flex:1;min-width:0}
+.row .t{display:block;color:var(--ink)}
+.row .d{display:block;color:var(--ink-3);font-size:12.5px}
+.head{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+.head .grow{flex:1;min-width:0}
+.stack{display:flex;flex-direction:column;gap:12px}
+
+.switch{position:relative;width:44px;height:26px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,255,255,.06);cursor:pointer;flex:none;transition:background .35s,border-color .35s;padding:0}
+.switch span{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#cfd5e4;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:transform .35s cubic-bezier(.4,.1,.2,1)}
+.switch[aria-checked="true"]{background:color-mix(in srgb,var(--acc) 42%,transparent);border-color:color-mix(in srgb,var(--acc) 60%,transparent)}
+.switch[aria-checked="true"] span{transform:translateX(18px);background:#fff}
+.switch:disabled{opacity:.4;cursor:not-allowed}
+
+.seg{display:inline-flex;padding:3px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid var(--line);gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--ink-2);padding:6px 13px;border-radius:999px;cursor:pointer;font-size:13px;transition:background .3s,color .3s}
+.seg button[aria-pressed="true"]{background:rgba(255,255,255,.1);color:var(--ink);box-shadow:inset 0 1px 0 var(--hi)}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer;box-shadow:inset 0 1px 0 var(--hi);transition:background .3s,border-color .3s;font-size:13.5px;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.09)}
+.btn.pri{background:color-mix(in srgb,var(--acc) 26%,rgba(255,255,255,.04));border-color:color-mix(in srgb,var(--acc) 55%,transparent)}
+.btn.pri:hover{background:color-mix(in srgb,var(--acc) 36%,rgba(255,255,255,.04))}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+
+input[type=range]{width:100%;accent-color:var(--acc)}
+.range-row{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:12px;align-items:center}
+output,.val{font:500 13px var(--mono);color:var(--ink);text-align:right}
+.ends{display:flex;justify-content:space-between;color:var(--ink-3);font-size:12px;margin-top:2px}
+
+.devcard{padding:20px;display:flex;flex-direction:column;gap:14px}
+.devcard .top{display:flex;align-items:center;gap:12px}
+.devcard .top svg{width:64px;height:40px;flex:none}
+.devcard h3{margin:0;font-weight:500;font-size:15.5px}
+.devcard .os{color:var(--ink-3);font-size:12.5px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;color:var(--ink);text-align:right}
+.batt{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end}
+.batt i{display:inline-block;width:30px;height:12px;border:1px solid var(--ink-3);border-radius:3px;position:relative;padding:1px}
+.batt i::after{content:"";position:absolute;right:-4px;top:3px;width:2px;height:4px;background:var(--ink-3);border-radius:0 1px 1px 0}
+.batt i b{display:block;height:100%;background:var(--good);border-radius:1.5px;transition:width .6s}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.tag i{width:6px;height:6px;border-radius:50%;background:var(--tc,var(--acc))}
+.tag.off{color:var(--ink-3);border-style:dashed}
+.state{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2)}
+.state i{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+.state.off i{background:var(--ink-3);box-shadow:none}
+.state.live i{background:var(--c-cam);box-shadow:0 0 8px var(--c-cam)}
+
+.code{display:flex;gap:8px;margin:14px 0 8px;flex-wrap:wrap}
+.code span{font:500 30px var(--mono);width:44px;height:58px;display:grid;place-items:center;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--line-2);box-shadow:inset 0 1px 0 var(--hi)}
+.code span:nth-child(3){margin-right:10px}
+.code.expired span{color:var(--ink-3);text-decoration:line-through}
+.bar{height:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px}
+.bar b{display:block;height:100%;background:var(--acc);transition:width 1s linear}
+.note{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--ink-2);font-size:13px}
+.note .ic{color:var(--acc);margin-top:1px}
+
+.log{font:400 11.5px/1.75 var(--mono);color:var(--ink-2);background:rgba(0,0,0,.32);border:1px solid var(--line);border-radius:14px;padding:12px 14px;overflow-x:auto;white-space:pre;max-height:240px;overflow-y:auto}
+.log .ok{color:var(--good)}
+.log .no{color:var(--warn)}
+.log .ts{color:var(--ink-3)}
+.rule{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3)}
+
+.clip-item{display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--line)}
+.clip-item:first-child{border-top:0}
+.thumb{width:52px;height:40px;border-radius:9px;border:1px solid var(--line-2);display:grid;place-items:center;flex:none;background:rgba(255,255,255,.03);overflow:hidden}
+.thumb svg{width:100%;height:100%}
+.dir{font:500 11.5px var(--mono);color:var(--ink-2);white-space:nowrap}
+
+.lat{font:500 38px var(--mono);letter-spacing:-.03em}
+.lat small{font-size:14px;color:var(--ink-3);margin-left:4px;letter-spacing:0}
+
+.desk{width:100%;height:auto;display:block;touch-action:none;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid var(--line)}
+.desk .tile{cursor:grab}
+.desk .tile:active{cursor:grabbing}
+.desk .mon{fill:rgba(255,255,255,.04);stroke:var(--ink-2);stroke-width:1.4}
+.desk .mon.mac{stroke:var(--ink)}
+.desk text{fill:var(--ink-2);font:500 13px var(--font)}
+.desk text.m{fill:var(--ink-3);font:400 11px var(--mono)}
+.desk .xedge{stroke:var(--acc);stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 0 6px var(--acc))}
+.desk .tile:focus-visible .mon{stroke:var(--acc)}
+
+.amounts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.amt{padding:16px 8px;border-radius:16px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);cursor:pointer;text-align:center;font:500 20px var(--mono);transition:border-color .3s,background .3s}
+.amt[aria-pressed="true"]{border-color:color-mix(in srgb,var(--acc) 70%,transparent);background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.amt small{display:block;font:400 11.5px var(--font);color:var(--ink-3);margin-top:2px}
+.field{width:100%;padding:11px 14px;border-radius:14px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);color:var(--ink)}
+textarea.field{min-height:120px;resize:vertical;line-height:1.5}
+.field:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+label.chk{display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--ink-2)}
+label.chk input{width:17px;height:17px;accent-color:var(--acc)}
+pre.sys{margin:12px 0 0;font:400 12px/1.7 var(--mono);color:var(--ink-2);background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:14px;padding:12px 14px;white-space:pre-wrap;word-break:break-word}
+.err{color:var(--bad);font-size:12.5px;margin-top:8px}
+.done{text-align:center;padding:36px 22px}
+.done .ic{width:40px;height:40px;color:var(--acc);stroke-width:1.3}
+.done h2{font-size:20px;margin:10px 0 6px}
+.credits{font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.credits p{margin:0 0 10px}
+.soon{font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--acc) 50%,transparent);color:var(--acc);vertical-align:middle;margin-left:8px;letter-spacing:.02em}
+.empty{color:var(--ink-3);font-size:13px;padding:14px 0 4px}
+
+/* status bar */
+.status{position:sticky;bottom:14px;z-index:5;display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;padding:10px 18px;border-radius:999px;font-size:12.5px;color:var(--ink-2);margin-top:auto}
+.status .st{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.status b{color:var(--ink);font-weight:500}
+.status .led{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+.status .sep{width:1px;height:14px;background:var(--line-2)}
+.status .enc{margin-left:auto;color:var(--ink-3)}
+.status .enc .ic{width:15px;height:15px}
+.flash{animation:flash 1.2s ease}
+@keyframes flash{0%{color:var(--acc);text-shadow:0 0 12px var(--acc)}100%{color:var(--ink)}}
+
+/* command bar */
+.pal{position:fixed;inset:0;z-index:50;display:none;align-items:flex-start;justify-content:center;padding:14vh max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));background:rgba(2,3,8,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.pal.open{display:flex}
+.pal-in{width:min(640px,100%);display:flex;flex-direction:column;gap:12px}
+.cap{position:relative;border-radius:999px}
+.cap::before,.cap::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+  background:conic-gradient(from var(--a),#5fd4f0,#a58bff,#f28aa8,#f2b866,#4fd6b0,#6f9bff,#5fd4f0)}
+.cap::before{padding:1.5px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);opacity:.22;transition:opacity .5s}
+.cap::after{z-index:-1;filter:blur(18px);opacity:0;transition:opacity .6s}
+.cap.typing::before{opacity:1;animation:spinA 3.2s linear infinite}
+.cap.typing::after{opacity:.42;animation:spinA 3.2s linear infinite}
+@keyframes spinA{to{--a:360deg}}
+.cap-in{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:999px;background:rgba(12,15,27,.78);-webkit-backdrop-filter:blur(30px) saturate(150%);backdrop-filter:blur(30px) saturate(150%);box-shadow:inset 0 1px 0 var(--hi),0 30px 80px -20px rgba(0,0,0,.9)}
+.cap-in .ic{color:var(--ink-3)}
+.cap-in input{flex:1;min-width:0;border:0;background:transparent;font-size:17px;outline:none}
+.cap-in input::placeholder{color:var(--ink-3)}
+.results{padding:8px;max-height:min(52vh,420px);overflow:auto;border-radius:22px;background:rgba(12,15,27,.72)}
+.results button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;border-radius:12px;cursor:pointer;color:var(--ink-2)}
+.results button .ic{width:17px;height:17px;color:var(--rc,var(--ink-3))}
+.results button span{flex:1}
+.results button small{color:var(--ink-3);font-size:11.5px}
+.results button[aria-selected="true"]{background:rgba(255,255,255,.08);color:var(--ink);box-shadow:inset 0 1px 0 var(--hi)}
+.results mark{background:none;color:var(--ink);font-weight:600}
+.results .none{padding:14px;color:var(--ink-3)}
+
+.toast{position:fixed;left:50%;bottom:84px;z-index:60;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:10px 18px;border-radius:999px;font-size:13.5px;display:flex;gap:9px;align-items:center;transition:opacity .35s,transform .35s;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast i{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc);flex:none}
+
+.scrim{display:none}
+
+@media (max-width:1080px){
+  .grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero{grid-template-columns:1fr}
+  .hero .scene{max-width:440px}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr);padding-top:12px}
+  .side{position:fixed;z-index:40;top:10px;bottom:10px;left:10px;height:auto;width:min(280px,calc(100% - 20px));transform:translateX(calc(-100% - 20px));transition:transform .4s cubic-bezier(.4,.1,.2,1)}
+  .side.open{transform:none}
+  .scrim{position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.5)}
+  .scrim.open{display:block}
+  .topbar{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:999px;position:sticky;top:10px;z-index:20}
+  .topbar .brand{padding:0;flex:1;min-width:0}
+  .topbar .brand svg{width:26px;height:26px}
+  .iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:rgba(255,255,255,.05);cursor:pointer;flex:none;padding:0}
+  .grid,.grid.three{grid-template-columns:minmax(0,1fr)}
+  .hero{padding:22px 18px}
+  .hero h1{font-size:26px}
+  .card{padding:18px 16px}
+  .status{border-radius:18px;gap:6px 12px;padding:10px 14px}
+  .status .sep{display:none}
+  .status .enc{margin-left:0}
+  .amounts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .code span{width:38px;height:50px;font-size:24px}
+}
+@media (max-width:420px){
+  .code{gap:5px}
+  .code span{width:34px;height:46px;font-size:21px}
+  .code span:nth-child(3){margin-right:4px}
+  .row{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .cap.typing::before{opacity:1}
+}
+</style>
+
+<canvas id="aurora" aria-hidden="true"></canvas>
+<div class="veil" aria-hidden="true"></div>
+<div class="noise" aria-hidden="true"></div>
+
+<div class="app">
+  <aside class="side glass" id="side" aria-label="Sidebar">
+    <div class="brand"><span id="logo1"></span><div><b>OmniDesk</b><small>One desk for all your computers</small></div></div>
+    <button class="cmdbtn" type="button" data-act="palette" id="cmd-side"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM20 20l-4-4"/></svg><span>Search or run…</span><span class="kbd" id="kbdhint">Ctrl K</span></button>
+    <nav class="nav" id="nav" aria-label="Pages"></nav>
+    <div class="side-foot"><svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3"/></svg>Encrypted · no account · no cloud</div>
+  </aside>
+  <div class="scrim" id="scrim" data-act="drawer"></div>
+
+  <div class="main">
+    <header class="topbar glass">
+      <button class="iconbtn" type="button" data-act="drawer" aria-label="Open menu" id="menu-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="brand"><span id="logo2"></span><div><b>OmniDesk</b></div></div>
+      <button class="iconbtn" type="button" data-act="palette" aria-label="Open command bar" id="cmd-top"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM20 20l-4-4"/></svg></button>
+    </header>
+    <main id="view" tabindex="-1"></main>
+    <footer class="status glass" id="status" aria-label="Status">
+      <span class="st"><i class="led"></i><b data-live="count"></b></span><span class="sep"></span>
+      <span class="st">Cursor on <b data-live="active" id="st-active"></b></span><span class="sep"></span>
+      <span class="st">Clipboard <b data-live="clipState"></b></span><span class="sep"></span>
+      <span class="st"><span data-live="linkName"></span> · <b class="mono" data-live="ping"></b></span>
+      <span class="st enc"><svg class="ic" viewBox="0 0 24 24"><path d="M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3"/></svg>Encrypted end to end</span>
+    </footer>
+  </div>
+</div>
+
+<div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Command bar">
+  <div class="pal-in">
+    <div class="cap" id="cap"><div class="cap-in">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM20 20l-4-4"/></svg>
+      <input id="q" type="text" placeholder="Type a command or a page…" autocomplete="off" spellcheck="false" aria-controls="res" aria-label="Command">
+      <span class="kbd">Esc</span>
+    </div></div>
+    <div class="results glass" id="res" role="listbox" aria-label="Commands"></div>
+  </div>
+</div>
+<div class="toast glass" id="toast" role="status" aria-live="polite"><i></i><span></span></div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(s, r){ return (r || document).querySelector(s); };
+var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var RM = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ---------- icons ---------- */
+var IC = {
+  home:'M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1z',
+  mouse:'M12 3a6 6 0 0 1 6 6v6a6 6 0 0 1-12 0V9a6 6 0 0 1 6-6zM12 7v3',
+  layout:'M3 6h9v7H3zM14 8h7v6h-7zM12 9.5h2',
+  clipboard:'M9 4h6v3H9zM7 5.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6.5a1 1 0 0 0-1-1h-1M9 12h6M9 16h4',
+  screen:'M3 5h12v9H3zM7 17h4M17 9h4v9h-8v-1',
+  camera:'M4 8h11v9H4zM15 11l5-3v9l-5-3',
+  connection:'M2 9a14 14 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01',
+  devices:'M3 5h10v7H3zM6 15h4M15 8h6v11h-6zM18 16h.01',
+  tip:'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
+  feedback:'M4 5h16v11H9l-5 4z',
+  about:'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM12 11v5M12 8h.01',
+  lock:'M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3',
+  bolt:'M13 3L5 13h6l-1 8 8-10h-6z',
+  check:'M5 12.5l4.5 4.5L19 7.5',
+  arrow:'M5 12h14M13 6l6 6-6 6',
+  shield:'M12 3l7 3v6c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9V6z'
+};
+function ic(n, cls){ return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true"><path d="' + IC[n] + '"/></svg>'; }
+
+var uid = 0;
+function logo(size){
+  var id = 'lg' + (uid++);
+  return '<svg viewBox="0 0 32 32" width="' + (size || 30) + '" height="' + (size || 30) + '" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fe3ff"/><stop offset=".5" stop-color="#a58bff"/><stop offset="1" stop-color="#ffb38a"/></linearGradient></defs>' +
+    '<rect x="3" y="6.5" width="17" height="12.5" rx="3.5" fill="none" stroke="url(#' + id + ')" stroke-width="1.8"/>' +
+    '<rect x="12" y="12.5" width="17" height="12.5" rx="3.5" fill="#0b0f1c" stroke="url(#' + id + ')" stroke-width="1.8"/>' +
+    '<circle cx="20.5" cy="18.75" r="2.1" fill="url(#' + id + ')"/></svg>';
+}
+
+/* ---------- pages ---------- */
+var PAGES = [
+  {id:'home', label:'Home', group:'', acc:'#9db4ff', icon:'home', title:'Your desk', sub:'Every computer on this desk, how it is linked, and what it shares right now.'},
+  {id:'mouse', label:'Mouse & keyboard', group:'Share', acc:'#a58bff', icon:'mouse', title:'Mouse & keyboard', sub:'Push the cursor past the outer edge of your last screen and keep typing on the next computer.'},
+  {id:'layout', label:'Screen layout', group:'Share', acc:'#b79dff', icon:'layout', title:'Screen layout', sub:'Place your computers the way they sit on the desk. Touching edges become crossings.'},
+  {id:'clipboard', label:'Clipboard', group:'Share', acc:'#f2b866', icon:'clipboard', title:'Clipboard', sub:'Copy on one computer, paste on the other. Text, images and files.'},
+  {id:'screen', label:'Second screen', group:'Share', acc:'#4fd6b0', icon:'screen', title:'Second screen', sub:'Turn one computer into an extra display for the other, in either direction.'},
+  {id:'camera', label:'Camera', group:'Share', acc:'#f28aa8', icon:'camera', title:'Camera', sub:'Share one camera with every device on the desk. One camera runs at a time.', badge:'Soon'},
+  {id:'connection', label:'Connection', group:'Devices', acc:'#5fd4f0', icon:'connection', title:'Connection', sub:'Find computers nearby, pair them with a short code, and choose how each one is linked.'},
+  {id:'devices', label:'Multi-device', group:'Devices', acc:'#6f9bff', icon:'devices', title:'Multi-device', sub:'More than two computers on one desk, all sharing one mouse, keyboard and clipboard.'},
+  {id:'tip', label:'Tip', group:'More', acc:'#f0a98a', icon:'tip', title:'Leave a tip', sub:'OmniDesk is free. If it makes your desk calmer, a small tip keeps it going.'},
+  {id:'feedback', label:'Feedback', group:'More', acc:'#8fc8ff', icon:'feedback', title:'Feedback', sub:'Found a bug, have an idea, or just want to say thanks? It all gets read.'},
+  {id:'about', label:'About', group:'More', acc:'#b9c3dc', icon:'about', title:'About OmniDesk', sub:'One desk for all your computers.'}
+];
+var PG = {}; PAGES.forEach(function(p){ PG[p.id] = p; });
+
+/* ---------- state ---------- */
+var now = Date.now();
+var S = {
+  page:'home', drawer:false,
+  mouse:true, clip:true, lock:false, cooldown:250, guard:120,
+  clipDir:'both', clipMax:'50 MB',
+  link:'wifi', ping:4, battery:82, active:'Windows PC', pos:'(900, 700)',
+  screen:null, res:'2560×1600', quality:55, lat:61,
+  cam:false, camSince:0, multi:true,
+  pair:null,
+  layout:{pc:{x:110,y:120}, mac:{x:670,y:149}},
+  tipAmt:'5', tipCustom:'', tipDone:false,
+  fb:{type:'Idea', msg:'', sys:false, sent:false, err:false},
+  t0:now,
+  log:[
+    {t:'12:04:31', k:'no', s:'no-cross reason=not-outer-edge edge=right pos=(2559,812) monitors=[0,0,2560x1440][2560,180,1920x1080]'},
+    {t:'12:04:33', k:'ok', s:'cross edge=right pos=(4479,700) to=MacBook arrive=(0,471) guard=120ms'},
+    {t:'12:04:41', k:'no', s:'no-cross reason=button-held edge=right pos=(4479,688)'},
+    {t:'12:04:47', k:'ok', s:'cross edge=left pos=(0,291) to=Windows PC arrive=(4479,520) cooldown=250ms'}
+  ]
+};
+var CLIPS = [
+  {kind:'file', name:'Quarterly plan v3.docx', meta:'2.4 MB · Word document', from:'MacBook', to:'Windows PC', ago:2},
+  {kind:'image', name:'Screenshot.png', meta:'1440×900 · PNG image', from:'Windows PC', to:'MacBook', ago:9},
+  {kind:'text', name:'“meet at 4:30, room B”', meta:'Text · 20 characters', from:'MacBook', to:'Windows PC', ago:14}
+];
+var LINK = {wifi:'Wi‑Fi', usb:'USB cable', bt:'Bluetooth'};
+
+function rnd(a, b){ return a + Math.random() * (b - a); }
+function newPing(){
+  if (S.link === 'usb') return Math.random() < .8 ? 1 : 2;
+  if (S.link === 'bt') return Math.round(rnd(9, 16));
+  return Math.round(rnd(3, 7));
+}
+function newLat(){
+  var base = S.link === 'usb' ? 38 : 61;
+  return Math.round(base + (S.quality - 50) / 12 + rnd(-2, 2));
+}
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function clock(d){ d = d || new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+function mins(ms){ var s = Math.floor(ms / 1000); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); }
+function hms(ms){ var s = Math.floor(ms / 1000); return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); }
+function newCode(){ var c = ''; for (var i = 0; i < 6; i++) c += Math.floor(Math.random() * 10); return c; }
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+/* ---------- live values ---------- */
+var LIVE = {
+  ping: function(){ return S.ping + ' ms'; },
+  battery: function(){ return S.battery + '%'; },
+  active: function(){ return S.active; },
+  pos: function(){ return S.pos; },
+  count: function(){ return S.multi ? '2 of 3 connected' : '2 connected'; },
+  clipState: function(){ return S.clip ? 'on' : 'off'; },
+  linkName: function(){ return LINK[S.link]; },
+  lat: function(){ return S.link === 'bt' ? '—' : String(S.lat); },
+  latLink: function(){ return S.link === 'bt' ? 'Bluetooth is too slow for video' : 'ms over ' + LINK[S.link]; },
+  clock: function(){ return clock(); },
+  session: function(){ return hms(Date.now() - S.t0); },
+  pairLeft: function(){ if (!S.pair) return ''; var l = S.pair.until - Date.now(); return l > 0 ? mins(l) : 'expired'; },
+  camTime: function(){ return S.cam ? mins(Date.now() - S.camSince) : '00:00'; },
+  cooldown: function(){ return S.cooldown + ' ms'; },
+  guard: function(){ return S.guard + ' ms'; },
+  quality: function(){ return S.quality < 40 ? 'Snappier' : S.quality > 65 ? 'Sharper' : 'Balanced'; },
+  clip0: function(){ return agoText(0); }, clip1: function(){ return agoText(1); }, clip2: function(){ return agoText(2); },
+  crossCount: function(){ var n = crossings().length; return n + (n === 1 ? ' edge' : ' edges'); }
+};
+function agoText(i){ var m = CLIPS[i].ago + Math.floor((Date.now() - S.t0) / 60000); return m + ' min ago'; }
+function updateLive(){
+  $$('[data-live]').forEach(function(el){ var f = LIVE[el.getAttribute('data-live')]; if (f){ var v = f(); if (el.textContent !== v) el.textContent = v; } });
+  $$('[data-live-w="battery"]').forEach(function(el){ el.style.width = S.battery + '%'; el.style.background = S.battery < 20 ? 'var(--bad)' : 'var(--good)'; });
+  $$('[data-live-w="pair"]').forEach(function(el){ if (!S.pair) return; var l = Math.max(0, S.pair.until - Date.now()); el.style.width = (l / 1200) + '%'; });
+}
+
+/* ---------- device kit (line art) ---------- */
+function kitPC(x, y, s, o){
+  o = o || {};
+  var t = o.second ? 198 : 112;
+  return '<g class="kit ' + (o.cls || '') + '" transform="translate(' + x + ' ' + y + ') scale(' + s + ')">' +
+    '<rect x="0" y="0" width="104" height="64" rx="5"/><rect class="scr" x="5" y="5" width="94" height="52" rx="2"/>' +
+    '<path d="M45 64 L43 76 H61 L59 64"/><path d="M34 77 H70"/>' +
+    (o.second ? '<rect x="110" y="10" width="80" height="50" rx="4"/><rect class="scr" x="114" y="14" width="72" height="40" rx="1.5"/><path d="M145 60 L144 70 H156 L155 60"/><path d="M138 71 H162"/>' : '') +
+    '<rect x="' + t + '" y="12" width="28" height="65" rx="3"/><circle cx="' + (t + 14) + '" cy="22" r="2.4"/><path d="M' + (t + 7) + ' 62 H' + (t + 21) + 'M' + (t + 7) + ' 66 H' + (t + 21) + '"/>' +
+    '</g>';
+}
+function kitMac(x, y, s, cls){
+  return '<g class="kit ' + (cls || '') + '" transform="translate(' + x + ' ' + y + ') scale(' + s + ')">' +
+    '<rect x="8" y="0" width="100" height="64" rx="5"/><rect class="scr" x="12" y="4" width="92" height="56" rx="2"/>' +
+    '<path d="M52 4 h12 v2 a1.6 1.6 0 0 1 -1.6 1.6 h-8.8 a1.6 1.6 0 0 1 -1.6 -1.6z"/>' +
+    '<path d="M0 66 H116 L112 71 H4 Z"/><path d="M50 66 v1.5 h16 v-1.5"/></g>';
+}
+function kitMini(x, y, s, cls){
+  return '<g class="kit ' + (cls || '') + '" transform="translate(' + x + ' ' + y + ') scale(' + s + ')">' +
+    '<rect x="0" y="0" width="64" height="20" rx="6"/><path d="M8 20 v2 M56 20 v2"/><circle cx="54" cy="10" r="1.2"/></g>';
+}
+function miniIcon(kind){
+  var inner = kind === 'pc' ? kitPC(4, 2, .42, {}) : kind === 'mac' ? kitMac(4, 6, .48) : kitMini(10, 14, .68);
+  return '<svg viewBox="0 0 64 40" aria-hidden="true">' + inner + '</svg>';
+}
+
+/* ---------- scenes (one accent each) ---------- */
+var SCENE = {
+  home: function(){
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="Windows PC with two monitors linked to a MacBook">' +
+      kitPC(6, 44, .72, {second:true}) + kitMac(226, 66, 1) +
+      '<path class="acc-s flow" d="M150 52 C 190 18, 246 26, 284 62"/>' +
+      '<circle class="acc-f pulse" cx="284" cy="62" r="2.6"/>' +
+      kitMini(140, 140, .7, 'dim') + '<text class="lbl" x="192" y="152">offline</text></svg>';
+  },
+  connection: function(){
+    var cx = 180, cy = 85, blips = [[38, 54, 'MacBook', 1], [205, 66, 'Mac mini', 0], [312, 34, 'New?', 1]];
+    var b = blips.map(function(d){
+      var a = d[0] * Math.PI / 180, x = cx + d[1] * Math.cos(a), y = cy + d[1] * Math.sin(a);
+      var delay = -(5 - d[0] / 360 * 5);
+      return '<g class="' + (d[3] ? 'blip' : '') + '" style="animation-delay:' + delay.toFixed(2) + 's' + (d[3] ? '' : ';opacity:.3') + '"><circle class="acc-f" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3"/>' +
+        '<text class="lbl ink" x="' + (x + 7).toFixed(1) + '" y="' + (y + 3).toFixed(1) + '">' + d[2] + '</text></g>';
+    }).join('');
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="Radar sweep finding devices nearby">' +
+      '<defs><linearGradient id="sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--acc)" stop-opacity="0"/><stop offset="1" stop-color="var(--acc)" stop-opacity=".35"/></linearGradient></defs>' +
+      '<g class="kit"><circle cx="180" cy="85" r="28"/><circle cx="180" cy="85" r="54" opacity=".7"/><circle cx="180" cy="85" r="78" opacity=".45"/><path d="M98 85 H262 M180 3 V167" opacity=".25"/></g>' +
+      '<g class="sweep"><circle cx="180" cy="85" r="80" fill="none" stroke="none"/><path d="M180 85 L260 85 A80 80 0 0 0 249.3 45 Z" fill="url(#sw)"/><path class="acc-s" d="M180 85 L260 85"/></g>' +
+      kitPC(166, 76, .14, {}) + b + '</svg>';
+  },
+  mouse: function(){
+    return '<svg class="scn map" id="map" viewBox="-6 -28 420 124" role="img" aria-label="Screen map: cursor moving across two Windows monitors and crossing to the MacBook at the outer edge">' +
+      '<text class="lbl" x="0" y="-12">WINDOWS PC</text><text class="lbl" x="310" y="-12">MACBOOK</text>' +
+      '<rect class="mon" x="0" y="0" width="160" height="90" rx="3"/><rect class="mon" x="160" y="11.25" width="120" height="67.5" rx="3"/>' +
+      '<rect class="mon" x="310" y="14.3" width="94.5" height="61.4" rx="3"/>' +
+      '<text class="lbl sm" x="6" y="84">1 · 2560×1440</text><text class="lbl sm" x="166" y="73">2 · 1920×1080</text><text class="lbl sm" x="316" y="70">1512×982</text>' +
+      '<line class="inner" x1="160" y1="11.25" x2="160" y2="78.75"/>' +
+      '<line class="edge ' + (S.mouse ? '' : 'off') + '" x1="280" y1="12" x2="280" y2="78"/><line class="edge ' + (S.mouse ? '' : 'off') + '" x1="310" y1="15" x2="310" y2="75"/>' +
+      '<path d="M286 45 H304" stroke="var(--ink-3)" stroke-dasharray="1.5 2.5" fill="none"/>' +
+      '<g id="cur" transform="translate(' + simSvg.x.toFixed(1) + ' ' + simSvg.y.toFixed(1) + ')"><circle class="halo" r="7"/><path class="arrow" d="M0 0 L0 9.5 L2.6 7 L4.5 10.8 L6.1 10 L4.3 6.4 L7.8 6.4 Z"/></g></svg>';
+  },
+  layout: function(){
+    var dots = '';
+    for (var i = 0; i < 12; i++) for (var j = 0; j < 6; j++) dots += '<circle cx="' + (18 + i * 30) + '" cy="' + (18 + j * 28) + '" r=".8" fill="var(--ink-3)" opacity=".5"/>';
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="MacBook tile snapping against the Windows PC edge">' + dots +
+      '<g class="kit"><rect class="scr" x="40" y="44" width="110" height="62" rx="3"/><rect class="scr" x="150" y="52" width="82" height="47" rx="3"/></g>' +
+      '<text class="lbl" x="44" y="38">Windows PC</text>' +
+      '<g class="snap"><rect x="232" y="56" width="66" height="43" rx="3" fill="rgba(255,255,255,.04)" stroke="var(--ink)" stroke-width="1.15"/><text class="lbl ink" x="236" y="112">MacBook</text></g>' +
+      '<line class="acc-s snapedge" x1="232" y1="57" x2="232" y2="98" stroke-width="2.5"/></svg>';
+  },
+  clipboard: function(){
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="A copied document travels from the PC to the MacBook">' +
+      kitPC(14, 56, .9, {}) + kitMac(222, 72, 1) +
+      '<g class="fly"><g transform="translate(70 60)"><rect x="0" y="0" width="22" height="28" rx="3" fill="#0b0f1c" stroke="var(--acc)" stroke-width="1.3"/><path class="acc-s" d="M5 9 H17 M5 14 H17 M5 19 H12" stroke-width="1"/></g></g>' +
+      '<path d="M108 52 Q 170 8, 262 52" fill="none" stroke="var(--ink-3)" stroke-dasharray="1.5 4" opacity=".6"/></svg>';
+  },
+  screen: function(){
+    var rev = S.screen === 'pc';
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="A display slides out of the PC onto the laptop">' +
+      kitPC(14, 46, 1, {}) + kitMac(196, 70, 1.1) +
+      '<rect class="acc-f dock" x="222" y="76" width="100" height="61" rx="2"/>' +
+      '<g class="slide ' + (rev ? 'rev' : '') + '"><rect x="62" y="58" width="72" height="44" rx="3" fill="rgba(11,15,28,.85)" stroke="var(--acc)" stroke-width="1.3"/>' +
+      '<path class="acc-s" d="M70 68 H100 M70 75 H120 M70 82 H90" stroke-width="1" opacity=".7"/></g></svg>';
+  },
+  camera: function(){
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="Camera on the PC broadcasting to other devices">' +
+      kitPC(30, 56, 1, {}) + kitMac(216, 74, 1) +
+      '<circle class="acc-s ring" cx="82" cy="58" r="8"/><circle class="acc-s ring d2" cx="82" cy="58" r="8"/><circle class="acc-s ring d3" cx="82" cy="58" r="8"/>' +
+      '<circle class="acc-f" cx="82" cy="58" r="2.6"/>' +
+      '<g opacity="' + (S.cam ? '1' : '.35') + '"><circle cx="274" cy="96" r="7" fill="none" stroke="var(--acc)" stroke-width="1.2"/><path d="M262 124 a12 10 0 0 1 24 0" fill="none" stroke="var(--acc)" stroke-width="1.2"/></g>' +
+      (S.cam ? '<g><rect x="230" y="80" width="22" height="10" rx="5" fill="var(--acc)"/><text x="234.5" y="87.6" fill="#1a0a10" font-size="6.5" font-weight="700" font-family="var(--font)">LIVE</text></g>' : '') +
+      '</svg>';
+  },
+  devices: function(){
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="Three computers linked to one desk">' +
+      '<circle class="acc-f pulse" cx="180" cy="22" r="4"/><circle cx="180" cy="22" r="10" fill="none" stroke="var(--acc)" opacity=".35"/>' +
+      '<path class="acc-s flow" d="M180 30 C 150 60, 80 70, 72 92"/><path class="acc-s flow" d="M180 30 C 182 60, 182 70, 182 96"/>' +
+      '<path d="M180 30 C 220 60, 290 80, 300 118" fill="none" stroke="var(--ink-3)" stroke-dasharray="2 5" opacity=".6"/>' +
+      kitPC(18, 96, .7, {}) + kitMac(124, 104, .95) + kitMini(270, 124, .9, 'dim') + '</svg>';
+  },
+  tip: function(){
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="A coin dropping into a tip jar">' +
+      '<g class="kit"><path d="M146 66 h68 M150 66 v-8 h60 v8 M150 66 c-14 8 -14 20 -14 30 v40 a14 14 0 0 0 14 14 h60 a14 14 0 0 0 14 -14 v-40 c0 -10 0 -22 -14 -30"/>' +
+      '<path d="M156 128 h48" opacity=".5"/></g>' +
+      '<g class="coin"><circle cx="180" cy="62" r="9" fill="#0b0f1c" stroke="var(--acc)" stroke-width="1.4"/><path class="acc-s" d="M180 57 v10" stroke-width="1.2"/></g>' +
+      '<path class="acc-s pulse" d="M254 54s-9-5.6-9-12.4a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.8-9 12.4-9 12.4z"/></svg>';
+  },
+  feedback: function(){
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="A message being written">' +
+      '<g class="kit"><path d="M96 30 h168 a12 12 0 0 1 12 12 v66 a12 12 0 0 1 -12 12 h-118 l-26 22 v-22 h-24 a12 12 0 0 1 -12 -12 v-66 a12 12 0 0 1 12 -12z"/></g>' +
+      '<rect class="acc-f tline" x="108" y="52" width="140" height="5" rx="2.5" opacity=".75"/>' +
+      '<rect class="acc-f tline l2" x="108" y="68" width="110" height="5" rx="2.5" opacity=".55"/>' +
+      '<rect class="acc-f tline l3" x="108" y="84" width="76" height="5" rx="2.5" opacity=".4"/></svg>';
+  },
+  about: function(){
+    return '<svg class="scn" viewBox="0 0 360 170" role="img" aria-label="OmniDesk mark">' +
+      '<g class="orbit"><circle cx="180" cy="85" r="66" fill="none" stroke="var(--ink-3)" stroke-dasharray="1 7" stroke-width="1.4"/><circle cx="246" cy="85" r="3" class="acc-f"/></g>' +
+      '<g transform="translate(140 45) scale(2.5)">' + logo(32).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '') + '</g></svg>';
+  }
+};
+
+/* ---------- hero ---------- */
+function chips(id){
+  var c = function(lbl, live, cls){ return '<span class="chip ' + (cls || '') + '"><i class="led"></i>' + lbl + (live ? ' <b data-live="' + live + '"></b>' : '') + '</span>'; };
+  switch (id){
+    case 'home': return c('MacBook ping', 'ping', 'acc') + c('MacBook battery', 'battery') + c('Cursor on', 'active');
+    case 'connection': return c('Scanning nearby', '', 'acc') + c('MacBook', 'ping') + '<span class="chip">' + ic('lock') + 'No account · no cloud</span>';
+    case 'mouse': return c('Cursor on', 'active', 'acc') + c('Position', 'pos') + c(S.mouse ? 'Sharing on' : 'Sharing off', '');
+    case 'layout': return c('Crossing', 'crossCount', 'acc') + c('Snap', '') ;
+    case 'clipboard': return c(S.clip ? 'Clipboard on' : 'Clipboard off', '', 'acc') + c('Last copy', 'clip0');
+    case 'screen': return c(S.screen ? 'Running' : 'Ready', '', 'acc') + c('Latency', 'lat') + c('Refresh', '') .replace('</span>', '<b>60 Hz</b></span>');
+    case 'camera': return c(S.cam ? 'Live from Windows PC' : 'Camera off', '', 'acc') + (S.cam ? c('On air', 'camTime') : '') + c(S.cam ? 'Watching: 1' : 'Watching: 0', '');
+    case 'devices': return c(S.multi ? 'Multi-device on' : 'Two-device mode', '', 'acc') + c('Online', 'count');
+    case 'tip': return c('Session', 'session', 'acc') + c('Local time', 'clock');
+    case 'feedback': return c('Read by a person', '', 'acc') + c('Local time', 'clock');
+    case 'about': return c('Version', '', 'acc').replace('</span>', '<b>2.5.0</b></span>') + c('Uptime', 'session');
+  }
+  return '';
+}
+function hero(p){
+  return '<section class="hero glass" aria-label="' + esc(p.title) + ' live header">' +
+    '<div><div class="eyebrow"><span class="live-dot"></span>' + (p.group || 'Overview') + ' · live</div>' +
+    '<h1>' + esc(p.title) + (p.badge ? '<span class="soon">Coming soon</span>' : '') + '</h1><p>' + esc(p.sub) + '</p>' +
+    '<div class="chips">' + chips(p.id) + '</div></div>' +
+    '<div class="scene">' + SCENE[p.id]() + '</div></section>';
+}
+
+/* ---------- small builders ---------- */
+function sw(id, act, on, label, disabled){
+  return '<button class="switch" type="button" role="switch" id="' + id + '" data-act="' + act + '" aria-checked="' + on + '" aria-label="' + esc(label) + '"' + (disabled ? ' disabled' : '') + '><span></span></button>';
+}
+function seg(key, opts, cur, label, dis){
+  return '<div class="seg" role="group" aria-label="' + esc(label) + '">' + opts.map(function(o){
+    var v = o[0], l = o[1];
+    return '<button type="button" id="seg-' + key + '-' + v.replace(/[^a-z0-9]/gi, '') + '" data-act="set" data-key="' + key + '" data-val="' + esc(v) + '" aria-pressed="' + (cur === v) + '"' + (dis && dis(v) ? ' disabled' : '') + '>' + l + '</button>';
+  }).join('') + '</div>';
+}
+function tag(txt, color, off){ return '<span class="tag' + (off ? ' off' : '') + '" style="--tc:' + (color || 'var(--acc)') + '"><i></i>' + txt + '</span>'; }
+function sharedTags(dev){
+  var t = [];
+  if (dev === 'mini') return tag('Nothing · offline', '', true);
+  if (S.mouse) t.push(tag('Mouse & keyboard', 'var(--c-mouse)'));
+  if (S.clip) t.push(tag('Clipboard', 'var(--c-clip)'));
+  if (S.screen) t.push(tag(S.screen === 'mac' ? (dev === 'mac' ? 'Screen for PC' : 'Extended to MacBook') : (dev === 'pc' ? 'Screen for Mac' : 'Extended to PC'), 'var(--c-screen)'));
+  if (S.cam) t.push(tag(dev === 'pc' ? 'Camera live' : 'Watching camera', 'var(--c-cam)'));
+  return t.length ? t.join('') : tag('Nothing shared', '', true);
+}
+
+/* ---------- page bodies ---------- */
+var BODY = {
+  home: function(){
+    return '<div class="grid three">' +
+      '<article class="devcard glass"><div class="top">' + miniIcon('pc') + '<div><h3>Windows PC</h3><div class="os">Windows 11 · x64 · this device</div></div></div>' +
+      '<dl class="kv"><dt>Link</dt><dd>Wired Ethernet</dd><dt>Screens</dt><dd>2560×1440 + 1920×1080</dd><dt>Status</dt><dd><span class="state"><i></i>Online</span></dd></dl>' +
+      '<div><div class="sub" style="margin-bottom:8px">Sharing right now</div><div class="tags">' + sharedTags('pc') + '</div></div></article>' +
+      '<article class="devcard glass"><div class="top">' + miniIcon('mac') + '<div><h3>MacBook</h3><div class="os">macOS 15 · Apple silicon</div></div></div>' +
+      '<dl class="kv"><dt>Link</dt><dd>' + LINK[S.link] + ' · <span class="mono" data-live="ping"></span></dd><dt>Screen</dt><dd>1512×982 pt</dd>' +
+      '<dt>Battery</dt><dd class="batt"><span class="mono" data-live="battery"></span><i><b data-live-w="battery"></b></i></dd></dl>' +
+      '<div><div class="sub" style="margin-bottom:8px">Sharing right now</div><div class="tags">' + sharedTags('mac') + '</div></div></article>' +
+      '<article class="devcard glass" style="opacity:.78"><div class="top">' + miniIcon('mini') + '<div><h3>Studio Mac mini</h3><div class="os">macOS 15</div></div></div>' +
+      '<dl class="kv"><dt>Link</dt><dd>—</dd><dt>Status</dt><dd><span class="state off"><i></i>Offline</span></dd><dt>Last seen</dt><dd>2 days ago</dd></dl>' +
+      '<div><div class="sub" style="margin-bottom:8px">Sharing right now</div><div class="tags">' + sharedTags('mini') + '</div></div></article>' +
+      '</div>' +
+      '<section class="card glass"><div class="head"><div class="grow"><h2>Quick switches</h2><p class="sub">The same switches live on each page and in the command bar.</p></div><button class="btn" type="button" data-act="palette" id="home-cmd">' + ic('bolt') + 'Command bar</button></div>' +
+      row('Mouse & keyboard', S.mouse ? 'Cursor crosses at the outer edge' : 'Off. Each computer keeps its own cursor', sw('sw-h-mouse', 'mouse', S.mouse, 'Mouse and keyboard sharing')) +
+      row('Clipboard', S.clip ? 'Copy here, paste there' : 'Off', sw('sw-h-clip', 'clip', S.clip, 'Clipboard sharing')) +
+      row('Second screen', S.screen ? (S.screen === 'mac' ? 'MacBook is a screen for Windows PC' : 'Windows PC is a screen for MacBook') : 'Not running', S.screen ? '<button class="btn" type="button" data-act="screen" data-val="" id="h-ss">Stop</button>' : '<button class="btn" type="button" data-act="screen" data-val="mac" id="h-ss">Start on MacBook</button>') +
+      '</section>';
+  },
+  connection: function(){
+    var pair;
+    if (S.pair){
+      var expired = S.pair.until <= Date.now();
+      pair = '<p class="muted">' + (expired ? 'This code has expired. Make a new one.' : 'Type this on the other computer, in OmniDesk → Connection → Join.') + '</p>' +
+        '<div class="code' + (expired ? ' expired' : '') + '" aria-label="Pairing code ' + S.pair.code.split('').join(' ') + '">' + S.pair.code.split('').map(function(d){ return '<span>' + d + '</span>'; }).join('') + '</div>' +
+        '<div class="rule">Expires in <b class="mono" data-live="pairLeft" style="color:var(--ink)"></b></div><div class="bar"><b data-live-w="pair"></b></div>' +
+        '<div class="btns"><button class="btn pri" type="button" data-act="pair" id="pair-new">New code</button><button class="btn ghost" type="button" data-act="pairCancel" id="pair-cancel">Cancel</button></div>';
+    } else {
+      pair = '<p class="muted">Pair with a 6-digit code. Codes last two minutes and work only on this network or cable.</p><div class="btns"><button class="btn pri" type="button" data-act="pair" id="pair-new">Pair a new device</button></div>';
+    }
+    return '<div class="grid">' +
+      '<section class="card glass"><div class="head"><div class="grow"><h2>Pair a new device</h2></div></div>' + pair + '</section>' +
+      '<section class="card glass"><h2>How each computer is linked</h2><p class="sub">Choose the link per device. Ping is measured live.</p>' +
+      '<div style="margin-top:8px">' +
+      row('Windows PC', 'This device · Wired Ethernet', '<span class="state"><i></i>Online</span>', miniIcon('pc')) +
+      row('MacBook', LINK[S.link] + ' · ping <span class="mono" data-live="ping"></span>', seg('link', [['wifi', 'Wi‑Fi'], ['usb', 'USB'], ['bt', 'Bluetooth']], S.link, 'MacBook link type'), miniIcon('mac')) +
+      row('Studio Mac mini', 'Offline · last seen 2 days ago', '<span class="state off"><i></i>Offline</span>', miniIcon('mini')) +
+      '</div></section>' +
+      '<div class="note span2">' + ic('shield') + '<div><b style="color:var(--ink)">Encrypted, no account, no cloud.</b> Computers talk directly to each other over your own network or cable. Every link is encrypted end to end, and nothing passes through a server.</div></div>' +
+      '</div>';
+  },
+  mouse: function(){
+    return '<div class="grid">' +
+      '<section class="card glass"><div class="head"><div class="grow"><h2>Share mouse & keyboard</h2><p class="sub">' + (S.mouse ? 'On. Push past the outer edge to switch computers.' : 'Off. The cursor stays on Windows PC.') + '</p></div>' + sw('sw-mouse', 'mouse', S.mouse, 'Share mouse and keyboard') + '</div>' +
+      '<div class="stack" style="margin-top:6px">' +
+      '<div><div class="range-row"><label for="r-cooldown">Cooldown after crossing</label><output data-live="cooldown"></output></div><input type="range" id="r-cooldown" data-set="cooldown" min="0" max="1000" step="50" value="' + S.cooldown + '"><div class="ends"><span>Instant</span><span>1 s</span></div></div>' +
+      '<div><div class="range-row"><label for="r-guard">Arrival guard</label><output data-live="guard"></output></div><input type="range" id="r-guard" data-set="guard" min="0" max="500" step="10" value="' + S.guard + '"><div class="ends"><span>Off</span><span>500 ms</span></div></div>' +
+      '</div></section>' +
+      '<section class="card glass"><h2>Rules</h2><p class="sub">Guards that keep the cursor where you mean it.</p><div style="margin-top:8px">' +
+      row('Don’t cross while a button is held', 'Dragging stays on the computer you started on', '<span class="rule">' + ic('lock') + 'Always on</span>') +
+      row('Lock cursor to this screen', 'Hotkey <span class="kbd">Ctrl</span> <span class="kbd">Alt</span> <span class="kbd">L</span>', sw('sw-lock', 'lock', S.lock, 'Lock cursor to this screen')) +
+      row('Crossing edge', 'Outer edges only. Monitor 2 right ⇄ MacBook left', '<a class="btn ghost" href="#layout">Layout</a>') +
+      '</div></section>' +
+      '<section class="card glass span2"><div class="head"><div class="grow"><h2>Why didn’t it cross?</h2><p class="sub">Every crossing decision, newest last. Live while the cursor moves.</p></div><button class="btn ghost" type="button" data-act="clearLog" id="log-clear">Clear</button></div>' +
+      '<div class="log" id="log" tabindex="0" aria-label="Crossing log"></div></section></div>';
+  },
+  layout: function(){
+    return '<section class="card glass"><div class="head"><div class="grow"><h2>Arrange your screens</h2><p class="sub">Drag a computer. It snaps to the nearest edge; touching outer edges become crossings. Arrow keys move the focused tile.</p></div><button class="btn ghost" type="button" data-act="resetLayout" id="lay-reset">Reset</button></div>' +
+      '<svg class="desk" id="desk" viewBox="0 0 900 420" aria-label="Screen layout editor"><defs><pattern id="gp" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="rgba(255,255,255,.08)"/></pattern></defs><rect width="900" height="420" fill="url(#gp)"/>' +
+      '<g class="tile" id="t-pc" data-tile="pc" tabindex="0" role="button" aria-label="Windows PC tile, two monitors"><rect class="mon" x="0" y="0" width="320" height="180" rx="6"/><rect class="mon" x="320" y="22.5" width="240" height="135" rx="6"/>' +
+      '<text x="16" y="28">Windows PC · 1</text><text class="m" x="16" y="166">2560×1440</text><text x="336" y="50">2</text><text class="m" x="336" y="144">1920×1080</text></g>' +
+      '<g class="tile" id="t-mac" data-tile="mac" tabindex="0" role="button" aria-label="MacBook tile"><rect class="mon mac" x="0" y="0" width="189" height="122.75" rx="6"/><text x="14" y="26">MacBook</text><text class="m" x="14" y="110">1512×982</text></g>' +
+      '<g id="xedges"></g></svg>' +
+      '<div style="margin-top:14px"><div class="sub" style="margin-bottom:8px">Crossing edges</div><div class="tags" id="xlist"></div></div></section>';
+  },
+  clipboard: function(){
+    var items = CLIPS.map(function(c, i){
+      var th = c.kind === 'file' ? '<svg viewBox="0 0 52 40"><path d="M20 8 h9 l5 5 v19 h-14z" fill="none" stroke="var(--acc)" stroke-width="1.2"/><path d="M23 19h8M23 23h8M23 27h5" stroke="var(--ink-3)"/></svg>'
+        : c.kind === 'image' ? '<svg viewBox="0 0 52 40"><rect x="9" y="8" width="34" height="24" rx="2" fill="rgba(255,255,255,.03)" stroke="var(--ink-3)"/><circle cx="17" cy="15" r="2.5" fill="var(--acc)"/><path d="M10 30 l10-9 7 6 5-4 10 7" fill="none" stroke="var(--acc)" stroke-width="1.2"/></svg>'
+        : '<svg viewBox="0 0 52 40"><text x="12" y="27" fill="var(--acc)" font-size="18" font-family="Georgia,serif">“</text><path d="M24 16h14M24 21h10M24 26h12" stroke="var(--ink-3)"/></svg>';
+      return '<div class="clip-item"><div class="thumb">' + th + '</div><div class="grow" style="flex:1;min-width:0"><span class="t" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(c.name) + '</span><span class="d" style="color:var(--ink-3);font-size:12.5px">' + c.meta + ' · <span data-live="clip' + i + '"></span></span></div>' +
+        '<span class="dir">' + (c.from === 'MacBook' ? 'Mac → PC' : 'PC → Mac') + '</span></div>';
+    }).join('');
+    return '<div class="grid">' +
+      '<section class="card glass"><div class="head"><div class="grow"><h2>Share clipboard</h2><p class="sub">' + (S.clip ? 'On. Copies travel to the other computer instantly.' : 'Off. Each computer keeps its own clipboard.') + '</p></div>' + sw('sw-clip', 'clip', S.clip, 'Share clipboard') + '</div>' +
+      '<div class="stack" style="margin-top:4px"><div><div class="sub" style="margin-bottom:8px">Direction</div>' + seg('clipDir', [['both', 'Both ways'], ['pc2mac', 'PC → Mac'], ['mac2pc', 'Mac → PC']], S.clipDir, 'Clipboard direction') + '</div>' +
+      '<div><div class="sub" style="margin-bottom:8px">Files up to</div>' + seg('clipMax', [['10 MB', '10 MB'], ['50 MB', '50 MB'], ['200 MB', '200 MB'], ['No limit', 'No limit']], S.clipMax, 'Maximum file size') + '</div></div></section>' +
+      '<section class="card glass"><h2>Recently shared</h2><p class="sub">Kept in memory only. Cleared when OmniDesk quits.</p><div style="margin-top:6px;' + (S.clip ? '' : 'opacity:.5') + '">' + items + '</div></section></div>';
+  },
+  screen: function(){
+    var bt = S.link === 'bt';
+    function dirCard(dir, title, desc){
+      var on = S.screen === dir;
+      return '<section class="card glass"><div class="head"><div style="width:72px">' + miniIcon(dir === 'mac' ? 'mac' : 'pc') + '</div><div class="grow"><h2>' + title + '</h2><p class="sub">' + desc + '</p></div></div>' +
+        '<div class="row" style="border:0;padding-top:4px"><span class="state ' + (on ? '' : 'off') + '"><i></i>' + (on ? 'Running · ' + S.res + ' · 60 Hz' : 'Not running') + '</span><span class="grow"></span>' +
+        (on ? '<button class="btn" type="button" data-act="screen" data-val="" id="ss-' + dir + '">Stop</button>' : '<button class="btn pri" type="button" data-act="screen" data-val="' + dir + '" id="ss-' + dir + '"' + (bt ? ' disabled' : '') + '>Start</button>') + '</div></section>';
+    }
+    return '<div class="grid">' +
+      dirCard('mac', 'Use MacBook as a screen for Windows PC', 'The MacBook shows a third Windows display.') +
+      dirCard('pc', 'Use Windows PC as a screen for MacBook', 'Monitor 2 becomes an extra Mac display.') +
+      '<section class="card glass"><h2>Picture</h2><div class="stack" style="margin-top:12px">' +
+      '<div><div class="sub" style="margin-bottom:8px">Resolution</div>' + seg('res', [['1920×1080', '1920×1080'], ['2560×1600', '2560×1600']], S.res, 'Resolution') + '</div>' +
+      '<div class="row" style="padding:0;border:0"><span class="grow"><span class="t">Refresh rate</span></span><span class="chip"><b>60 Hz</b></span></div>' +
+      '<div><div class="range-row"><label for="r-q">Quality vs latency</label><output data-live="quality"></output></div><input type="range" id="r-q" data-set="quality" min="0" max="100" step="5" value="' + S.quality + '"><div class="ends"><span>Snappier</span><span>Sharper</span></div></div>' +
+      '</div></section>' +
+      '<section class="card glass"><h2>Measured latency</h2><p class="sub">Glass to glass, sampled every second.</p><div style="margin-top:14px"><span class="lat" data-live="lat"></span><small class="muted" style="margin-left:6px" data-live="latLink"></small></div>' +
+      '<div class="note" style="margin-top:16px">' + ic('bolt') + '<div>About <b class="mono" style="color:var(--ink)">38 ms</b> over USB cable, <b class="mono" style="color:var(--ink)">61 ms</b> over Wi‑Fi. ' + (bt ? 'Switch the MacBook to Wi‑Fi or USB on <a href="#connection">Connection</a> to start.' : 'Change the link on <a href="#connection">Connection</a>.') + '</div></div></section></div>';
+  },
+  camera: function(){
+    return '<div class="grid">' +
+      '<section class="card glass span2"><div class="head"><div class="grow"><h2>Share my camera with every device</h2><p class="sub">' + (S.cam ? 'Your Windows PC camera is live for every device on this desk.' : 'Off. Works in Multi-device mode.') + '</p></div>' + sw('sw-cam', 'cam', S.cam, 'Share my camera with every device') + '</div></section>' +
+      '<section class="card glass"><h2>Cameras</h2><p class="sub">Only one camera runs at a time.</p><div style="margin-top:8px">' +
+      row('Windows PC', 'This device · Integrated webcam', S.cam ? '<span class="state live"><i></i>Live · <span class="mono" data-live="camTime"></span></span>' : '<span class="state off"><i></i>Off</span>', miniIcon('pc')) +
+      row('MacBook', 'FaceTime HD camera', '<span class="state off"><i></i>' + (S.cam ? 'Standing by' : 'Off') + '</span>', miniIcon('mac')) +
+      row('Studio Mac mini', 'Offline', '<span class="state off"><i></i>Offline</span>', miniIcon('mini')) +
+      '</div></section>' +
+      '<section class="card glass"><h2>Watching now</h2><p class="sub">Devices that see your camera right now.</p>' +
+      (S.cam ? '<div style="margin-top:8px">' + row('MacBook', 'Watching since ' + clock(new Date(S.camSince)).slice(0, 5) + ' · 720p · 30 fps', '<span class="state live"><i></i>Watching</span>', miniIcon('mac')) + '</div>'
+        : '<div class="empty">Nobody is watching. Your camera is off.</div>') +
+      '<div class="note" style="margin-top:14px">' + ic('shield') + '<div>The camera light stays on while shared. Video never leaves your desk.</div></div></section></div>';
+  },
+  devices: function(){
+    return '<div class="grid">' +
+      '<section class="card glass span2"><div class="head"><div class="grow"><h2>Multi-device mode</h2><p class="sub">' + (S.multi ? 'On. Up to six computers share one mouse, keyboard and clipboard.' : 'Off. Two computers, one link.') + '</p></div>' + sw('sw-multi', 'multi', S.multi, 'Multi-device mode') + '</div>' +
+      '<div class="sub" style="margin:10px 0 8px">Mode</div>' + seg('mode', [['two', 'Two devices'], ['multi', 'Multi-device']], S.multi ? 'multi' : 'two', 'Mode') + '</section>' +
+      '<section class="card glass span2"><h2>On this desk</h2><p class="sub">The cursor travels left to right in this order.</p><div style="margin-top:8px">' +
+      row('Windows PC', 'Windows 11 · x64 · Wired Ethernet · this device', '<span class="state"><i></i>Online</span>', miniIcon('pc')) +
+      row('MacBook', 'macOS 15 · Apple silicon · ' + LINK[S.link] + ' · <span class="mono" data-live="ping"></span> · battery <span class="mono" data-live="battery"></span>', '<span class="state"><i></i>Online</span>', miniIcon('mac')) +
+      row('Studio Mac mini', S.multi ? 'macOS 15 · last seen 2 days ago' : 'Turn on Multi-device to add a third computer', '<span class="state off"><i></i>Offline</span>', miniIcon('mini')) +
+      '</div></section></div>';
+  },
+  tip: function(){
+    if (S.tipDone){
+      return '<section class="card glass done">' + ic('tip') + '<h2>Thank you, truly.</h2><p class="muted">Your ' + tipLabel() + ' tip would go straight into late nights of making OmniDesk calmer.<br>This is a preview, so no payment was made.</p><div class="btns" style="justify-content:center"><button class="btn" type="button" data-act="tipBack" id="tip-back">Back</button></div></section>';
+    }
+    var amts = [['3', 'Coffee'], ['5', 'Lunch'], ['10', 'A great day']].map(function(a){
+      return '<button type="button" class="amt" id="amt-' + a[0] + '" data-act="tipAmt" data-val="' + a[0] + '" aria-pressed="' + (S.tipAmt === a[0]) + '">$' + a[0] + '<small>' + a[1] + '</small></button>';
+    }).join('') + '<button type="button" class="amt" id="amt-c" data-act="tipAmt" data-val="custom" aria-pressed="' + (S.tipAmt === 'custom') + '">…<small>Custom</small></button>';
+    return '<div class="grid"><section class="card glass"><h2>A one-time tip</h2><p class="sub">No subscription, no account, nothing unlocks. Just thanks.</p><div class="amounts">' + amts + '</div>' +
+      (S.tipAmt === 'custom' ? '<div style="margin-top:12px"><label class="sub" for="tip-custom">Custom amount (USD)</label><input class="field" id="tip-custom" data-set="tipCustom" inputmode="decimal" placeholder="e.g. 7" value="' + esc(S.tipCustom) + '" style="margin-top:6px"></div>' : '') +
+      '<div class="btns"><button class="btn pri" type="button" data-act="tip" id="tip-go">Leave a <span id="tip-lbl">' + tipLabel() + '</span> tip</button></div></section>' +
+      '<section class="card glass"><h2>Where it goes</h2><div style="margin-top:6px">' +
+      row('Time', 'Evenings spent on the details: edges, latency, calm.', '') +
+      row('Test hardware', 'Odd monitors, old laptops, many cables.', '') +
+      row('Staying free', 'OmniDesk stays free and open source for everyone.', '') + '</div></section></div>';
+  },
+  feedback: function(){
+    if (S.fb.sent){
+      return '<section class="card glass done">' + ic('check') + '<h2>Thanks, it’s in.</h2><p class="muted">Your ' + S.fb.type.toLowerCase() + ' was saved in this preview. Nothing was sent over the network.</p><div class="btns" style="justify-content:center"><button class="btn" type="button" data-act="fbNew" id="fb-new">Write another</button></div></section>';
+    }
+    return '<section class="card glass"><h2>What is it about?</h2><div style="margin:12px 0 16px">' + seg('fbType', [['Bug', 'Bug'], ['Idea', 'Idea'], ['Thank you', 'Thank you']], S.fb.type, 'Feedback type') + '</div>' +
+      '<label class="sub" for="fb-msg">Message</label><textarea class="field" id="fb-msg" data-set="fbMsg" style="margin-top:6px" placeholder="' + (S.fb.type === 'Bug' ? 'What happened, and what did you expect?' : S.fb.type === 'Idea' ? 'What would make your desk calmer?' : 'Say hi…') + '">' + esc(S.fb.msg) + '</textarea>' +
+      (S.fb.err ? '<div class="err" role="alert">Write a few words first.</div>' : '') +
+      '<div style="margin-top:14px"><label class="chk"><input type="checkbox" id="fb-sys" data-act="fbSys"' + (S.fb.sys ? ' checked' : '') + '>Include system info</label></div>' +
+      (S.fb.sys ? '<pre class="sys" aria-label="System info that will be included">OS              Windows 11 (x64)\nApp version     OmniDesk 2.5.0\nEngine version  core 1.20.1\nMonitor layout  [0,0,2560x1440][2560,180,1920x1080]\nPeers           macOS 15 (online), macOS 15 (offline)\n\nNever included: device names, user names, emails,\nclipboard contents, files.</pre>' : '<p class="sub" style="margin-top:6px">Off. Only your message is included.</p>') +
+      '<div class="btns"><button class="btn pri" type="button" data-act="fbSend" id="fb-send">Send feedback</button></div></section>';
+  },
+  about: function(){
+    return '<div class="grid"><section class="card glass"><div class="head"><div>' + logo(48) + '</div><div class="grow"><h2 style="font-size:20px">OmniDesk 2.5.0</h2><p class="sub">One desk for all your computers.</p></div></div>' +
+      '<div style="margin-top:4px">' + row('Version', '2.5.0 · Windows 11 x64', '') + row('License', 'Licensed under GPL-2.0-only.', '') + row('Privacy', 'No account, no cloud, no tracking.', '') + '</div></section>' +
+      '<section class="card glass"><h2>Credits</h2><div class="credits" style="margin-top:10px">' +
+      '<p>Built on Deskflow (github.com/deskflow/deskflow). Copyright (C) 2025 Deskflow Developers, (C) 2012 Synergy App Ltd, (C) 2002 Chris Schoeneman.</p>' +
+      '<p>Second screen on Windows uses Virtual Display Driver (MIT).</p>' +
+      '<p class="sub">Typefaces: Onest and JetBrains Mono (SIL Open Font License).</p></div></section></div>';
+  }
+};
+function row(t, d, right, icon){
+  return '<div class="row">' + (icon ? '<div style="width:56px;flex:none">' + icon + '</div>' : '') + '<div class="grow"><span class="t">' + t + '</span><span class="d">' + d + '</span></div>' + (right || '') + '</div>';
+}
+function tipLabel(){
+  if (S.tipAmt === 'custom'){ var n = parseFloat(S.tipCustom); return n > 0 ? '$' + (Math.round(n * 100) / 100) : 'custom'; }
+  return '$' + S.tipAmt;
+}
+
+/* ---------- nav + render ---------- */
+function buildNav(){
+  var h = '', g = null;
+  PAGES.forEach(function(p){
+    if (p.group !== g){ g = p.group; if (g) h += '<h6>' + g + '</h6>'; }
+    h += '<a href="#' + p.id + '" style="--pa:' + p.acc + '" data-nav="' + p.id + '">' + ic(p.icon) + '<span>' + p.label + '</span>' + (p.badge ? '<span class="badge">' + p.badge + '</span>' : '') + '</a>';
+  });
+  $('#nav').innerHTML = h;
+}
+function render(){
+  var p = PG[S.page];
+  document.documentElement.style.setProperty('--acc', p.acc);
+  document.title = 'OmniDesk · Aurora glass';
+  $('#view').innerHTML = hero(p) + BODY[p.id]();
+  $$('[data-nav]').forEach(function(a){ if (a.getAttribute('data-nav') === S.page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  if (p.id === 'layout') initLayout();
+  if (p.id === 'mouse') renderLog();
+  aurora.setAccent(p.acc);
+  updateLive();
+}
+function refresh(){
+  var a = document.activeElement, id = a && a.id;
+  render();
+  if (id){ var el = document.getElementById(id); if (el && el !== document.activeElement) el.focus({preventScroll:true}); }
+}
+function go(id){
+  if (!PG[id]) id = 'home';
+  if (location.hash.slice(1) !== id) location.hash = id;
+  else setPage(id);
+}
+function setPage(id){
+  if (!PG[id]) id = 'home';
+  var changed = S.page !== id;
+  S.page = id; S.fb.err = false;
+  setDrawer(false);
+  render();
+  if (changed) window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', function(){ setPage(location.hash.slice(1)); });
+
+/* ---------- actions (shared by UI and command bar) ---------- */
+var toastT;
+function toast(msg){
+  var t = $('#toast'); t.querySelector('span').textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+var A = {
+  clip: function(on){ S.clip = on; toast(on ? 'Clipboard is on' : 'Clipboard is off'); },
+  mouse: function(on){ S.mouse = on; toast(on ? 'Mouse & keyboard sharing is on' : 'Mouse & keyboard sharing is off'); },
+  lock: function(on){ S.lock = on; toast(on ? 'Cursor locked to Windows PC' : 'Cursor unlocked'); },
+  screen: function(dir){
+    if (dir && S.link === 'bt'){ toast('Second screen needs Wi‑Fi or USB'); return; }
+    S.screen = dir || null; S.lat = newLat();
+    toast(dir === 'mac' ? 'MacBook is now a screen for Windows PC' : dir === 'pc' ? 'Windows PC is now a screen for MacBook' : 'Second screen stopped');
+  },
+  cam: function(on){
+    var note = '';
+    if (on && !S.multi){ S.multi = true; note = ' (Multi-device turned on)'; }
+    S.cam = on; S.camSince = Date.now();
+    toast(on ? 'Camera shared with every device' + note : 'Camera sharing stopped');
+  },
+  multi: function(on){ S.multi = on; if (!on && S.cam){ S.cam = false; } toast(on ? 'Multi-device mode is on' : 'Two-device mode'); },
+  pair: function(){ S.pair = {code:newCode(), until:Date.now() + 120000}; toast('Pairing code ready'); },
+  link: function(v){ S.link = v; S.ping = newPing(); S.lat = newLat(); if (v === 'bt' && S.screen){ S.screen = null; } toast('MacBook linked over ' + LINK[v]); }
+};
+
+document.addEventListener('click', function(e){
+  var el = e.target.closest('[data-act]'); if (!el) return;
+  var a = el.getAttribute('data-act'), v = el.getAttribute('data-val');
+  switch (a){
+    case 'palette': openPal(el); return;
+    case 'drawer': setDrawer(!S.drawer); return;
+    case 'clip': A.clip(!S.clip); break;
+    case 'mouse': A.mouse(!S.mouse); break;
+    case 'lock': A.lock(!S.lock); break;
+    case 'cam': A.cam(!S.cam); break;
+    case 'multi': A.multi(!S.multi); break;
+    case 'screen': A.screen(v); break;
+    case 'pair': A.pair(); break;
+    case 'pairCancel': S.pair = null; toast('Pairing cancelled'); break;
+    case 'clearLog': S.log = []; renderLog(); return;
+    case 'resetLayout': S.layout = {pc:{x:110,y:120}, mac:{x:670,y:149}}; toast('Layout reset'); break;
+    case 'set':
+      var k = el.getAttribute('data-key');
+      if (k === 'link') A.link(v);
+      else if (k === 'mode') A.multi(v === 'multi');
+      else if (k === 'fbType') S.fb.type = v;
+      else { S[k] = v; if (k === 'clipMax') toast('Files up to ' + v); if (k === 'clipDir') toast('Clipboard: ' + el.textContent); if (k === 'res') toast('Resolution ' + v); }
+      break;
+    case 'tipAmt': S.tipAmt = v; break;
+    case 'tip':
+      if (S.tipAmt === 'custom' && !(parseFloat(S.tipCustom) > 0)){ toast('Enter an amount first'); var f = $('#tip-custom'); if (f) f.focus(); return; }
+      S.tipDone = true; toast('Thank you! (preview, no payment)'); break;
+    case 'tipBack': S.tipDone = false; break;
+    case 'fbSys': S.fb.sys = el.checked; break;
+    case 'fbSend':
+      if (!S.fb.msg.trim()){ S.fb.err = true; refresh(); var m = $('#fb-msg'); if (m) m.focus(); return; }
+      S.fb.sent = true; S.fb.err = false; toast('Feedback saved (no network)'); break;
+    case 'fbNew': S.fb = {type:'Idea', msg:'', sys:false, sent:false, err:false}; break;
+    default: return;
+  }
+  refresh();
+});
+document.addEventListener('input', function(e){
+  var el = e.target, k = el.getAttribute && el.getAttribute('data-set'); if (!k) return;
+  if (k === 'fbMsg'){ S.fb.msg = el.value; if (S.fb.err && el.value.trim()){ S.fb.err = false; var er = $('.err'); if (er) er.remove(); } return; }
+  if (k === 'tipCustom'){ S.tipCustom = el.value; var l = $('#tip-lbl'); if (l) l.textContent = tipLabel(); return; }
+  S[k] = +el.value;
+  if (k === 'quality') S.lat = newLat();
+  updateLive();
+});
+
+function setDrawer(open){
+  S.drawer = open;
+  $('#side').classList.toggle('open', open);
+  $('#scrim').classList.toggle('open', open);
+  $('#menu-btn').setAttribute('aria-expanded', String(open));
+}
+
+/* ---------- command bar ---------- */
+var pal = $('#pal'), q = $('#q'), res = $('#res'), cap = $('#cap'), palFrom = null, sel = 0, list = [], typT;
+function commands(){
+  var c = [];
+  var add = function(t, icon, acc, run, hint){ c.push({t:t, icon:icon, acc:acc, run:run, hint:hint || 'Action'}); };
+  add(S.clip ? 'Turn off clipboard' : 'Turn on clipboard', 'clipboard', '#f2b866', function(){ A.clip(!S.clip); });
+  add(S.mouse ? 'Turn mouse sharing off' : 'Turn mouse sharing on', 'mouse', '#a58bff', function(){ A.mouse(!S.mouse); });
+  add(S.lock ? 'Unlock cursor' : 'Lock cursor to this screen', 'lock', '#a58bff', function(){ A.lock(!S.lock); });
+  if (S.screen !== 'mac') add('Start second screen on MacBook', 'screen', '#4fd6b0', function(){ A.screen('mac'); go('screen'); });
+  if (S.screen !== 'pc') add('Use Windows PC as a screen for MacBook', 'screen', '#4fd6b0', function(){ A.screen('pc'); go('screen'); });
+  if (S.screen) add('Stop second screen', 'screen', '#4fd6b0', function(){ A.screen(null); });
+  add(S.cam ? 'Stop sharing my camera' : 'Share my camera', 'camera', '#f28aa8', function(){ A.cam(!S.cam); });
+  add('Pair a new device', 'connection', '#5fd4f0', function(){ A.pair(); go('connection'); });
+  ['wifi', 'usb', 'bt'].forEach(function(l){ if (S.link !== l) add('Link MacBook over ' + LINK[l], 'connection', '#5fd4f0', function(){ A.link(l); }); });
+  add(S.multi ? 'Turn off Multi-device mode' : 'Turn on Multi-device mode', 'devices', '#6f9bff', function(){ A.multi(!S.multi); });
+  PAGES.forEach(function(p){ add('Go to ' + p.label, p.icon, p.acc, function(){ go(p.id); }, 'Page'); });
+  return c;
+}
+function fuzzy(text, query){
+  if (!query) return {s:0, m:[]};
+  var t = text.toLowerCase(), qq = query.toLowerCase().replace(/\s+/g, ' ').trim(), ti = 0, score = 0, m = [], last = -2;
+  if (!qq) return {s:0, m:[]};
+  var sub = t.indexOf(qq);
+  if (sub >= 0){ for (var k = 0; k < qq.length; k++) m.push(sub + k); return {s:100 - sub, m:m}; }
+  for (var i = 0; i < qq.length; i++){
+    var ch = qq[i]; if (ch === ' ') continue;
+    var f = t.indexOf(ch, ti); if (f < 0) return null;
+    score += (f === last + 1 ? 6 : 1) + (f === 0 || t[f - 1] === ' ' ? 5 : 0) - Math.min(4, (f - ti) * .2);
+    m.push(f); last = f; ti = f + 1;
+  }
+  return {s:score, m:m};
+}
+function hl(text, m){
+  var out = ''; for (var i = 0; i < text.length; i++){ var ch = esc(text[i]); out += m.indexOf(i) >= 0 ? '<mark>' + ch + '</mark>' : ch; } return out;
+}
+function renderRes(){
+  var qv = q.value;
+  list = commands().map(function(c, i){ var f = fuzzy(c.t, qv); return f ? {c:c, f:f, i:i} : null; }).filter(Boolean);
+  if (qv.trim()) list.sort(function(a, b){ return b.f.s - a.f.s || a.i - b.i; });
+  if (sel >= list.length) sel = Math.max(0, list.length - 1);
+  res.innerHTML = list.length ? list.map(function(r, i){
+    return '<button type="button" role="option" id="opt-' + i + '" data-i="' + i + '" aria-selected="' + (i === sel) + '" style="--rc:' + r.c.acc + '">' + ic(r.c.icon) + '<span>' + hl(r.c.t, r.f.m) + '</span><small>' + r.c.hint + '</small></button>';
+  }).join('') : '<div class="none">No matching command. Try “clipboard” or “go to”.</div>';
+  q.setAttribute('aria-activedescendant', list.length ? 'opt-' + sel : '');
+  var cur = res.querySelector('[aria-selected="true"]'); if (cur) cur.scrollIntoView({block:'nearest'});
+}
+function openPal(from){
+  palFrom = from || document.activeElement; setDrawer(false);
+  pal.classList.add('open'); q.value = ''; sel = 0; renderRes(); q.focus();
+}
+function closePal(){
+  pal.classList.remove('open'); cap.classList.remove('typing');
+  if (palFrom && palFrom.focus && document.body.contains(palFrom)) palFrom.focus();
+}
+function runSel(i){
+  var r = list[i]; if (!r) return;
+  closePal(); r.c.run(); refresh();
+}
+q.addEventListener('input', function(){
+  sel = 0; renderRes();
+  cap.classList.add('typing'); clearTimeout(typT);
+  typT = setTimeout(function(){ cap.classList.remove('typing'); }, 1100);
+});
+q.addEventListener('keydown', function(e){
+  if (e.key === 'ArrowDown'){ e.preventDefault(); sel = Math.min(list.length - 1, sel + 1); renderRes(); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); sel = Math.max(0, sel - 1); renderRes(); }
+  else if (e.key === 'Enter'){ e.preventDefault(); runSel(sel); }
+  else if (e.key === 'Tab'){ e.preventDefault(); }
+});
+res.addEventListener('click', function(e){ var b = e.target.closest('[data-i]'); if (b) runSel(+b.getAttribute('data-i')); });
+pal.addEventListener('mousedown', function(e){ if (e.target === pal) closePal(); });
+document.addEventListener('keydown', function(e){
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')){ e.preventDefault(); if (pal.classList.contains('open')) closePal(); else openPal(); return; }
+  if (e.key === 'Escape'){ if (pal.classList.contains('open')) closePal(); else if (S.drawer) setDrawer(false); }
+});
+if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) $('#kbdhint').textContent = '⌘ K';
+
+/* ---------- crossing log ---------- */
+function logLine(k, s){
+  S.log.push({t:clock(), k:k, s:s});
+  if (S.log.length > 40) S.log.shift();
+  if (S.page === 'mouse') renderLog();
+}
+function renderLog(){
+  var el = $('#log'); if (!el) return;
+  el.innerHTML = S.log.length ? S.log.map(function(l){
+    return '<span class="ts">' + l.t + '</span> <span class="' + l.k + '">' + (l.k === 'ok' ? 'cross   ' : 'no-cross') + '</span>' + esc(l.s.replace(/^(no-cross|cross)/, '')) ;
+  }).join('\n') : '<span class="ts">Log cleared. Waiting for the cursor…</span>';
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ---------- cursor simulation (drives mouse header + status bar) ---------- */
+var MAC_Y = 229;
+function toSvg(x, y){ return x >= 4480 ? {x:(x - 4480) / 16 + 310, y:y / 16} : {x:x / 16, y:y / 16}; }
+var simSvg = toSvg(900, 700);
+var sim = {from:null, to:null, t0:0, d:1, q:[], loop:0, desk:{x:900, y:700}};
+function plan(){
+  sim.loop++;
+  var held = sim.loop % 3 === 0, q = [];
+  q.push({x:1500, y:540, d:1900});
+  q.push({x:2559, y:812, d:1500, ev:function(){ logLine('no', 'no-cross reason=not-outer-edge edge=right pos=(2559,812) monitors=[0,0,2560x1440][2560,180,1920x1080]'); }});
+  q.push({x:3500, y:900, d:1300});
+  if (!S.mouse || S.lock || held){
+    var reason = !S.mouse ? 'sharing-off' : S.lock ? 'cursor-locked' : 'button-held';
+    q.push({x:4479, y:700, d:1500, ev:function(){ logLine('no', 'no-cross reason=' + reason + ' edge=right pos=(4479,700)'); }});
+    q.push({x:3700, y:560, d:1500}); q.push({x:1700, y:620, d:2300});
+  } else {
+    q.push({x:4479, y:700, d:1500, ev:function(){ logLine('ok', 'cross edge=right pos=(4479,700) to=MacBook arrive=(0,' + (700 - MAC_Y) + ') guard=' + S.guard + 'ms'); }});
+    q.push({x:4481, y:700, d:Math.max(260, S.cooldown + 200)});
+    q.push({x:5100, y:620, d:1700}); q.push({x:5700, y:980, d:1800}); q.push({x:5300, y:420, d:1600});
+    q.push({x:4481, y:520, d:1600, ev:function(){ logLine('ok', 'cross edge=left pos=(0,' + (520 - MAC_Y) + ') to=Windows PC arrive=(4479,520) cooldown=' + S.cooldown + 'ms'); }});
+    q.push({x:4479, y:520, d:Math.max(260, S.cooldown + 200)});
+    q.push({x:3300, y:400, d:1600}); q.push({x:1500, y:640, d:2100});
+  }
+  return q;
+}
+function ease(t){ return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+function simStep(ts){
+  if (!sim.to || ts - sim.t0 >= sim.d){
+    if (sim.to){ simSvg = sim.to.s; sim.desk = {x:sim.to.x, y:sim.to.y}; if (sim.to.ev) sim.to.ev(); }
+    if (!sim.q.length) sim.q = plan();
+    var n = sim.q.shift();
+    sim.from = {x:simSvg.x, y:simSvg.y}; sim.to = {x:n.x, y:n.y, s:toSvg(n.x, n.y), ev:n.ev}; sim.t0 = ts; sim.d = n.d;
+  }
+  var k = ease(Math.min(1, (ts - sim.t0) / sim.d));
+  simSvg = {x:sim.from.x + (sim.to.s.x - sim.from.x) * k, y:sim.from.y + (sim.to.s.y - sim.from.y) * k};
+  var dev, pos;
+  if (simSvg.x >= 310){ dev = 'MacBook'; pos = '(' + Math.round((simSvg.x - 310) * 16) + ', ' + Math.max(0, Math.round(simSvg.y * 16 - MAC_Y)) + ')'; }
+  else if (simSvg.x <= 280){ dev = 'Windows PC'; pos = '(' + Math.round(simSvg.x * 16) + ', ' + Math.round(simSvg.y * 16) + ')'; }
+  else { dev = sim.to.x >= 4480 ? 'MacBook' : 'Windows PC'; pos = 'crossing…'; }
+  S.pos = pos;
+  if (dev !== S.active){
+    S.active = dev; updateLive();
+    var st = $('#st-active'); if (st){ st.classList.remove('flash'); void st.offsetWidth; st.classList.add('flash'); }
+  }
+  var cur = document.getElementById('cur');
+  if (cur){ cur.setAttribute('transform', 'translate(' + simSvg.x.toFixed(1) + ' ' + simSvg.y.toFixed(1) + ')'); }
+}
+
+/* ---------- screen layout editor ---------- */
+var MW = 189, MH = 122.75;
+function rects(){
+  var p = S.layout.pc, m = S.layout.mac;
+  return {mons:[{n:1, x:p.x, y:p.y, w:320, h:180}, {n:2, x:p.x + 320, y:p.y + 22.5, w:240, h:135}], mac:{x:m.x, y:m.y, w:MW, h:MH}};
+}
+function ov(a1, a2, b1, b2){ return Math.min(a2, b2) - Math.max(a1, b1); }
+function hits(a, b){ return ov(a.x, a.x + a.w, b.x, b.x + b.w) > .5 && ov(a.y, a.y + a.h, b.y, b.y + b.h) > .5; }
+function snapLayout(which){
+  var r = rects(), mac = r.mac, best = null;
+  r.mons.forEach(function(m){
+    [{dx:m.x + m.w - mac.x, dy:0, ax:'y'}, {dx:m.x - (mac.x + mac.w), dy:0, ax:'y'}, {dx:0, dy:m.y + m.h - mac.y, ax:'x'}, {dx:0, dy:m.y - (mac.y + mac.h), ax:'x'}].forEach(function(c){
+      var d = Math.abs(c.dx + c.dy); if (d > 28) return;
+      var o = c.ax === 'y' ? ov(mac.y, mac.y + mac.h, m.y, m.y + m.h) : ov(mac.x, mac.x + mac.w, m.x, m.x + m.w);
+      if (o < 24) return;
+      var moved = {x:mac.x + c.dx, y:mac.y + c.dy, w:mac.w, h:mac.h};
+      if (r.mons.some(function(o2){ return hits(moved, o2); })) return;
+      if (!best || d < best.d) best = {dx:c.dx, dy:c.dy, d:d};
+    });
+  });
+  if (best){
+    if (which === 'mac'){ S.layout.mac.x += best.dx; S.layout.mac.y += best.dy; }
+    else { S.layout.pc.x -= best.dx; S.layout.pc.y -= best.dy; }
+  }
+}
+function crossings(){
+  var r = rects(), mac = r.mac, out = [], e = .6;
+  r.mons.forEach(function(m){
+    var oy = ov(mac.y, mac.y + mac.h, m.y, m.y + m.h), ox = ov(mac.x, mac.x + mac.w, m.x, m.x + m.w);
+    if (Math.abs(m.x + m.w - mac.x) < e && oy > 0) out.push({t:'Monitor ' + m.n + ' right ⇄ MacBook left', l:[mac.x, Math.max(mac.y, m.y), mac.x, Math.min(mac.y + mac.h, m.y + m.h)]});
+    if (Math.abs(m.x - mac.x - mac.w) < e && oy > 0) out.push({t:'Monitor ' + m.n + ' left ⇄ MacBook right', l:[m.x, Math.max(mac.y, m.y), m.x, Math.min(mac.y + mac.h, m.y + m.h)]});
+    if (Math.abs(m.y + m.h - mac.y) < e && ox > 0) out.push({t:'Monitor ' + m.n + ' bottom ⇄ MacBook top', l:[Math.max(mac.x, m.x), mac.y, Math.min(mac.x + mac.w, m.x + m.w), mac.y]});
+    if (Math.abs(m.y - mac.y - mac.h) < e && ox > 0) out.push({t:'Monitor ' + m.n + ' top ⇄ MacBook bottom', l:[Math.max(mac.x, m.x), m.y, Math.min(mac.x + mac.w, m.x + m.w), m.y]});
+  });
+  return out;
+}
+function drawLayout(){
+  var d = $('#desk'); if (!d) return;
+  $('#t-pc').setAttribute('transform', 'translate(' + S.layout.pc.x + ' ' + S.layout.pc.y + ')');
+  $('#t-mac').setAttribute('transform', 'translate(' + S.layout.mac.x + ' ' + S.layout.mac.y + ')');
+  var xs = crossings(), overlap = rects().mons.some(function(m){ return hits(rects().mac, m); });
+  $('#xedges').innerHTML = xs.map(function(x){ return '<line class="xedge" x1="' + x.l[0] + '" y1="' + x.l[1] + '" x2="' + x.l[2] + '" y2="' + x.l[3] + '"/>'; }).join('');
+  $('#xlist').innerHTML = overlap ? tag('Overlapping. Move them apart', 'var(--warn)') :
+    xs.length ? xs.map(function(x){ return tag(x.t); }).join('') : tag('Not touching. Drag the MacBook against an outer edge so the cursor can cross', '', true);
+  updateLive();
+}
+function initLayout(){
+  var d = $('#desk');
+  drawLayout();
+  var drag = null;
+  function pt(e){ var p = d.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(d.getScreenCTM().inverse()); }
+  function clamp(which){
+    var o = S.layout[which], w = which === 'pc' ? 560 : MW, h = which === 'pc' ? 180 : MH;
+    o.x = Math.max(0, Math.min(900 - w, o.x)); o.y = Math.max(0, Math.min(420 - h, o.y));
+  }
+  d.addEventListener('pointerdown', function(e){
+    var t = e.target.closest('[data-tile]'); if (!t) return;
+    var w = t.getAttribute('data-tile'), p = pt(e);
+    drag = {w:w, dx:p.x - S.layout[w].x, dy:p.y - S.layout[w].y};
+    d.setPointerCapture(e.pointerId); t.focus({preventScroll:true}); e.preventDefault();
+  });
+  d.addEventListener('pointermove', function(e){
+    if (!drag) return; var p = pt(e);
+    S.layout[drag.w].x = p.x - drag.dx; S.layout[drag.w].y = p.y - drag.dy;
+    clamp(drag.w); snapLayout(drag.w); drawLayout();
+  });
+  var end = function(){ if (drag){ var n = crossings().length; toast(n ? 'Crossing: ' + crossings()[0].t : 'Not touching, no crossing'); } drag = null; };
+  d.addEventListener('pointerup', end); d.addEventListener('pointercancel', end);
+  d.addEventListener('keydown', function(e){
+    var t = e.target.closest && e.target.closest('[data-tile]'); if (!t) return;
+    var w = t.getAttribute('data-tile'), step = e.shiftKey ? 40 : 10, o = S.layout[w];
+    if (e.key === 'ArrowLeft') o.x -= step; else if (e.key === 'ArrowRight') o.x += step;
+    else if (e.key === 'ArrowUp') o.y -= step; else if (e.key === 'ArrowDown') o.y += step; else return;
+    e.preventDefault(); clamp(w); snapLayout(w); drawLayout();
+  });
+}
+
+/* ---------- aurora ---------- */
+var aurora = (function(){
+  var cv = $('#aurora'), cx = cv.getContext('2d'), W = 0, H = 0;
+  var acc = [157, 180, 255], target = [157, 180, 255];
+  var B = [
+    {c:[52, 84, 230], x:.18, y:.22, ax:.16, ay:.12, px:61, py:47, r:.62, a:.42},
+    {c:[132, 84, 240], x:.78, y:.18, ax:.14, ay:.14, px:83, py:71, r:.55, a:.34},
+    {c:[30, 170, 190], x:.62, y:.86, ax:.2, ay:.09, px:53, py:89, r:.6, a:.26},
+    {c:[220, 100, 150], x:.12, y:.9, ax:.12, ay:.1, px:77, py:59, r:.48, a:.18},
+    {acc:true, x:.58, y:.42, ax:.22, ay:.16, px:67, py:43, r:.62, a:.3}
+  ];
+  function size(){ W = cv.width = Math.max(40, Math.ceil(innerWidth / 8)); H = cv.height = Math.max(30, Math.ceil(innerHeight / 8)); }
+  function hex(h){ return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
+  function draw(t){
+    cx.globalCompositeOperation = 'source-over'; cx.fillStyle = '#04060c'; cx.fillRect(0, 0, W, H);
+    cx.globalCompositeOperation = 'lighter';
+    var M = Math.max(W, H);
+    B.forEach(function(b, i){
+      var X = (b.x + b.ax * Math.sin(t / b.px * 6.283 + i * 1.7)) * W, Y = (b.y + b.ay * Math.cos(t / b.py * 6.283 + i)) * H, R = b.r * M;
+      var c = b.acc ? acc : b.c, g = cx.createRadialGradient(X, Y, 0, X, Y, R);
+      g.addColorStop(0, 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',' + b.a + ')');
+      g.addColorStop(.55, 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',' + (b.a * .35) + ')');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    });
+  }
+  size();
+  window.addEventListener('resize', function(){ size(); if (RM.matches) draw(0); });
+  return {
+    draw:draw,
+    step:function(){ for (var i = 0; i < 3; i++) acc[i] += (target[i] - acc[i]) * .03; },
+    setAccent:function(h){ target = hex(h); if (RM.matches){ acc = target.slice(); draw(30); } }
+  };
+})();
+
+/* ---------- loops ---------- */
+var raf = 0, lastA = 0;
+function frame(ts){
+  simStep(ts);
+  if (ts - lastA > 50){ aurora.step(); aurora.draw(ts / 1000); lastA = ts; }
+  raf = requestAnimationFrame(frame);
+}
+function startLoops(){
+  cancelAnimationFrame(raf);
+  if (RM.matches){ aurora.draw(30); S.active = 'Windows PC'; S.pos = '(900, 700)'; updateLive(); return; }
+  raf = requestAnimationFrame(frame);
+}
+if (RM.addEventListener) RM.addEventListener('change', function(){ startLoops(); render(); });
+
+var battTick = 0;
+setInterval(function(){
+  S.ping = newPing();
+  if (S.screen || S.page === 'screen') S.lat = newLat();
+  if (++battTick % 25 === 0 && S.battery > 5) S.battery--;
+  if (S.pair && S.pair.until <= Date.now() && !S.pair.exp){ S.pair.exp = true; if (S.page === 'connection') refresh(); }
+  updateLive();
+}, 1000);
+
+/* ---------- boot ---------- */
+$('#logo1').innerHTML = logo(30); $('#logo2').innerHTML = logo(26);
+buildNav();
+S.page = PG[location.hash.slice(1)] ? location.hash.slice(1) : 'home';
+render();
+startLoops();
+})();
+</script>

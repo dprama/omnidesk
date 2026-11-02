@@ -35,6 +35,10 @@ public:
 
   void parseArgs() override;
   const char *daemonName() const override;
+  const char *startMode() const override
+  {
+    return "client";
+  }
   void loadConfig() override
   {
     // do nothing

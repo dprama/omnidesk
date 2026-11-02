@@ -1,0 +1,113 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors -->
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<!--
+  OmniDesk dmg window background, Glass folders language.
+  Rendered to background.png (660x400) and background@2x.png (1320x800) by render.mjs.
+  Icon slots must match layout.json: app at (180,200), Applications at (480,200).
+  Local only: fonts come from the app's bundled fonts, with system fallbacks. No network.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OmniDesk dmg background</title>
+<style>
+@font-face{font-family:"Figtree";font-weight:300 900;font-display:block;
+  src:url("../../app/renderer/fonts/figtree-latin.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:100 800;font-display:block;
+  src:url("../../app/renderer/fonts/jetbrains-mono-latin.woff2") format("woff2")}
+:root{
+  --bg:#0c0e13;
+  --ink:#eef1f6; --ink-2:#b6bdcb; --ink-3:#808999; --ink-4:#596170;
+  --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.13);
+  --font:"Figtree","SF Pro Display",-apple-system,"Helvetica Neue",system-ui,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",Menlo,ui-monospace,monospace;
+  /* icon centres, keep in sync with layout.json */
+  --app-x:180px; --apps-x:480px; --icon-y:200px; --slot:148px; --slot-h:178px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:660px;height:400px;overflow:hidden;background:var(--bg)}
+body{position:relative;font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* spectral light through frosted glass (a still frame of the app's slow drift) */
+.spectrum{position:absolute;inset:-30%;
+  background:
+    radial-gradient(26% 30% at 31% 47%,rgba(95,212,232,.42),transparent 70%),
+    radial-gradient(26% 32% at 70% 44%,rgba(169,139,255,.46),transparent 70%),
+    radial-gradient(30% 22% at 54% 84%,rgba(82,214,170,.20),transparent 70%),
+    radial-gradient(22% 20% at 24% 82%,rgba(244,131,166,.24),transparent 70%),
+    radial-gradient(20% 18% at 84% 20%,rgba(242,184,96,.18),transparent 70%);
+  filter:blur(34px) saturate(115%);transform:rotate(-4deg)}
+.frost{position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(12,14,19,.0),rgba(12,14,19,.38)),
+    repeating-linear-gradient(115deg,rgba(255,255,255,.012) 0 2px,transparent 2px 7px)}
+.vignette{position:absolute;inset:0;
+  background:radial-gradient(120% 95% at 50% 45%,transparent 55%,rgba(5,6,9,.55) 100%)}
+
+/* header */
+.head{position:absolute;left:0;right:0;top:40px;text-align:center}
+.head h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.012em;color:var(--ink)}
+.head p{margin:6px 0 0;font-size:12.5px;color:var(--ink-3);letter-spacing:.005em}
+
+/* glass slots behind the two Finder icons */
+.slot{position:absolute;width:var(--slot);
+  height:var(--slot-h);top:calc(var(--icon-y) - 78px);border-radius:30px;
+  background:linear-gradient(180deg,rgba(28,33,46,.58),rgba(18,21,30,.42));
+  border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 18px 40px -18px rgba(0,0,0,.7)}
+.slot.app{left:calc(var(--app-x) - var(--slot) / 2)}
+.slot.apps{left:calc(var(--apps-x) - var(--slot) / 2);
+  background:linear-gradient(180deg,rgba(28,33,46,.40),rgba(18,21,30,.28))}
+.slot.apps::after{content:"";position:absolute;inset:9px;border-radius:22px;
+  border:1px dashed rgba(255,255,255,.10)}
+.slot.app::before{content:"";position:absolute;inset:-1px;border-radius:30px;padding:1px;
+  background:linear-gradient(135deg,rgba(95,212,232,.55),rgba(169,139,255,.45) 45%,rgba(244,131,166,.0) 80%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+
+/* calm arrow between the slots */
+.arrow{position:absolute;left:0;top:0;width:660px;height:400px}
+
+/* foot note */
+.foot{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:center;gap:10px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 9px;border-radius:999px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;color:var(--ink-2);
+  background:rgba(22,26,36,.55);border:1px solid var(--line)}
+.chip i{width:6px;height:6px;border-radius:50%;background:#6fa6ff;box-shadow:0 0 8px #6fa6ff}
+.foot span{font-size:11px;color:var(--ink-4)}
+</style>
+</head>
+<body>
+  <div class="spectrum"></div>
+  <div class="frost"></div>
+  <div class="vignette"></div>
+
+  <header class="head">
+    <h1>Drag OmniDesk to Applications</h1>
+    <p>Then open it from your Applications folder.</p>
+  </header>
+
+  <div class="slot app"></div>
+  <div class="slot apps"></div>
+
+  <svg class="arrow" viewBox="0 0 660 400" aria-hidden="true">
+    <defs>
+      <linearGradient id="ag" x1="268" y1="0" x2="392" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#5fd4e8" stop-opacity=".15"/>
+        <stop offset=".45" stop-color="#a98bff" stop-opacity=".85"/>
+        <stop offset="1" stop-color="#eef1f6" stop-opacity=".95"/>
+      </linearGradient>
+      <filter id="ab" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="4"/></filter>
+    </defs>
+    <!-- soft glow under the stroke -->
+    <path d="M272 200 C 310 186, 350 186, 386 200" fill="none" stroke="url(#ag)" stroke-width="5" stroke-linecap="round" opacity=".45" filter="url(#ab)"/>
+    <path d="M272 200 C 310 186, 350 186, 386 200" fill="none" stroke="url(#ag)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M377 191.5 L 387.5 200.5 L 374.5 205.5" fill="none" stroke="#eef1f6" stroke-opacity=".95" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+
+  <footer class="foot">
+    <span class="chip"><i></i>Intel Mac · macOS 12 or later</span>
+  </footer>
+</body>
+</html>

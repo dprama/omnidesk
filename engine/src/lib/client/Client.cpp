@@ -24,6 +24,7 @@
 #include "deskflow/ProtocolTypes.h"
 #include "deskflow/ProtocolUtil.h"
 #include "deskflow/StreamChunker.h"
+#include "deskflow/ipc/CoreControls.h"
 #include "deskflow/ipc/CoreIpc.h"
 #include "net/IDataSocket.h"
 #include "net/ISocketFactory.h"
@@ -237,7 +238,7 @@ bool Client::leave()
 
   m_computer->leave();
 
-  if (m_enableClipboard) {
+  if (clipboardAllowed()) {
     // send clipboards that we own and that have changed
     for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
       if (m_ownClipboard[id]) {
@@ -251,6 +252,11 @@ bool Client::leave()
 
 void Client::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
+  // OmniDesk: `clipboard=off` from the app stops data coming in, too
+  if (!clipboardAllowed()) {
+    LOG_DEBUG("clipboard sharing is off, ignoring clipboard %d from server", id);
+    return;
+  }
   m_computer->setClipboard(id, clipboard);
   m_ownClipboard[id] = false;
   m_sentClipboard[id] = false;
@@ -258,9 +264,19 @@ void Client::setClipboard(ClipboardID id, const IClipboard *clipboard)
 
 void Client::grabClipboard(ClipboardID id)
 {
+  // OmniDesk: with clipboard sharing off the local clipboard is left alone
+  if (!clipboardAllowed()) {
+    return;
+  }
   m_computer->grabClipboard(id);
   m_ownClipboard[id] = false;
   m_sentClipboard[id] = false;
+}
+
+bool Client::clipboardAllowed() const
+{
+  // the server's option (clipboardSharing / size) and the app's runtime switch
+  return m_enableClipboard && deskflow::core::ipc::CoreControls::instance().clipboard().value_or(true);
 }
 
 void Client::setClipboardDirty(ClipboardID, bool)
@@ -638,12 +654,13 @@ void Client::handleDisconnectRequested(const Event &event)
 void Client::handleShapeChanged()
 {
   LOG_DEBUG("resolution changed");
+  deskflow::core::ipc::CoreControls::instance().setLocalMonitors(m_computer->getMonitorRects());
   m_server->onInfoChanged();
 }
 
 void Client::handleClipboardGrabbed(const Event &event)
 {
-  if (!m_enableClipboard || (m_maximumClipboardSize == 0)) {
+  if (!clipboardAllowed() || (m_maximumClipboardSize == 0)) {
     return;
   }
 

@@ -1,0 +1,97 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors -->
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c11">
+<title>OmniDesk privacy</title>
+<meta name="description" content="OmniDesk collects no data. No account, no cloud, no analytics.">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gSpec" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fd4e8"/><stop offset=".3" stop-color="#a98bff"/><stop offset=".55" stop-color="#f483a6"/><stop offset=".8" stop-color="#f2b860"/><stop offset="1" stop-color="#52d6aa"/>
+    </linearGradient>
+  </defs>
+  <symbol id="logo" viewBox="0 0 40 40">
+    <rect x="4" y="7" width="24" height="19" rx="5" fill="none" stroke="url(#gSpec)" stroke-width="2.4"/>
+    <rect x="12" y="14" width="24" height="19" rx="5" fill="#2a2e37" stroke="#ebeef4" stroke-opacity=".85" stroke-width="1.6"/>
+    <path d="M20 19.5v8l2.3-2 1.8 3.6 1.5-.7-1.8-3.5h3z" fill="#eef1f6"/>
+  </symbol>
+</svg>
+
+<div class="sky" aria-hidden="true"><div class="spectrum"></div><div class="frost"></div></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="OmniDesk home"><svg aria-hidden="true"><use href="#logo"/></svg><span>OmniDesk</span></a>
+    <nav aria-label="Site">
+      <a class="opt" href="./#features">Features</a>
+      <a class="opt" href="./#how">How it works</a>
+      <a class="opt" href="privacy.html" aria-current="page">Privacy</a>
+      <a class="opt" href="https://github.com/dprama/omnidesk">Source</a>
+      <a class="nav-dl" href="download.html">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<section class="page-head" aria-labelledby="pv-h">
+  <div class="wrap">
+    <span class="kick c-screen"><i></i>Privacy</span>
+    <h1 id="pv-h">We don't collect anything.</h1>
+    <p class="lead">That's the short version. Here is the slightly longer one.</p>
+  </div>
+</section>
+
+<section aria-label="Privacy details">
+  <div class="wrap plain">
+    <h2>The app</h2>
+    <ul>
+      <li>No account. There's nothing to sign up for.</li>
+      <li>No cloud. Your computers talk directly to each other over your own Wi-Fi, USB cable or Bluetooth, encrypted. Nothing passes through a server of ours, because there isn't one.</li>
+      <li>No analytics, no telemetry, no crash reports sent anywhere.</li>
+      <li>Your clipboard, screens and camera only ever go to computers you paired yourself with a 6-digit code.</li>
+    </ul>
+
+    <h2>Feedback</h2>
+    <p>The app never sends feedback on its own. If you want to report a problem or share an idea, you open an issue on <a href="https://github.com/dprama/omnidesk/issues">GitHub</a> yourself, and you see exactly what you post. System details are only included if you tick the box and can read them before posting. GitHub's own privacy terms apply there.</p>
+
+    <h2>This website</h2>
+    <p>No cookies, no analytics, no fonts or scripts from other sites. To point the Download button at the right file, your browser asks GitHub's public API for the latest release. That request goes from your browser straight to GitHub, without a referrer, and we never see it.</p>
+
+    <div class="card">
+      <p>OmniDesk is open source under GPL-2.0-only, so you don't have to take our word for any of this: <a href="https://github.com/dprama/omnidesk">read the code</a>.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="./"><svg aria-hidden="true"><use href="#logo"/></svg><span>OmniDesk 2.5.0</span></a>
+      <p>Free and open source, licensed under GPL-2.0-only.</p>
+      <p class="credits">Built on <a href="https://github.com/deskflow/deskflow">Deskflow</a>. Copyright (C) 2025 Deskflow Developers, (C) 2012 Synergy App Ltd, (C) 2002 Chris Schoeneman.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="download.html">Download</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/dprama/omnidesk">Source code</a>
+      <a href="https://github.com/dprama/omnidesk/issues">Report a problem</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "omnidesk",
+  "productName": "OmniDesk",
+  "version": "2.5.0",
+  "description": "One mouse, one keyboard, one clipboard across your computers.",
+  "license": "GPL-2.0-only",
+  "private": true,
+  "author": "OmniDesk contributors",
+  "homepage": "https://github.com/dprama/omnidesk",
+  "main": "main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"main/**/*.test.js\"",
+    "test-window": "node test/run.mjs --headed",
+    "test:page": "node test/run.mjs",
+    "test:mock": "node --test test/",
+    "smoke": "electron . --smoke-test",
+    "dist:mac": "electron-builder --config electron-builder.config.js --mac dmg --x64",
+    "dist:win": "electron-builder --config electron-builder.config.js --win nsis --x64 --arm64",
+    "dist:linux": "electron-builder --config electron-builder.config.js --linux AppImage --x64"
+  },
+  "devDependencies": {
+    "electron": "44.9.0",
+    "electron-builder": "26.17.0"
+  },
+  "dependencies": {
+    "@noble/curves": "1.9.7",
+    "@noble/hashes": "1.8.0",
+    "multicast-dns": "7.2.5"
+  }
+}

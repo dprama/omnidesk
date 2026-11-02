@@ -119,6 +119,9 @@ public:
     inline static const auto SwitchDelay = QStringLiteral("server/switchDelay");
     inline static const auto SwitchDoubleTap = QStringLiteral("server/switchDoubleTap");
     inline static const auto Win32KeepForeground = QStringLiteral("server/win32KeepForeground");
+    // OmniDesk edge-crossing timings in milliseconds (also accepted in `section: options` of the server config)
+    inline static const auto OmniDeskCrossCooldown = QStringLiteral("server/omnideskCrossCooldown");
+    inline static const auto OmniDeskArrivalGuard = QStringLiteral("server/omnideskArrivalGuard");
     inline static const auto XdpClipboardRetried = QStringLiteral("server/xdpClipboardRetried");
     inline static const auto XdpRestoreToken = QStringLiteral("server/xdpRestoreToken");
   };
@@ -335,6 +338,8 @@ private:
     , Server::SwitchDelay
     , Server::SwitchDoubleTap
     , Server::Win32KeepForeground
+    , Server::OmniDeskCrossCooldown
+    , Server::OmniDeskArrivalGuard
   };
 
   // When checking the default values this list contains the ones that default to false.

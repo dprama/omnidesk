@@ -1,0 +1,844 @@
+<title>OmniDesk · ASCII</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap");
+:root{
+  color-scheme:dark;
+  --bg:#131417; --bg2:#18191d;
+  --pn:rgba(22,23,27,.9); --pn2:rgba(30,31,36,.92);
+  --line:#34353b; --line2:#4d4e56;
+  --tx:#e9e3d7; --mu:#a29c90; --fa:#68645d; --ff:#3f3d39;
+  --cy:#7cc7d0; --vi:#a99bdd; --am:#dbb36f; --te:#72c8a6; --ro:#de92a2; --bl:#89a8e2; --warm:#d6c6a6;
+  --good:#97cb8c; --warn:#e3a35f; --bad:#e2867a;
+  --scrim:rgba(9,9,11,.6);
+  --acc:var(--warm);
+  --lh:20px;
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 13px/20px var(--mono);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+#field{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 40%,transparent 40%,rgba(10,10,12,.55) 100%)}
+a{color:inherit}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:1px dashed var(--acc);outline-offset:2px;border-radius:2px}
+::selection{background:color-mix(in oklab,var(--acc) 35%,transparent)}
+
+/* app frame */
+.app{position:relative;z-index:1;max-width:1320px;margin:0 auto;min-height:100dvh;display:grid;grid-template-columns:236px minmax(0,1fr);grid-template-rows:auto 1fr auto;column-gap:20px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:14px 0 10px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;white-space:nowrap}
+.brand b{font-weight:500;letter-spacing:.02em}
+.crumb{color:var(--fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.crumb span{color:var(--mu)}
+.spacer{flex:1}
+.kbtn{background:var(--pn);border:1px solid var(--line2);border-radius:4px;padding:3px 10px;cursor:pointer;color:var(--mu);white-space:nowrap}
+.kbtn:hover{color:var(--tx);border-color:var(--fa)}
+.kbtn kbd{color:var(--tx)}
+.menu-btn{display:none}
+kbd{font:inherit;color:var(--tx);border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-size:12px}
+
+/* character-framed boxes */
+.box{position:relative;margin:0 0 16px;min-width:0;display:flex;flex-direction:column;
+  background:linear-gradient(var(--pn),var(--pn)) no-repeat;background-position:.5ch calc(var(--lh)/2);background-size:calc(100% - 1ch) calc(100% - var(--lh))}
+.box::before,.box::after{content:"";position:absolute;top:calc(var(--lh)/2);bottom:calc(var(--lh)/2);width:1px;background:var(--line2)}
+.box::before{left:calc(.5ch - .5px)}
+.box::after{right:calc(.5ch - .5px)}
+.bt,.bb{display:flex;white-space:pre;color:var(--line2);height:var(--lh);overflow:hidden;user-select:none;position:relative}
+.bt .lbl{color:var(--mu);flex:none}
+.bt .lbl.t{color:var(--acc)}
+.bt .lbl.r{color:var(--fa)}
+.fill{flex:1 1 0;overflow:hidden;min-width:1ch}
+.bi{padding:6px 2ch 8px;position:relative;min-width:0;flex:1}
+.box.sq .bt,.box.sq .bb{color:var(--line)}
+.box.sq::before,.box.sq::after{background:var(--line)}
+.livedot{color:var(--acc);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* sidebar */
+.side{position:sticky;top:12px;align-self:start;min-width:0}
+.grp{display:flex;color:var(--fa);white-space:pre;overflow:hidden;margin-top:10px;text-transform:lowercase}
+.grp:first-child{margin-top:0}
+.it{display:flex;gap:1ch;align-items:center;text-decoration:none;color:var(--mu);padding:1px 1ch;border-radius:3px;white-space:nowrap}
+.it .g{width:2ch;text-align:center}
+.it .m{color:transparent;width:1ch}
+.it:hover{color:var(--tx);background:rgba(255,255,255,.03)}
+.it[aria-current="page"]{color:var(--tx);background:color-mix(in oklab,var(--c) 13%,transparent)}
+.it[aria-current="page"] .m{color:var(--c)}
+.me{color:var(--fa);margin-top:6px}
+.me b{color:var(--mu);font-weight:400}
+
+/* main */
+main{min-width:0;padding-bottom:24px}
+.ph h1{font-size:22px;line-height:30px;font-weight:500;letter-spacing:-.01em;margin:2px 0 0;outline:none}
+.ph .pfx{color:var(--fa);font-weight:300}
+.sub{color:var(--mu);margin:2px 0 12px}
+.sub b{color:var(--acc);font-weight:500}
+.art{container-type:inline-size;display:flex;justify-content:center;overflow:hidden;padding:4px 0}
+.art pre{margin:0;font-family:var(--mono);font-size:min(13px,calc(100cqw / (var(--cols) * .605)));line-height:1.3;width:max-content;color:var(--mu)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:16px}
+.span2{grid-column:1/-1}
+p{margin:0 0 10px}
+.muted{color:var(--mu)} .faint{color:var(--fa)}
+.note{color:var(--mu);border-left:1px solid var(--line2);padding-left:1.5ch;margin:8px 0}
+.kv{display:flex;gap:1ch;white-space:nowrap;min-width:0}
+.kv .k{color:var(--mu);flex:none}
+.kv .dots{flex:1 1 0;overflow:hidden;color:var(--ff);min-width:1ch}
+.kv .v{flex:none;max-width:70%;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-block;color:var(--c,var(--acc));border:1px solid color-mix(in oklab,var(--c,var(--acc)) 40%,transparent);border-radius:3px;padding:0 .6ch;line-height:17px;margin:2px 4px 2px 0;font-size:12px}
+.badge{display:inline-block;font-size:11px;line-height:16px;padding:0 .8ch;border-radius:3px;color:var(--acc);border:1px dashed color-mix(in oklab,var(--acc) 55%,transparent);vertical-align:3px;margin-left:1ch;font-weight:400;letter-spacing:.02em}
+.hr{color:var(--line);white-space:pre;overflow:hidden;height:var(--lh);margin:4px 0}
+
+/* controls */
+.btn{background:transparent;border:0;padding:1px 3px;cursor:pointer;border-radius:3px;color:var(--tx);white-space:nowrap}
+.btn::before{content:"[ ";color:var(--fa)}
+.btn::after{content:" ]";color:var(--fa)}
+.btn:hover{background:color-mix(in oklab,var(--acc) 13%,transparent)}
+.btn.pri{color:var(--acc)}
+.btn.pri::before,.btn.pri::after{color:color-mix(in oklab,var(--acc) 60%,var(--fa))}
+.btn[disabled]{color:var(--fa);cursor:not-allowed}
+.sw{display:flex;width:100%;align-items:center;gap:1ch;background:none;border:0;padding:3px 0;cursor:pointer;text-align:left;color:var(--tx)}
+.sw .lab{flex:1;min-width:0}
+.sw .sw-g{color:var(--fa);white-space:pre;flex:none}
+.sw.on .sw-g{color:var(--acc);text-shadow:0 0 10px color-mix(in oklab,var(--acc) 55%,transparent)}
+.sw.big{font-size:15px;padding:8px 0}
+.seg{display:inline-flex;flex-wrap:wrap;align-items:center;color:var(--fa)}
+.seg::before{content:"("}
+.seg::after{content:")"}
+.seg button{background:none;border:0;color:var(--mu);padding:0 1ch;cursor:pointer;border-radius:3px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line);border-radius:0}
+.seg button:hover{color:var(--tx)}
+.seg button[aria-checked="true"]{color:var(--bg);background:var(--acc);border-radius:2px}
+.row{display:flex;align-items:center;gap:1ch;flex-wrap:wrap;margin:6px 0}
+.row .k{color:var(--mu);min-width:14ch}
+.sl{display:block;margin:6px 0 10px}
+.sl-h{display:flex;justify-content:space-between;gap:1ch}
+.sl-h b{color:var(--acc);font-weight:500}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;width:100%;height:20px;margin:2px 0;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:repeating-linear-gradient(90deg,var(--line2) 0 4px,transparent 4px 8px)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:14px;margin-top:-7px;background:var(--acc);border-radius:1px;box-shadow:0 0 10px color-mix(in oklab,var(--acc) 50%,transparent)}
+input[type=range]::-moz-range-track{height:1px;background:var(--line2)}
+input[type=range]::-moz-range-thumb{width:8px;height:14px;border:0;background:var(--acc);border-radius:1px}
+.rule{display:flex;gap:1ch;align-items:baseline;flex-wrap:wrap;color:var(--tx);margin-top:6px}
+.tag{color:var(--fa);font-size:12px}
+.field-in,textarea{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:3px;color:var(--tx);padding:6px 1ch;resize:vertical}
+.field-in:focus,textarea:focus{border-color:var(--acc);outline:none;box-shadow:0 0 0 1px color-mix(in oklab,var(--acc) 30%,transparent)}
+input[type=checkbox]{-webkit-appearance:none;appearance:none;margin:0;width:3ch;height:20px;cursor:pointer;color:var(--fa);flex:none}
+input[type=checkbox]::before{content:"[ ]";font:inherit}
+input[type=checkbox]:checked::before{content:"[x]";color:var(--acc)}
+.cb{display:flex;gap:1ch;align-items:center;cursor:pointer}
+pre.plain{margin:6px 0;white-space:pre-wrap;word-break:break-word;font:inherit;color:var(--mu);background:rgba(0,0,0,.22);padding:8px 1.5ch;border-left:1px solid var(--acc)}
+.log{margin:0;white-space:pre-wrap;word-break:break-all;font:12px/18px var(--mono);color:var(--mu);min-height:144px}
+.log .ts{color:var(--fa)} .log .w{color:var(--warn)} .log .g{color:var(--good)}
+.code{font-size:34px;line-height:46px;letter-spacing:.18em;color:var(--acc);font-weight:500;text-shadow:0 0 18px color-mix(in oklab,var(--acc) 35%,transparent);margin:6px 0}
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;gap:1ch;align-items:flex-start;padding:6px 0;border-bottom:1px dashed var(--line)}
+.list li:last-child{border-bottom:0}
+.list .ic{flex:none;color:var(--acc);white-space:pre;line-height:16px;font-size:12px}
+.list .bd{flex:1;min-width:0}
+.list .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .meta{color:var(--fa);font-size:12px}
+.dev{display:grid;grid-template-columns:2ch minmax(0,1fr) auto;gap:0 1ch;padding:6px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+.dev:last-child{border-bottom:0}
+.ok{color:var(--good)} .wn{color:var(--warn)} .bad{color:var(--bad)}
+.board-wrap pre{cursor:grab;touch-action:none;user-select:none;outline-offset:4px}
+.board-wrap pre.drag{cursor:grabbing}
+.edge{margin:2px 0}
+.thx{font-size:15px;line-height:24px}
+
+/* k- classes for character grids */
+.k-f{color:var(--ff)} .k-d{color:var(--fa)} .k-m{color:var(--mu)} .k-t{color:var(--tx)} .k-l{color:var(--line2)}
+.k-a{color:var(--acc)} .k-a2{color:color-mix(in oklab,var(--acc) 42%,var(--bg))}
+.k-b{color:color-mix(in oklab,var(--acc) 70%,#fff);text-shadow:0 0 8px color-mix(in oklab,var(--acc) 60%,transparent)}
+.k-g{color:var(--good)} .k-w{color:var(--warn)} .k-r{color:var(--bad)}
+.k-cy{color:var(--cy)} .k-vi{color:var(--vi)} .k-am{color:var(--am)} .k-te{color:var(--te)} .k-ro{color:var(--ro)} .k-bl{color:var(--bl)}
+
+/* status bar */
+.status{grid-column:1/-1;position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:0 1ch;padding:6px 1.5ch;margin:0 0 10px;
+  background:rgba(17,18,21,.94);border:1px solid var(--line);border-radius:4px;color:var(--mu);font-size:12px;backdrop-filter:blur(6px)}
+.status .sep{color:var(--line2)}
+.status b{font-weight:400;color:var(--tx)}
+.status svg{vertical-align:-2px}
+.status .grow{flex:1}
+
+/* command bar */
+.cmd{position:fixed;inset:0;z-index:40;background:var(--scrim);backdrop-filter:blur(3px);padding:12vh 16px 16px}
+.cmd[hidden]{display:none}
+.cmd .box{max-width:660px;margin:0 auto;--pn:rgba(20,21,25,.97);transition:filter .25s}
+.cmd.typing .box{filter:drop-shadow(0 0 14px color-mix(in oklab,var(--glow) 40%,transparent))}
+.prompt{display:flex;align-items:center;gap:1ch;font-size:15px;line-height:28px;padding:2px 0 8px;border-bottom:1px dashed var(--line);margin-bottom:6px}
+.ps{color:var(--glow);white-space:nowrap}
+.fld{position:relative;flex:1;min-width:0}
+.fld input{width:100%;background:transparent;border:0;outline:none;caret-color:transparent;padding:0;font-size:15px;line-height:28px}
+.fld input::placeholder{color:var(--fa)}
+.caret{position:absolute;top:4px;width:1ch;height:20px;background:var(--glow);animation:blink 1.05s steps(1) infinite;pointer-events:none;opacity:.85}
+.cmd.typing .caret{animation:none;opacity:1;box-shadow:0 0 10px var(--glow),0 0 22px color-mix(in oklab,var(--glow) 60%,transparent)}
+.cmd.typing .fld input{text-shadow:0 0 12px color-mix(in oklab,var(--glow) 55%,transparent)}
+@keyframes blink{50%{opacity:0}}
+#cmdlist{list-style:none;margin:0;padding:0;max-height:min(46vh,380px);overflow:auto}
+#cmdlist li{display:flex;gap:1ch;padding:2px 1ch;border-radius:3px;cursor:pointer;color:var(--mu)}
+#cmdlist li .mk{color:transparent;flex:none}
+#cmdlist li .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#cmdlist li .lb em{font-style:normal;color:var(--tx);text-decoration:underline;text-decoration-color:color-mix(in oklab,var(--c) 60%,transparent);text-underline-offset:3px}
+#cmdlist li .hn{color:var(--c);font-size:12px;opacity:.8}
+#cmdlist li[aria-selected="true"]{background:color-mix(in oklab,var(--c) 14%,transparent);color:var(--tx)}
+#cmdlist li[aria-selected="true"] .mk{color:var(--c)}
+.cmd-foot{color:var(--fa);font-size:12px;margin-top:6px}
+
+/* toast */
+.toast{position:fixed;right:max(24px,env(safe-area-inset-right,0px));bottom:64px;z-index:50;min-width:240px;max-width:calc(100% - 32px);visibility:hidden;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s,visibility .2s}
+.toast.show{visibility:visible;opacity:1;transform:none}
+.toast .box{margin:0;--pn:rgba(24,25,29,.97);--acc:var(--good)}
+
+@media (max-width:860px){
+  .grid3{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none;position:static}
+  .app.menu .side{display:block}
+  .menu-btn{display:inline-block}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .crumb{display:none}
+  .kbtn .kl{display:none}
+  .code{font-size:26px;letter-spacing:.12em}
+  .toast{left:16px;right:16px;bottom:96px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .caret{opacity:1}
+}
+</style>
+
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="app" id="app">
+  <header class="top">
+    <button class="btn menu-btn" data-act="menu" id="menu-btn" aria-expanded="false" aria-controls="side">menu</button>
+    <a class="brand" href="#home" aria-label="OmniDesk home">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--cy)"/><stop offset=".5" style="stop-color:var(--vi)"/><stop offset="1" style="stop-color:var(--ro)"/></linearGradient></defs>
+        <rect x="1.5" y="3.5" width="12.5" height="9" rx="2" fill="none" stroke="url(#lg)" stroke-width="1.5"/>
+        <rect x="10" y="11.5" width="12.5" height="9" rx="2" fill="none" stroke="url(#lg)" stroke-width="1.5"/>
+        <path d="M11.6 7.2l5.2 1.9-2.2.8-.8 2.2z" style="fill:var(--tx)"/>
+      </svg>
+      <b>omnidesk</b>
+    </a>
+    <div class="crumb" id="crumb"></div>
+    <div class="spacer"></div>
+    <button class="kbtn" data-act="cmd" id="cmd-btn" aria-haspopup="dialog"><span aria-hidden="true">❯_</span> <span class="kl">commands</span> <kbd id="kbd-hint">Ctrl K</kbd></button>
+  </header>
+  <aside class="side" id="side"></aside>
+  <main id="main"></main>
+  <footer class="status" id="status" aria-label="Status"></footer>
+</div>
+
+<div class="cmd" id="cmd" hidden role="dialog" aria-modal="true" aria-label="Command bar">
+  <div id="cmdbox"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const LINE='─'.repeat(260), DOTS='·'.repeat(160);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)');
+let reduce=RM.matches;
+const isMac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
+
+/* ---------- pages ---------- */
+const PAGES={
+  home:{t:'Home',acc:'--warm',g:'⌂',path:''},
+  mouse:{t:'Mouse & keyboard',acc:'--vi',g:'↖',path:'share/'},
+  layout:{t:'Screen layout',acc:'--vi',g:'▦',path:'share/'},
+  clipboard:{t:'Clipboard',acc:'--am',g:'▤',path:'share/'},
+  screen:{t:'Second screen',acc:'--te',g:'▭',path:'share/'},
+  camera:{t:'Camera',acc:'--ro',g:'◉',path:'share/'},
+  connection:{t:'Connection',acc:'--cy',g:'≋',path:'devices/'},
+  devices:{t:'Multi-device',acc:'--bl',g:'∴',path:'devices/'},
+  tip:{t:'Tip',acc:'--warm',g:'♥',path:'more/'},
+  feedback:{t:'Feedback',acc:'--warm',g:'✎',path:'more/'},
+  about:{t:'About',acc:'--warm',g:'i',path:'more/'}
+};
+const NAV=[['',['home']],['share',['mouse','layout','clipboard','screen','camera']],['devices',['connection','devices']],['more',['tip','feedback','about']]];
+
+/* ---------- state ---------- */
+const DEFAULT_L=()=>({pc:{x:5,y:3},mac:{x:31,y:4}});
+const S={
+  page:'home', clip:true, mouse:true, locked:false, cooldown:250, guard:150,
+  link:'wifi', ping:4, batt:82, active:'Windows PC',
+  ss:{on:null,res:{mac:'1920×1080',pc:'2560×1600'},q:50,lat:61},
+  cam:{on:false,src:'Windows PC'}, multi:true, pair:null, clipLimit:'50 MB',
+  L:DEFAULT_L(), sel:'mac',
+  tip:{amt:'5',custom:'',done:false},
+  fb:{type:'Idea',msg:'',sys:false,sent:false},
+  log:[], menu:false
+};
+const CLIP=[
+  {kind:'file',name:'Quarterly plan v3.docx',meta:'2.4 MB',from:'MacBook',to:'Windows PC',ago:'2 min ago'},
+  {kind:'image',name:'Screenshot.png',meta:'PNG · 1440×900',from:'Windows PC',to:'MacBook',ago:'9 min ago'},
+  {kind:'text',name:'“meet at 4:30, room B”',meta:'text · 20 chars',from:'MacBook',to:'Windows PC',ago:'14 min ago'}
+];
+const linkName=()=>({wifi:'Wi-Fi',usb:'USB cable',bt:'Bluetooth'})[S.link];
+const fmtT=d=>d.toTimeString().slice(0,8);
+const bar=(f,n)=>'▮'.repeat(Math.round(f*n))+'▯'.repeat(n-Math.round(f*n));
+function newPing(){S.ping=S.link==='wifi'?3+Math.round(Math.random()*4):S.link==='usb'?(Math.random()<.8?1:2):10+Math.round(Math.random()*6);}
+function ssBase(){return S.link==='usb'?38:S.link==='wifi'?61:null;}
+function newLat(){const b=ssBase();S.ss.lat=b==null?null:Math.max(20,Math.round(b+(S.ss.q-50)*.2+(Math.random()*4-2)));}
+
+/* ---------- character grid ---------- */
+class G{
+  constructor(w,h){this.w=w;this.h=h;this.c=new Array(w*h).fill(' ');this.k=new Array(w*h).fill('');}
+  set(x,y,ch,k=''){x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=this.w||y>=this.h)return;const i=y*this.w+x;this.c[i]=ch;this.k[i]=k;}
+  text(x,y,s,k){let i=0;for(const ch of String(s)){this.set(x+i,y,ch,k);i++;}}
+  spr(x,y,lines,k){lines.forEach((l,j)=>{let i=0;for(const ch of l){if(ch!==' ')this.set(x+i,y+j,ch,k);i++;}});}
+  fill(x,y,w,h,ch,k=''){for(let j=0;j<h;j++)for(let i=0;i<w;i++)this.set(x+i,y+j,ch,k);}
+  box(x,y,w,h,k,round){const [a,b,c,d]=round?['╭','╮','╰','╯']:['┌','┐','└','┘'];
+    for(let i=1;i<w-1;i++){this.set(x+i,y,'─',k);this.set(x+i,y+h-1,'─',k);}
+    for(let j=1;j<h-1;j++){this.set(x,y+j,'│',k);this.set(x+w-1,y+j,'│',k);}
+    this.set(x,y,a,k);this.set(x+w-1,y,b,k);this.set(x,y+h-1,c,k);this.set(x+w-1,y+h-1,d,k);}
+  html(){let o='';for(let y=0;y<this.h;y++){let cur=null,buf='';
+      const flush=()=>{if(!buf)return;o+=cur?(cur.startsWith('s:')?`<span style="color:${cur.slice(2)}">${esc(buf)}</span>`:`<span class="${cur}">${esc(buf)}</span>`):esc(buf);buf='';};
+      for(let x=0;x<this.w;x++){const i=y*this.w+x,k=this.k[i];if(k!==cur){flush();cur=k;}buf+=this.c[i];}
+      flush();if(y<this.h-1)o+='\n';}
+    return o;}
+}
+const SPR={
+  pc:['┌────────────────┐ ┌──┐','│                │ │▫ │','│                │ │  │','│                │ │──│','└───────┬┬───────┘ │  │','      ──┴┴──       └──┘'],
+  mb:[' ╭──────────────╮ ',' │              │ ',' │              │ ',' │              │ ','╶┴──────────────┴╴',' ╰──────────────╯ '],
+  mini:['╭──────────╮','│ ·        │','╰──────────╯'],
+  pcs:['┌──────────┐','│          │','│          │','└────┬┬────┘','   ──┴┴──   '],
+  mbs:[' ╭────────╮ ',' │        │ ',' │        │ ','╶┴────────┴╴',' ╰────────╯ ']
+};
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const lerp=(a,b,p)=>a+(b-a)*p;
+
+/* ---------- screen layout geometry ---------- */
+const DESK=[{x:0,y:0,w:2560,h:1440},{x:2560,y:180,w:1920,h:1080}];
+const MON=P=>[{i:0,x:P.x,y:P.y,w:15,h:7},{i:1,x:P.x+15,y:P.y+1,w:11,h:5}];
+const MW=9,MH=5,BW=50,BH=14;
+const ov=(a0,al,b0,bl)=>Math.max(0,Math.min(a0+al,b0+bl)-Math.max(a0,b0));
+function contactOf(m,r){const out=[];const vo=ov(m.y,m.h,r.y,r.h),ho=ov(m.x,m.w,r.x,r.w);
+  if(r.x===m.x+m.w&&vo>0)out.push({mon:m.i,side:'right',len:vo});
+  if(r.x+r.w===m.x&&vo>0)out.push({mon:m.i,side:'left',len:vo});
+  if(r.y+r.h===m.y&&ho>0)out.push({mon:m.i,side:'top',len:ho});
+  if(r.y===m.y+m.h&&ho>0)out.push({mon:m.i,side:'bottom',len:ho});
+  return out;}
+function contacts(){const r={x:S.L.mac.x,y:S.L.mac.y,w:MW,h:MH};return MON(S.L.pc).flatMap(m=>contactOf(m,r));}
+function primary(){return contacts().sort((a,b)=>b.len-a.len)[0]||null;}
+const hits=(a,b)=>ov(a.x,a.w,b.x,b.w)>0&&ov(a.y,a.h,b.y,b.h)>0;
+function overlapsPC(r){return MON(S.L.pc).some(m=>hits(m,r));}
+const OPP={right:'left',left:'right',top:'bottom',bottom:'top'};
+
+/* ---------- cursor simulation (drives status bar + mouse header) ---------- */
+const SIM={fx:1180,fy:640,x:1180,y:640,path:[],i:0,wait:0,trail:[],tt:0,c:null,e:null,mac:null};
+function macDesk(c){const sx=2560/15,sy=1440/7,P=S.L.pc,M=S.L.mac;let x=(M.x-P.x)*sx,y=(M.y-P.y)*sy;
+  if(c){const D=DESK[c.mon];
+    if(c.side==='right')x=D.x+D.w; if(c.side==='left')x=D.x-1512; if(c.side==='top')y=D.y-982; if(c.side==='bottom')y=D.y+D.h;
+    if(c.side==='right'||c.side==='left')y=Math.max(D.y-982+140,Math.min(D.y+D.h-140,y));else x=Math.max(D.x-1512+160,Math.min(D.x+D.w-160,x));}
+  else{x=Math.max(x,DESK[1].x+DESK[1].w+300);}
+  return{x:Math.round(x),y:Math.round(y),w:1512,h:982};}
+function edgeInfo(c,m){const D=DESK[c.mon];
+  if(c.side==='right'||c.side==='left'){const y=Math.round((Math.max(D.y,m.y)+Math.min(D.y+D.h,m.y+m.h))/2);
+    return c.side==='right'?{E:{x:D.x+D.w-1,y},A:{x:m.x,y}}:{E:{x:D.x,y},A:{x:m.x+m.w-1,y}};}
+  const x=Math.round((Math.max(D.x,m.x)+Math.min(D.x+D.w,m.x+m.w))/2);
+  return c.side==='top'?{E:{x,y:D.y},A:{x,y:m.y+m.h-1}}:{E:{x,y:D.y+D.h-1},A:{x,y:m.y}};}
+function buildPath(){const c=primary();SIM.c=c;SIM.mac=macDesk(c);
+  const p=[{x:1180,y:640},{x:2559,y:812,ev:'inner'},{x:3480,y:760}];
+  if(c){SIM.e=edgeInfo(c,SIM.mac);if(c.mon===0)p.push({x:2560,y:812},{x:1300,y:760});p.push({...SIM.e.E,ev:'edge'});}
+  else{SIM.e=null;p.push({x:4479,y:700,ev:'edge'});}
+  p.push({x:1100+(Math.random()*300|0),y:560+(Math.random()*240|0)});
+  SIM.path=p;SIM.i=0;}
+function resetSim(){SIM.fx=1180;SIM.fy=640;SIM.x=1180;SIM.y=640;SIM.trail=[];SIM.wait=0;buildPath();setActive('Windows PC');}
+function addLog(msg,cls,d=new Date()){S.log.push({t:fmtT(d),msg,cls});if(S.log.length>40)S.log.shift();updateLog();}
+function onEv(ev){const pos=`(${SIM.x},${SIM.y})`,m=SIM.mac;
+  if(ev==='inner'){addLog('no-cross reason=not-outer-edge edge=right pos=(2559,812) monitors=[0,0,2560x1440][2560,180,1920x1080]','w');return;}
+  if(ev==='edge'){const side=SIM.c?SIM.c.side:'right';let reason=null;
+    if(!S.mouse)reason='sharing-off';else if(S.locked)reason='cursor-locked';else if(!SIM.c)reason='no-neighbor';else if(Math.random()<.2)reason='button-held';
+    if(reason){addLog(`no-cross reason=${reason} edge=${side} pos=${pos}`,'w');return;}
+    addLog(`cross to=MacBook edge=${side} pos=${pos} cooldown=${S.cooldown}ms`,'g');
+    const e=SIM.e;SIM.path.splice(SIM.i+1,0,{...e.A,ev:'arrive'},{x:m.x+m.w*.52|0,y:m.y+m.h*.42|0},{x:m.x+m.w*.3|0,y:m.y+m.h*.7|0},{...e.A,ev:'leave'},{...e.E});return;}
+  if(ev==='arrive'){addLog(`arrive MacBook pos=(${SIM.x-m.x},${SIM.y-m.y}) guard=${S.guard}ms`,'g');SIM.wait+=S.guard/1000;return;}
+  if(ev==='leave'){addLog(`cross to=Windows PC edge=${OPP[SIM.c.side]} pos=(${SIM.x-m.x},${SIM.y-m.y}) cooldown=${S.cooldown}ms`,'g');SIM.wait+=S.cooldown/1000;}
+}
+function setActive(a){if(S.active!==a){S.active=a;liveUpdate();}}
+function simStep(dt){
+  if(SIM.wait>0){SIM.wait-=dt;return;}
+  const tg=SIM.path[SIM.i];if(!tg){buildPath();return;}
+  const dx=tg.x-SIM.fx,dy=tg.y-SIM.fy,d=Math.hypot(dx,dy),st=1500*dt;
+  if(d<=st){SIM.fx=tg.x;SIM.fy=tg.y;}else{SIM.fx+=dx/d*st;SIM.fy+=dy/d*st;}
+  SIM.x=Math.round(SIM.fx);SIM.y=Math.round(SIM.fy);
+  SIM.tt+=dt;if(SIM.tt>.07){SIM.tt=0;SIM.trail.push({x:SIM.x,y:SIM.y});if(SIM.trail.length>9)SIM.trail.shift();}
+  const m=SIM.mac;setActive(m&&SIM.x>=m.x&&SIM.x<m.x+m.w&&SIM.y>=m.y&&SIM.y<m.y+m.h?'MacBook':'Windows PC');
+  if(d<=st){if(tg.ev)onEv(tg.ev);SIM.i++;SIM.wait+=.35;}
+}
+
+/* ---------- live headers (scenes) ---------- */
+const SCENES={
+  home(g,t){
+    g.spr(1,1,SPR.pc,'k-t');g.spr(33,1,SPR.mb,'k-t');g.spr(51,2,SPR.mini,'k-d');
+    for(let y=2;y<=4;y++)for(let x=3;x<=16;x+=2)g.set(x,y,'·','k-f');
+    for(let y=2;y<=4;y++)for(let x=36;x<=47;x+=2)g.set(x,y,'·','k-f');
+    const m=SIM.mac||{x:4480,y:180,w:1512,h:982};
+    if(S.active==='MacBook'){g.set(35+Math.round((SIM.x-m.x)/m.w*12),2+Math.round((SIM.y-m.y)/m.h*2),'↖','k-cy');}
+    else g.set(2+Math.round(SIM.x/4480*15),2+Math.round(SIM.y/1440*2),'↖','k-cy');
+    for(let x=24;x<=32;x++)g.set(x,4,'·','k-d');
+    if(!reduce){const p=(t*5)%9;g.set(24+Math.floor(p),4,'●','k-cy');g.set(24+Math.floor((p+8)%9),4,'∙','k-cy');}
+    g.text(24,2,S.link==='usb'?'usb':S.link==='bt'?'bt':'wi-fi','k-d');g.text(24,6,`${S.ping} ms`,'k-cy');
+    g.text(48,4,'┄┄┄','k-f');
+    g.text(1,8,'Windows PC','k-t');g.text(1,9,'this device · wired','k-d');
+    g.text(33,8,'MacBook','k-t');g.text(33,9,`${bar(S.batt/100,5)} ${S.batt}%`,'k-am');
+    g.text(49,8,'Studio Mac mini','k-d');g.text(49,9,'offline · 2d','k-f');
+  },
+  connection(g,t){
+    const cx=18,cy=7,rx=16,ry=6.4,a=reduce?5.6:(t*.8)%(Math.PI*2);
+    for(let y=0;y<g.h;y++)for(let x=0;x<37;x++){const dx=(x-cx)/rx,dy=(y-cy)/ry,d=Math.hypot(dx,dy);if(d>1.06)continue;
+      let df=(a-Math.atan2(dy,dx))%(Math.PI*2);if(df<0)df+=Math.PI*2;
+      if(d<=1&&df<.14)g.set(x,y,'▓','k-b');else if(d<=1&&df<.4)g.set(x,y,'▒','k-a');else if(d<=1&&df<.85)g.set(x,y,'░','k-a2');
+      else if(Math.abs(d-1)<.075)g.set(x,y,'·','k-d');else if(Math.abs(d-.66)<.055||Math.abs(d-.33)<.07)g.set(x,y,'·','k-f');
+      else if(x===cx)g.set(x,y,'┊','k-f');else if(y===cy)g.set(x,y,'┈','k-f');}
+    g.set(cx,cy,'◆','k-t');
+    [{n:'MacBook',an:-.75,r:.62,on:true},{n:'mini',an:2.5,r:.86,on:false}].forEach(b=>{
+      let df=(a-b.an)%(Math.PI*2);if(df<0)df+=Math.PI*2;
+      const x=cx+Math.cos(b.an)*b.r*rx,y=cy+Math.sin(b.an)*b.r*ry;
+      g.set(x,y,b.on?'◉':'○',b.on?(df<1.4?'k-b':'k-a'):(df<1.2?'k-m':'k-d'));});
+    const sp='◐◓◑◒'[Math.floor(t*3)%4];
+    g.text(40,1,`${reduce?'·':sp} scanning nearby`,'k-m');
+    g.text(40,3,'◉ MacBook','k-t');g.text(40,4,`  ${linkName()} · ${S.ping} ms`,'k-a');
+    g.text(40,6,'○ Studio Mac mini','k-d');g.text(40,7,'  offline · 2 days','k-f');
+    g.text(40,9,'◆ Windows PC (you)','k-m');
+    g.text(40,11,'encrypted · no cloud','k-a2');
+    if(S.pair&&!S.pair.expired)g.text(40,13,`pair code ${S.pair.code}`,'k-b');
+  },
+  mouse(g,t){
+    const m=SIM.mac||macDesk(primary());
+    const R=[{...DESK[0],l:'1 · 2560×1440'},{...DESK[1],l:'2 · 1920×1080'},{...m,l:'MacBook',mac:1}];
+    const minX=Math.min(...R.map(r=>r.x)),maxX=Math.max(...R.map(r=>r.x+r.w)),minY=Math.min(...R.map(r=>r.y)),maxY=Math.max(...R.map(r=>r.y+r.h));
+    const W=g.w-2,H=g.h-2,AR=2.15,sx=Math.max((maxX-minX)/W,(maxY-minY)/(H*AR)),sy=sx*AR;
+    const ox=1+Math.floor((W-(maxX-minX)/sx)/2),oy=Math.floor((H-(maxY-minY)/sy)/2);
+    const X=p=>ox+Math.round((p-minX)/sx),Y=p=>oy+Math.round((p-minY)/sy);
+    const cells=R.map(r=>({x0:X(r.x),x1:X(r.x+r.w)-1,y0:Y(r.y),y1:Y(r.y+r.h)-1,r}));
+    cells.forEach(c=>{const on=c.r.mac?S.active==='MacBook':S.active==='Windows PC';
+      g.box(c.x0,c.y0,c.x1-c.x0+1,c.y1-c.y0+1,c.r.mac?(on?'k-a':'k-m'):(on?'k-t':'k-m'),!!c.r.mac);
+      g.text(c.x0+2,c.y0+1,c.r.l.slice(0,c.x1-c.x0-2),'k-d');});
+    const pc=primary();
+    if(pc){const c=cells[pc.mon],mc=cells[2],k=reduce||Math.sin(t*2.2)>0?'k-b':'k-a';
+      if(pc.side==='right'||pc.side==='left'){const col=pc.side==='right'?c.x1:c.x0;for(let y=Math.max(c.y0,mc.y0)+1;y<Math.min(c.y1,mc.y1);y++)g.set(col,y,'┃',k);}
+      else{const row=pc.side==='top'?c.y0:c.y1;for(let x=Math.max(c.x0,mc.x0)+1;x<Math.min(c.x1,mc.x1);x++)g.set(x,row,'━',k);}}
+    SIM.trail.forEach((p,i)=>g.set(X(p.x),Y(p.y),i>5?'∙':'·','k-a2'));
+    g.set(X(SIM.x),Y(SIM.y),'↖','k-b');
+    g.text(1,g.h-1,`↖ on ${S.active}`,'k-t');
+    g.text(20,g.h-1,pc?`┃ crosses: ${pc.side} edge, mon ${pc.mon+1}`:'✕ no edge touches MacBook','k-a');
+    const st=!S.mouse?'sharing off':S.locked?'cursor locked':'sharing on';
+    g.text(g.w-1-st.length,g.h-1,st,S.mouse&&!S.locked?'k-g':'k-w');
+  },
+  layout(g,t){
+    const c=primary();
+    g.box(2,1,9,5,'k-t');g.box(11,2,7,4,'k-t');g.text(4,3,'1','k-d');g.text(13,3,'2','k-d');g.text(2,6,'Windows PC','k-m');
+    g.box(46,2,10,4,'k-a',true);g.text(48,3,'Mac','k-d');g.text(46,6,'MacBook','k-m');
+    if(c){for(let x=20;x<44;x++)g.set(x,3,'·','k-f');
+      for(let i=0;i<4;i++){const p=reduce?i*6:((t*6+i*6)%24);g.set(20+Math.floor(p),3,'›','k-b');}
+      g.text(20,1,`${c.side} edge · monitor ${c.mon+1}`,'k-a');g.text(20,5,'crosses ⇄ both ways','k-d');}
+    else{g.text(20,3,'·  ·  ·  ✕  ·  ·  ·','k-d');g.text(20,1,'not touching','k-w');g.text(20,5,'drag tiles together','k-d');}
+  },
+  clipboard(g,t){
+    g.spr(2,1,SPR.pcs,'k-t');g.spr(50,1,SPR.mbs,'k-t');
+    g.text(2,6,'Windows PC','k-m');g.text(51,6,'MacBook','k-m');
+    for(let x=15;x<=48;x++)g.set(x,3,'┈','k-f');
+    if(!S.clip){g.text(30,3,' ✕ ','k-r');g.text(15,7,'clipboard sharing is off','k-d');return;}
+    const P=4.5,i=reduce?0:Math.floor(t/P)%3,u=reduce?.5:(t%P)/P,it=CLIP[i];
+    const p=ease(Math.min(1,Math.max(0,(u-.12)/.7))),l2r=it.from==='Windows PC';
+    const lab=it.kind==='file'?'▤ docx':it.kind==='image'?'▦ png':'¶ text';
+    const x=Math.round(l2r?lerp(15,43,p):lerp(43,15,p));g.text(x,3,lab,'k-b');
+    g.text(l2r?13:49,3,l2r?'●':'●','k-a');
+    g.text(15,7,`${it.from} → ${it.to}`,'k-a');g.text(15,8,`${it.name.replace(/[“”]/g,'"')}  ${it.meta}`.slice(0,48),'k-d');
+  },
+  screen(g,t){
+    g.box(2,1,24,8,'k-t');g.text(11,9,'──┴┴──','k-t');
+    g.box(40,3,20,6,'k-t',true);g.text(39,9,'╶┴'+'─'.repeat(18)+'┴╴','k-t');g.text(40,10,'╰'+'─'.repeat(18)+'╯','k-t');
+    g.text(4,2,'Windows PC','k-d');g.text(42,4,'MacBook','k-d');
+    const on=S.ss.on,dir=on||'mac';let p;
+    if(on)p=1;else if(reduce)p=.55;else{const u=(t%9)/9;p=u<.2?0:u<.6?ease((u-.2)/.4):1;}
+    const A={x:8,y:4},B={x:44,y:4};const s=dir==='mac'?A:B,e=dir==='mac'?B:A;
+    const x=Math.round(lerp(s.x,e.x,p)),y=Math.round(lerp(s.y,e.y,p)-Math.sin(Math.PI*p)*2.2);
+    const k=on?(reduce||Math.sin(t*2)>-.3?'k-b':'k-a'):'k-a';
+    g.fill(x,y,12,4,' ');g.box(x,y,12,4,k);g.text(x+1,y+1,(S.ss.res[dir]).padStart(10).slice(0,10),'k-a2');g.text(x+1,y+2,' display 2','k-a2');
+    g.text(2,11,on?`● streaming ${S.ss.res[on]} · 60 Hz · ${S.ss.lat??'—'} ms over ${linkName()}`:'○ idle · a display slides over when you press Start',on?'k-a':'k-d');
+  },
+  camera(g,t){
+    const on=S.cam.on;
+    g.spr(3,1,[' ╭──┐','╭┴──┴──────╮','│  ╭───╮   │','│  │   │  ▪│','│  ╰───╯   │','╰──────────╯'],on?'k-t':'k-m');
+    g.set(7,4,on?'◉':'–',on?'k-b':'k-d');
+    g.text(3,8,on?`live on ${S.cam.src}`:'camera off',on?'k-a':'k-d');
+    if(on)for(let i=0;i<4;i++){const ph=reduce?1:((t*1.1-i*.45)%2+2)%2,k=ph<.6?'k-b':ph<1.2?'k-a':'k-a2',x=17+i*4;
+      g.set(x-1,2,'╮',k);g.set(x,3,'│',k);g.set(x,4,'│',k);g.set(x,5,'│',k);g.set(x-1,6,'╯',k);}
+    const others=['Windows PC','MacBook','Studio Mac mini'].filter(n=>n!==S.cam.src);
+    g.text(36,1,'watching now','k-d');
+    others.forEach((n,j)=>{const off=n==='Studio Mac mini';g.text(36,3+j*2,`${off?'○':on?'●':'○'} ${n}`,off?'k-f':on?'k-t':'k-d');g.text(38,4+j*2,off?'offline':on?'watching':'—',off?'k-f':on?'k-a':'k-f');});
+  },
+  devices(g,t){
+    g.spr(2,1,SPR.pcs,'k-t');g.spr(26,1,SPR.mbs,'k-t');g.spr(50,2,SPR.mini,S.multi?'k-d':'k-f');
+    for(let x=14;x<=25;x++)g.set(x,3,'─','k-a2');
+    for(let x=38;x<=49;x++)g.set(x,3,'┄','k-f');
+    if(!reduce){const p=(t*4)%12;g.set(14+Math.floor(p),3,'●','k-b');g.set(25-Math.floor((p+6)%12),3,'∙','k-a');}
+    g.text(2,7,'Windows PC','k-t');g.text(2,8,'this device','k-d');
+    g.text(26,7,'MacBook','k-t');g.text(26,8,`${linkName()} · ${S.ping} ms`,'k-a');
+    g.text(50,7,'Studio Mac mini','k-d');g.text(50,8,S.multi?'offline · 2d':'not on desk','k-f');
+    g.text(2,10,S.multi?'mode: multi-device · 3 on this desk':'mode: two devices','k-m');
+  },
+  tip(g,t){
+    g.spr(22,2,['╭────────────╮','╰─┬────────┬─╯','  │        │','  │        │','  │ ◦ ◦◦ ◦ │','  ╰────────╯'],'k-t');
+    if(!reduce){const u=(t%3.4)/3.4,y=Math.round(lerp(0,5,Math.min(1,u*1.6)));if(u<.62)g.set(28,y,'●','k-am');else if(u<.8)g.text(26,5,'·  ·','k-am');}
+    else g.set(28,0,'●','k-am');
+    g.text(40,2,S.tip.done?'thank you ♥':'one time, no account','k-a');
+    g.text(40,4,'keeps it calm, fast','k-d');g.text(40,5,'and independent','k-d');
+    if(S.tip.done&&!reduce){for(let i=0;i<3;i++){const y=Math.round(6-((t*1.2+i*1.3)%5));g.set(10+i*4,y,'♥','k-ro');}}
+  },
+  feedback(g,t){
+    g.box(2,0,36,9,'k-m');g.text(4,0,' new note ','k-d');
+    const lines=['the cursor crosses too early on','the right edge when I drag a window.','otherwise: lovely. thank you.'];
+    const all=lines.join('\n'),n=reduce?all.length:Math.floor((t*9)%(all.length+30));let row=0,col=0;
+    for(let i=0;i<Math.min(n,all.length);i++){if(all[i]==='\n'){row++;col=0;continue;}g.set(4+col,2+row*2,all[i],'k-t');col++;}
+    if(!reduce&&n<=all.length&&Math.floor(t*2)%2===0)g.set(4+col,2+row*2,'▌','k-a');
+    g.spr(44,2,['┌──────────────┐','│╲            ╱│','│  ╲        ╱  │','│    ╲ ── ╱    │','└──────────────┘'],S.fb.sent?'k-g':'k-a');
+    g.text(44,8,S.fb.sent?'✓ sent · thanks':`type: ${S.fb.type.toLowerCase()}`,S.fb.sent?'k-g':'k-d');
+  },
+  about(g,t){
+    const F={O:['╭─╮','│ │','╰─╯'],M:['╭┬╮','│││','╵╵╵'],N:['╭╮╷','│││','╵╰╯'],I:['╶┬╴',' │ ','╶┴╴'],D:['┌─╮','│ │','└─╯'],E:['┌─╴','├─ ','└─╴'],S:['╭─╴','╰─╮','╶─╯'],K:['│╭╯','├┤ ','│╰╮']};
+    'OMNIDESK'.split('').forEach((ch,i)=>{const h=(195+i*22+(reduce?0:t*14))%360;g.spr(15+i*4,1,F[ch],`s:hsl(${h} 42% 72%)`);});
+    g.text(15,5,'one desk for all your computers','k-m');
+    g.text(15,7,'v2.5.0 · GPL-2.0-only','k-d');
+  }
+};
+const SCENE_DIMS={home:[64,11],connection:[64,15],mouse:[64,12],layout:[60,8],clipboard:[64,10],screen:[64,12],camera:[64,9],devices:[64,11],tip:[64,9],feedback:[64,10],about:[64,9]};
+
+/* ---------- html helpers ---------- */
+function box(title,body,o={}){const [a,b,c,d]=o.sq?['┌','┐','└','┘']:['╭','╮','╰','╯'];
+  return `<section class="box ${o.sq?'sq':''} ${o.cls||''}"${o.id?` id="${o.id}"`:''}${o.style?` style="${o.style}"`:''}><div class="bt" aria-hidden="false"><span aria-hidden="true">${a}─ </span><span class="lbl t">${title}</span><span aria-hidden="true"> </span><span class="fill" aria-hidden="true">${LINE}</span>${o.right?`<span class="lbl r"> ${o.right} </span>`:''}<span aria-hidden="true">─${b}</span></div><div class="bi">${body}</div><div class="bb" aria-hidden="true"><span>${c}</span><span class="fill">${LINE}</span><span>${d}</span></div></section>`;}
+const kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span class="dots" aria-hidden="true">${DOTS}</span><span class="v">${v}</span></div>`;
+const sw=(id,on,act,label)=>`<button class="sw ${on?'on':''}" id="${id}" role="switch" aria-checked="${on}" data-act="${act}"><span class="lab">${label}</span><span class="sw-g" aria-hidden="true">${on?'[on  ━━●]':'[●━━  off]'}</span></button>`;
+const btn=(label,act,o={})=>`<button class="btn ${o.pri?'pri':''}" data-act="${act}"${o.id?` id="${o.id}"`:''}${o.v?` data-v="${o.v}"`:''}${o.dis?' disabled':''}>${label}</button>`;
+const seg=(lab,opts,cur,act,extra='')=>`<div class="seg" role="radiogroup" aria-label="${lab}">${opts.map(([v,l])=>`<button role="radio" aria-checked="${v===cur}" data-act="${act}" data-v="${v}" ${extra} id="${act}-${String(v).replace(/\W/g,'')}${extra?'-'+extra.replace(/\W/g,''):''}">${l}</button>`).join('')}</div>`;
+const lockSvg=`<svg width="11" height="12" viewBox="0 0 11 12" aria-hidden="true"><rect x="1" y="5" width="9" height="6.5" rx="1.2" fill="none" style="stroke:currentColor"/><path d="M3 5V3.6a2.5 2.5 0 015 0V5" fill="none" style="stroke:currentColor"/></svg>`;
+function ph(title,sub,label,aria){const [c,r]=SCENE_DIMS[S.page];
+  return `<header class="ph"><h1 tabindex="-1"><span class="pfx">~/</span>${title}</h1><p class="sub">${sub}</p>${box(label,`<div class="art"><pre id="scene" data-cols="${c}" data-rows="${r}" style="--cols:${c}" role="img" aria-label="${aria}"></pre></div>`,{right:'<span class="livedot">●</span> live'})}</header>`;}
+function sharedChips(){const o=[];if(S.mouse)o.push(['mouse & keys','--vi']);if(S.clip)o.push(['clipboard','--am']);if(S.ss.on)o.push(['second screen','--te']);if(S.cam.on)o.push(['camera','--ro']);
+  return o.length?o.map(([l,c])=>`<span class="chip" style="--c:var(${c})">${l}</span>`).join(''):'<span class="faint">nothing right now</span>';}
+
+/* ---------- page renderers ---------- */
+const R={
+home(){return ph('Home',`2 of 3 devices connected · MacBook <b><span data-live="ping"></span></b> over <span data-live="link"></span> · battery <b><span data-live="batt"></span></b>`,'desk','Your desk: Windows PC linked to MacBook, Studio Mac mini offline')+
+ `<div class="grid3">`+
+ box('Windows PC',kv('os','Windows 11 · x64')+kv('role','this device')+kv('link','Ethernet · wired')+kv('ping','local')+kv('monitors','2560×1440 + 1920×1080')+kv('battery','— desktop')+`<div class="hr" aria-hidden="true">${'┈'.repeat(120)}</div><div class="faint">shared now</div><div>${sharedChips()}</div>`,{right:'<span class="ok">●</span>'})+
+ box('MacBook',kv('os','macOS 15 · Apple silicon')+kv('screen','1512×982 pt')+kv('link','<span data-live="link"></span>')+kv('ping','<span data-live="ping" class="k-cy"></span>')+kv('battery','<span data-live="battbar" class="k-am"></span> <span data-live="batt"></span>')+kv('cursor','<span data-live="cursorhere"></span>')+`<div class="hr" aria-hidden="true">${'┈'.repeat(120)}</div><div class="faint">shared now</div><div>${sharedChips()}</div>`,{right:'<span class="ok">●</span>'})+
+ box('Studio Mac mini',kv('os','macOS 15')+kv('link','—')+kv('ping','—')+kv('status','<span class="faint">offline</span>')+kv('last seen','2 days ago')+kv('battery','— desktop')+`<div class="hr" aria-hidden="true">${'┈'.repeat(120)}</div><div class="faint">shared now</div><div class="faint">nothing · offline</div>`,{right:'<span class="faint">○</span>'})+
+ `</div>`+
+ box('right now',`<div class="grid2"><div>${kv('cursor','<span data-live="active"></span>')}${kv('mouse & keyboard',S.mouse?(S.locked?'<span class="wn">locked here</span>':'<span class="ok">shared</span>'):'<span class="faint">off</span>')}${kv('clipboard',S.clip?'<span class="ok">on</span>':'<span class="faint">off</span>')}</div><div>${kv('second screen',S.ss.on?`<span class="ok">${S.ss.on==='mac'?'MacBook → PC':'PC → MacBook'}</span>`:'<span class="faint">idle</span>')}${kv('camera',S.cam.on?`<span class="ok">live · ${S.cam.src}</span>`:'<span class="faint">off</span>')}${kv('security',`${lockSvg} encrypted`)}</div></div><div class="row" style="margin-top:10px">${btn('Open command bar','cmd',{pri:1})}${btn('Pair a new device','pair')}</div>`)
+},
+connection(){const p=S.pair;
+ return ph('Connection',`Finding devices nearby · MacBook <b><span data-live="ping"></span></b> over <span data-live="link"></span>`,'radar','Radar sweep finding MacBook nearby, Studio Mac mini offline')+
+ `<div class="grid2">`+
+ box('pair a new device',p?(p.expired?`<p class="muted">That code expired. Codes last one minute.</p><div class="code faint" aria-label="expired code">${p.code}</div><div class="row">${btn('New code','pair',{pri:1,id:'b-newcode'})}${btn('Cancel','cancelpair')}</div>`:
+  `<p class="muted">Type this on the other computer:</p><div class="code" aria-live="polite" aria-label="Pairing code ${p.code.split('').join(' ')}">${p.code}</div><div class="row"><span class="k-a" data-live="pairbar"></span><span data-live="pairleft"></span></div><p class="faint">1 · open OmniDesk on the other computer<br>2 · choose Pair, then type the six digits<br>3 · both screens show the same emoji pair: confirm</p><div class="row">${btn('New code','pair',{id:'b-newcode'})}${btn('Cancel','cancelpair',{id:'b-cancel'})}</div>`):
+  `<p class="muted">Pairing uses a six-digit code shown here and typed on the other computer. Nothing leaves your network.</p><div class="row">${btn('Pair a new device','pair',{pri:1,id:'b-pair'})}</div>`)+
+ box('link per device',`<div class="dev"><span class="ok">●</span><span>Windows PC <span class="faint">· this device</span></span><span class="muted">Ethernet</span></div>
+  <div class="dev"><span class="ok">●</span><span>MacBook</span><span class="k-a"><span data-live="ping"></span></span></div>
+  <div class="row" style="margin:2px 0 8px 3ch">${seg('MacBook link type',[['wifi','Wi-Fi'],['usb','USB cable'],['bt','Bluetooth']],S.link,'link')}</div>
+  <div class="dev"><span class="faint">○</span><span class="muted">Studio Mac mini</span><span class="faint">offline · 2 days ago</span></div>
+  <p class="faint" style="margin-top:6px">typical ping: USB cable ~1 ms · Wi-Fi ~4 ms · Bluetooth ~12 ms</p>`)+
+ `</div>`+box('privacy',`<div class="rule"><span class="k-a">${lockSvg}</span><span>Encrypted, no account, no cloud.</span><span class="tag">devices talk directly over your own network or cable</span></div>`,{sq:1})
+},
+mouse(){return ph('Mouse &amp; keyboard',`One mouse, one keyboard · cursor on <b><span data-live="active"></span></b>`,'screen map','Screen map: cursor moving across two Windows monitors and crossing to the MacBook at the outer edge')+
+ `<div class="grid2">`+
+ box('sharing',sw('sw-mouse',S.mouse,'mouse','Share mouse &amp; keyboard')+sw('sw-lock',S.locked,'lock','Lock cursor to this screen')+kv('lock hotkey','<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd>')+kv('cursor now','<span data-live="active"></span>')+`<p class="faint" style="margin-top:8px">The cursor only leaves this computer through an outer edge that touches another device. Set edges in ${'<a href="#layout">Screen layout</a>'}.</p>`)+
+ box('crossing',`<label class="sl"><span class="sl-h"><span>Cooldown after crossing</span><b id="v-cooldown">${S.cooldown} ms</b></span><input type="range" id="in-cooldown" data-in="cooldown" min="0" max="1000" step="25" value="${S.cooldown}"></label>
+  <label class="sl"><span class="sl-h"><span>Arrival guard</span><b id="v-guard">${S.guard} ms</b></span><input type="range" id="in-guard" data-in="guard" min="0" max="600" step="25" value="${S.guard}"></label>
+  <div class="rule"><span class="k-a">${lockSvg}</span><span>Don't cross while a button is held</span><span class="tag">rule · always on</span></div>`)+
+ `</div>`+box("why didn't it cross?",`<pre class="log" id="log" aria-live="off"></pre>`,{right:'<span class="livedot">●</span> tail',sq:1})
+},
+layout(){return ph('Screen layout','Drag the tiles. They snap to edges; touching outer edges cross.','edges','Arrows flowing across the shared edge between Windows PC and MacBook')+
+ box('arrange',`<div class="art board-wrap"><pre id="board" data-cols="${BW}" data-rows="${BH}" style="--cols:${BW}" tabindex="0" role="application" aria-roledescription="layout board" aria-label="Screen layout. Drag tiles, or use arrow keys to move the selected tile; Space switches tile."></pre></div>
+  <div class="row"><span class="faint">selected:</span>${seg('Selected tile',[['mac','MacBook'],['pc','Windows PC']],S.sel,'sel')}<span class="spacer"></span>${btn('Reset','boardreset')}</div>
+  <p class="faint">Drag with the mouse or a finger. Keyboard: focus the board, arrows move, Space switches tile.</p>`,{right:'drag to place'})+
+ `<div class="grid2">`+box('crossing edges','<div id="edges"></div>')+box('legend',`<div><span class="k-b">┃</span> outer edge that crosses to the other computer</div><div><span class="muted">│</span> inner edge: same computer, cursor moves freely</div><div><span class="faint">·</span> empty desk space</div>`,{sq:1})+`</div>`
+},
+clipboard(){return ph('Clipboard',S.clip?'Copy on one computer, paste on the other · <b>on</b>':'Clipboard sharing is <b>off</b>','clipboard','A copied file travelling between Windows PC and MacBook')+
+ `<div class="grid2">`+
+ box('sharing',sw('sw-clip',S.clip,'clip','Share clipboard between devices')+`<div class="row"><span class="k">files up to</span>${seg('Largest file to share',[['10 MB','10 MB'],['50 MB','50 MB'],['100 MB','100 MB'],['1 GB','1 GB']],S.clipLimit,'limit')}</div><p class="faint">Text and images always sync. Bigger files stay where they are; drag them across instead.</p>`)+
+ box('recent',`<ul class="list">${CLIP.map(c=>`<li><span class="ic" aria-hidden="true">${c.kind==='image'?'┌▀▀▀▀┐\n│▒░▓▒│\n└────┘':c.kind==='file'?'╭──╮▤\n│≡≡│ \n╰──╯ ':' ¶  \n ─── \n     '}</span><span class="bd"><div class="nm">${c.name}</div><div class="meta">${c.meta} · ${c.ago}</div><div class="meta"><span class="k-a">${c.from} → ${c.to}</span></div></span></li>`).join('')}</ul>`,{right:S.clip?'3 items':'paused'})+
+ `</div>`
+},
+screen(){const card=(d,title,desc)=>{const on=S.ss.on===d;
+  return box(title,`<p class="muted">${desc}</p>${kv('status',on?'<span class="ok">● streaming</span>':'<span class="faint">○ idle</span>')}<div class="row"><span class="k">resolution</span>${seg('Resolution',[['1920×1080','1920×1080'],['2560×1600','2560×1600']],S.ss.res[d],'res',`data-d="${d}"`)}</div>${kv('refresh','60 Hz')}${kv('measured latency',`<span data-live="lat-${d}"></span>`)}<div class="row" style="margin-top:8px">${btn(on?'Stop':'Start','ss',{pri:!on,v:d,id:'ss-'+d})}</div>`,{right:on?'<span class="ok">● live</span>':''});};
+ return ph('Second screen',S.ss.on?`Streaming · <b>${S.ss.on==='mac'?'MacBook is a screen for Windows PC':'Windows PC is a screen for MacBook'}</b>`:'Use a laptop as a second screen, either direction','display','A display slides out of the Windows PC onto the MacBook')+
+ `<div class="grid2">`+card('mac','MacBook as a screen for Windows PC','Extend Windows onto the MacBook. Drag windows across like a normal monitor.')+card('pc','Windows PC as a screen for MacBook','Extend macOS onto a Windows monitor while the PC stays usable.')+`</div>`+
+ box('quality ⟷ latency',`<label class="sl"><span class="sl-h"><span>sharper image</span><b id="v-q">${S.ss.q<40?'favor latency':S.ss.q>60?'favor quality':'balanced'}</b><span>lower latency</span></span><input type="range" id="in-q" data-in="q" min="0" max="100" step="5" value="${100-S.ss.q}" aria-label="Quality versus latency"></label>
+  <p class="faint">Over USB cable ~38 ms · over Wi-Fi ~61 ms. ${S.link==='bt'?'<span class="wn">Bluetooth is too slow for a second screen: switch the link on <a href="#connection">Connection</a>.</span>':`Now: ${linkName()}.`}</p>`)
+},
+camera(){const others=['Windows PC','MacBook','Studio Mac mini'].filter(n=>n!==S.cam.src);
+ return ph('Camera <span class="badge">coming soon</span>',S.cam.on?`Live from <b>${S.cam.src}</b> · ${others.filter(n=>n!=='Studio Mac mini').length} watching`:'One camera, every device · off','camera','A camera broadcasting calm waves to the devices watching')+
+ `<div class="grid2">`+
+ box('multi-device camera',sw('sw-cam',S.cam.on,'cam','Share my camera with every device')+`<div class="row"><span class="k">camera on</span>${seg('Which camera runs',[['Windows PC','Windows PC'],['MacBook','MacBook']],S.cam.src,'camsrc')}</div><p class="faint">Only one camera runs at a time. Picking another device moves it there; the first one switches off.</p>`)+
+ box('watching now',S.cam.on?`<ul class="list">${others.map(n=>n==='Studio Mac mini'?`<li><span class="ic faint">○</span><span class="bd"><div class="nm muted">${n}</div><div class="meta">offline · joins when it wakes</div></span></li>`:`<li><span class="ic">●</span><span class="bd"><div class="nm">${n}</div><div class="meta">watching · ${S.link==='usb'?'1':S.ping} ms</div></span></li>`).join('')}</ul>`:'<p class="faint">No one. Turn the switch on and every connected device can use this camera as its own.</p>')+
+ `</div>`
+},
+devices(){return ph('Multi-device',S.multi?'More than two devices on one desk · <b>3</b> paired':'Two-device mode','desk graph','Three devices: Windows PC linked to MacBook, Studio Mac mini offline')+
+ `<div class="grid2">`+
+ box('mode',`<div class="row">${seg('Desk mode',[['two','Two devices'],['multi','Multi-device']],S.multi?'multi':'two','mode')}</div><p class="muted">${S.multi?'Every paired device joins the desk. The cursor travels along the edges you set, and the camera can be shared to all.':'Only Windows PC and MacBook. Simple, the way most desks are.'}</p>`)+
+ box('devices on this desk',`<div class="dev"><span class="ok">●</span><span>Windows PC <span class="faint">· Windows 11</span></span><span class="muted">this device</span></div><div class="dev"><span class="ok">●</span><span>MacBook <span class="faint">· macOS 15</span></span><span class="k-a">${linkName()} · <span data-live="ping"></span></span></div><div class="dev"><span class="faint">○</span><span class="muted">Studio Mac mini <span class="faint">· macOS 15</span></span><span class="faint">${S.multi?'last seen 2 days ago':'not in two-device mode'}</span></div><div class="row">${btn('Pair a new device','pair',{pri:1})}</div>`)+
+ `</div>`
+},
+tip(){const amt=S.tip.amt==='custom'?(S.tip.custom||'…'):S.tip.amt;
+ return ph('Tip','If OmniDesk earns a place on your desk','tip jar','A coin dropping gently into a tip jar')+
+ (S.tip.done?box('thank you',`<p class="thx">Thank you. That genuinely helps.</p><p class="muted">Your $${esc(amt)} keeps OmniDesk independent: no ads, no account, no cloud. It goes into maintenance, drivers and late-night bug hunts.</p><p class="faint">Concept preview: no payment was made.</p><div class="row">${btn('Back','tipreset')}</div>`,{style:'--acc:var(--good)'}):
+ box('leave a tip',`<p class="thx">OmniDesk is free and stays free.</p><p class="muted">If it saved you a cable, a second keyboard or a few minutes every day, a small one-time tip is a lovely way to say so. No subscription, nothing to sign up for.</p>
+  <div class="row">${seg('Amount',[['3','$3'],['5','$5'],['10','$10'],['custom','custom']],S.tip.amt,'tipamt')}${S.tip.amt==='custom'?`<label class="row" style="margin:0"><span class="faint">$</span><input class="field-in" style="width:10ch" id="tip-custom" data-in="tipcustom" inputmode="decimal" value="${esc(S.tip.custom)}" aria-label="Custom amount in dollars" placeholder="7"></label>`:''}</div>
+  <div class="row">${btn(`Leave a $<span id="tip-amt">${esc(amt)}</span> tip`,'tip',{pri:1,id:'b-tip'})}</div><p class="faint">One time. A mock confirmation appears here; nothing is charged.</p>`))
+},
+feedback(){const f=S.fb;
+ return ph('Feedback','Bugs, ideas and thank-yous all reach a real person','note','A note being typed next to an envelope')+
+ (f.sent?box('sent',`<p class="thx">Got it. Thank you.</p><p class="muted">Your ${f.type.toLowerCase()} was saved for the team${f.sys?' with the system info shown before':''}. In this concept nothing leaves your computer.</p><div class="row">${btn('Write another','fbreset')}</div>`,{style:'--acc:var(--good)'}):
+ box('send feedback',`<div class="row"><span class="k">type</span>${seg('Feedback type',[['Bug','Bug'],['Idea','Idea'],['Thank you','Thank you']],f.type,'fbtype')}</div>
+  <label for="fb-msg" class="faint">message</label><textarea id="fb-msg" data-in="fbmsg" rows="5" placeholder="${f.type==='Bug'?'What happened, and what did you expect?':f.type==='Idea'?'What would make your desk calmer?':'Say hi. It will be read.'}">${esc(f.msg)}</textarea>
+  <label class="cb" style="margin-top:8px"><input type="checkbox" id="fb-sys" data-in="fbsys" ${f.sys?'checked':''}><span>Include system info</span></label>
+  ${f.sys?`<pre class="plain">os         Windows 11 (x64)
+app        OmniDesk 2.5.0
+engine     1.20.0
+monitors   [0,0,2560x1440] [2560,180,1920x1080]
+peers      macOS 15 (Apple silicon) · 1 online
+
+not included: names, emails, device names,
+clipboard, files, screen contents</pre>`:'<p class="faint">Off. Nothing about your computer is attached.</p>'}
+  <div class="row">${btn('Send feedback','fbsend',{pri:1,id:'b-fb'})}</div>`))
+},
+about(){return ph('About','OmniDesk <b>2.5.0</b> · One desk for all your computers','wordmark','OmniDesk wordmark slowly shifting through the spectrum')+
+ `<div class="grid2">`+
+ box('omnidesk',kv('version','2.5.0')+kv('engine','1.20.0')+kv('platforms','Windows 11 · macOS 15')+kv('license','GPL-2.0-only')+`<p style="margin-top:10px">Licensed under GPL-2.0-only.</p><p class="faint">One mouse, one keyboard and one clipboard across your computers, plus a laptop as a second screen.</p>`)+
+ box('credits',`<p>Built on Deskflow (github.com/deskflow/deskflow). Copyright (C) 2025 Deskflow Developers, (C) 2012 Synergy App Ltd, (C) 2002 Chris Schoeneman.</p><p>Second screen on Windows uses Virtual Display Driver (MIT).</p><p class="faint">Type set in JetBrains Mono.</p>`,{sq:1})+
+ `</div>`
+}
+};
+
+/* ---------- board (screen layout) ---------- */
+function drawBoard(){const pre=$('#board');if(!pre)return;const g=new G(BW,BH);
+  for(let y=1;y<BH;y+=2)for(let x=1;x<BW;x+=3)g.set(x,y,'·','k-f');
+  const mons=MON(S.L.pc),M={x:S.L.mac.x,y:S.L.mac.y,w:MW,h:MH},sp=S.sel==='pc',sm=S.sel==='mac';
+  mons.forEach((m,i)=>{g.fill(m.x,m.y,m.w,m.h,' ');g.box(m.x,m.y,m.w,m.h,sp?'k-a':'k-t');g.text(m.x+2,m.y+1,i?'2':'1','k-m');g.text(m.x+1,m.y+2,i?'1920×1080':' 2560×1440','k-d');});
+  g.text(S.L.pc.x,S.L.pc.y+7,(sp?'› ':'')+'Windows PC',sp?'k-a':'k-m');
+  g.fill(M.x,M.y,M.w,M.h,' ');g.box(M.x,M.y,M.w,M.h,sm?'k-a':'k-t',true);g.text(M.x+1,M.y+1,'MacBook','k-m');g.text(M.x+1,M.y+2,'1512×982','k-d');
+  if(sm)g.text(M.x,M.y+M.h,'› selected','k-a');
+  const cs=contacts();
+  cs.forEach(c=>{const m=mons[c.mon];
+    if(c.side==='right'||c.side==='left'){const y0=Math.max(m.y,M.y),y1=Math.min(m.y+m.h,M.y+M.h);for(let y=y0;y<y1;y++){g.set(c.side==='right'?m.x+m.w-1:m.x,y,'┃','k-b');g.set(c.side==='right'?M.x:M.x+M.w-1,y,'┃','k-b');}}
+    else{const x0=Math.max(m.x,M.x),x1=Math.min(m.x+m.w,M.x+M.w);for(let x=x0;x<x1;x++){g.set(x,c.side==='top'?m.y:m.y+m.h-1,'━','k-b');g.set(x,c.side==='top'?M.y+M.h-1:M.y,'━','k-b');}}});
+  pre.innerHTML=g.html();
+  const ed=$('#edges');if(ed)ed.innerHTML=(cs.length?cs.map(c=>`<div class="edge"><span class="k-b">┃</span> MacBook ${OPP[c.side]} ⇄ monitor ${c.mon+1} ${c.side} <span class="ok">crosses</span></div>`).join(''):`<div class="edge wn">✕ MacBook isn't touching the PC. Drag it against an outer edge.</div>`)+
+    `<div class="edge muted"><span>│</span> monitor 1 right ⇄ monitor 2 left <span class="faint">inner, moves freely</span></div>`;
+  pre.setAttribute('aria-label','Screen layout board. '+(cs.length?cs.map(c=>`MacBook touches the ${c.side} edge of monitor ${c.mon+1}.`).join(' '):'MacBook is not touching the PC.')+' Arrow keys move the selected tile, Space switches tile.');
+}
+function clampL(){const P=S.L.pc,M=S.L.mac;P.x=Math.max(0,Math.min(BW-26,P.x));P.y=Math.max(0,Math.min(BH-8,P.y));M.x=Math.max(0,Math.min(BW-MW,M.x));M.y=Math.max(0,Math.min(BH-MH-1,M.y));}
+function snapL(who){const P=S.L.pc,M=S.L.mac,mons=MON(P);let best=null;
+  for(const m of mons){for(const c of [{x:m.x+m.w,y:M.y},{x:m.x-MW,y:M.y},{x:M.x,y:m.y-MH},{x:M.x,y:m.y+m.h}]){
+    const d=Math.abs(c.x-M.x)+Math.abs(c.y-M.y);const r={x:c.x,y:c.y,w:MW,h:MH};
+    if(d<=3&&!overlapsPC(r)&&contactOf(m,r).length&&(!best||d<best.d))best={...c,d};}}
+  if(best&&best.d>0){if(who==='pc'){P.x-=best.x-M.x;P.y-=best.y-M.y;}else{M.x=best.x;M.y=best.y;}}
+  clampL();}
+function layoutChanged(){drawBoard();resetSim();drawScene(performance.now()/1000);}
+let DRAG=null;
+function boardCell(e,pre){const r=pre.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*BW,y:(e.clientY-r.top)/r.height*BH};}
+function boardDown(e){const pre=e.currentTarget,p=boardCell(e,pre),M=S.L.mac;let who=null;
+  if(p.x>=M.x&&p.x<M.x+MW&&p.y>=M.y&&p.y<M.y+MH)who='mac';else if(MON(S.L.pc).some(m=>p.x>=m.x&&p.x<m.x+m.w&&p.y>=m.y&&p.y<m.y+m.h))who='pc';
+  if(!who)return;e.preventDefault();pre.setPointerCapture(e.pointerId);pre.classList.add('drag');
+  const o=S.L[who];DRAG={who,ox:p.x-o.x,oy:p.y-o.y,start:{...o}};if(S.sel!==who){S.sel=who;$$('[data-act="sel"]').forEach(b=>b.setAttribute('aria-checked',b.dataset.v===who));}drawBoard();}
+function boardMove(e){if(!DRAG)return;const pre=e.currentTarget,p=boardCell(e,pre),o=S.L[DRAG.who];
+  const nx=Math.round(p.x-DRAG.ox),ny=Math.round(p.y-DRAG.oy);if(nx!==o.x||ny!==o.y){o.x=nx;o.y=ny;clampL();drawBoard();}}
+function boardUp(e){if(!DRAG)return;const pre=e.currentTarget;pre.classList.remove('drag');
+  const M={x:S.L.mac.x,y:S.L.mac.y,w:MW,h:MH};if(overlapsPC(M)){Object.assign(S.L[DRAG.who],DRAG.start);}else snapL(DRAG.who);
+  DRAG=null;layoutChanged();const c=primary();toast(c?`MacBook snapped to the ${c.side} edge of monitor ${c.mon+1}`:'MacBook is not touching the PC');}
+function boardKey(e){const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();S.sel=S.sel==='mac'?'pc':'mac';$$('[data-act="sel"]').forEach(b=>b.setAttribute('aria-checked',b.dataset.v===S.sel));drawBoard();return;}
+  if(!d)return;e.preventDefault();const o=S.L[S.sel],prev={...o};o.x+=d[0];o.y+=d[1];clampL();
+  if(overlapsPC({x:S.L.mac.x,y:S.L.mac.y,w:MW,h:MH}))Object.assign(o,prev);layoutChanged();}
+
+/* ---------- live values ---------- */
+const LIVE={
+  ping:()=>`${S.ping} ms`, link:()=>linkName(), batt:()=>`${S.batt}%`, battbar:()=>bar(S.batt/100,10),
+  active:()=>S.active, cursorhere:()=>S.active==='MacBook'?'here now':'on Windows PC',
+  pairleft:()=>S.pair?`0:${String(S.pair.left).padStart(2,'0')} left`:'', pairbar:()=>S.pair?'▕'+'█'.repeat(Math.ceil(S.pair.left/4))+'░'.repeat(15-Math.ceil(S.pair.left/4))+'▏':'',
+  'lat-mac':()=>latText('mac'), 'lat-pc':()=>latText('pc')
+};
+function latText(d){const b=ssBase();if(b==null)return 'n/a over Bluetooth';return S.ss.on===d?`${S.ss.lat} ms over ${linkName()}`:`— (≈${b} ms over ${linkName()})`;}
+function liveUpdate(){$$('[data-live]').forEach(el=>{const f=LIVE[el.dataset.live];if(f){const v=f();if(el.textContent!==v)el.textContent=v;}});}
+function updateLog(){const el=$('#log');if(!el)return;
+  el.innerHTML=S.log.slice(-8).map(l=>`<span class="ts">${l.t}</span> ${esc(l.msg).replace(/^(no-cross)/,'<span class="w">$1</span>').replace(/^(cross|arrive)/,'<span class="g">$1</span>')}`).join('\n');}
+
+/* ---------- chrome: nav, status ---------- */
+function renderNav(){
+  $('#side').innerHTML=box('menu',`<nav aria-label="Sections">${NAV.map(([g,items])=>(g?`<div class="grp" aria-hidden="true"><span>── ${g} </span><span class="fill">${LINE}</span></div>`:'')+items.map(id=>{const p=PAGES[id];
+    return `<a class="it" href="#${id}" style="--c:var(${p.acc})" ${S.page===id?'aria-current="page"':''}><span class="m" aria-hidden="true">›</span><span class="g" aria-hidden="true" style="color:var(${p.acc})">${p.g}</span><span>${p.t}</span></a>`;}).join('')).join('')}</nav><div class="hr" aria-hidden="true">${'┈'.repeat(80)}</div><div class="me">this device<br><b>Windows PC</b> · Win 11</div>`,{sq:1});
+  $('#crumb').innerHTML=`~/<span>${PAGES[S.page].path}${S.page}</span>`;
+  $('#app').classList.toggle('menu',S.menu);$('#menu-btn').setAttribute('aria-expanded',S.menu);
+}
+function renderStatus(){const sep='<span class="sep" aria-hidden="true">│</span>';
+  $('#status').innerHTML=`<span><span class="ok">●</span> <b>2</b> connected</span>${sep}<span>↖ cursor on <b data-live="active"></b>${S.locked?' <span class="wn">(locked)</span>':''}</span>${sep}<span>▤ clipboard <b class="${S.clip?'ok':''}">${S.clip?'on':'off'}</b></span>${sep}<span>≋ <b data-live="link"></b> <span data-live="ping"></span></span>${S.ss.on?`${sep}<span class="k-te">▭ second screen</span>`:''}${S.cam.on?`${sep}<span class="k-ro">◉ camera</span>`:''}${sep}<span class="ok">${lockSvg} encrypted</span><span class="grow"></span><button class="btn" data-act="cmd" style="font-size:12px">${isMac?'⌘':'Ctrl '}K</button>`;
+  liveUpdate();}
+
+/* ---------- render ---------- */
+const main=$('#main');
+function drawScene(t){const pre=$('#scene');if(!pre)return;const f=SCENES[S.page];if(!f)return;const g=new G(+pre.dataset.cols,+pre.dataset.rows);f(g,reduce?2:t);pre.innerHTML=g.html();}
+function render(){const fid=document.activeElement&&document.activeElement.id;
+  document.documentElement.style.setProperty('--acc',`var(${PAGES[S.page].acc})`);
+  main.innerHTML=R[S.page]();renderNav();renderStatus();liveUpdate();updateLog();drawScene(performance.now()/1000);
+  const b=$('#board');if(b){drawBoard();b.addEventListener('pointerdown',boardDown);b.addEventListener('pointermove',boardMove);b.addEventListener('pointerup',boardUp);b.addEventListener('pointercancel',boardUp);b.addEventListener('keydown',boardKey);}
+  if(fid){const el=document.getElementById(fid);if(el&&el!==document.activeElement)el.focus({preventScroll:true});}}
+function go(p){if(location.hash!=='#'+p)location.hash=p;else onHash();}
+function onHash(){const p=location.hash.slice(1);if(PAGES[p]&&p!==S.page){S.page=p;S.menu=false;render();window.scrollTo(0,0);const h=$('#main h1');if(h&&!CM.open)h.focus({preventScroll:true});}}
+addEventListener('hashchange',onHash);
+
+/* ---------- actions ---------- */
+function newPair(){S.pair={code:String(100+Math.floor(Math.random()*900))+' '+String(Math.floor(Math.random()*1000)).padStart(3,'0'),left:60,expired:false};}
+function startSS(d){if(S.link==='bt')return 'Switch to Wi-Fi or USB cable first';S.ss.on=d;newLat();return d==='mac'?'Second screen on MacBook started':'Windows PC is now a screen for MacBook';}
+function setClip(v){S.clip=v;return v?'Clipboard is on':'Clipboard is off';}
+function setMouse(v){S.mouse=v;return v?'Mouse sharing is on':'Mouse sharing is off';}
+function setLock(v){S.locked=v;return v?'Cursor locked to this screen':'Cursor unlocked';}
+function setCam(v){S.cam.on=v;return v?`Sharing camera from ${S.cam.src}`:'Camera is off';}
+function setLink(v){S.link=v;newPing();newLat();if(v==='bt'&&S.ss.on){S.ss.on=null;return 'Bluetooth link: second screen stopped';}return `MacBook link: ${linkName()}`;}
+const ACT={
+  menu(){S.menu=!S.menu;renderNav();},
+  cmd(){openCmd();},
+  mouse(){toast(setMouse(!S.mouse));render();},
+  lock(){toast(setLock(!S.locked));render();},
+  clip(){toast(setClip(!S.clip));render();},
+  cam(){toast(setCam(!S.cam.on));render();},
+  camsrc(b){S.cam.src=b.dataset.v;toast(S.cam.on?`Camera moved to ${S.cam.src}`:`Camera will run on ${S.cam.src}`);render();},
+  link(b){toast(setLink(b.dataset.v));render();},
+  pair(){newPair();toast('Pairing code ready');if(S.page!=='connection')go('connection');else render();},
+  cancelpair(){S.pair=null;render();},
+  ss(b){const d=b.dataset.v;if(S.ss.on===d){S.ss.on=null;toast('Second screen stopped');}else toast(startSS(d));render();},
+  res(b){S.ss.res[b.dataset.d]=b.dataset.v;toast(`Resolution ${b.dataset.v}`);render();},
+  limit(b){S.clipLimit=b.dataset.v;toast(`Files up to ${S.clipLimit}`);render();},
+  mode(b){S.multi=b.dataset.v==='multi';toast(S.multi?'Multi-device mode':'Two-device mode');render();},
+  sel(b){S.sel=b.dataset.v;$$('[data-act="sel"]').forEach(x=>x.setAttribute('aria-checked',x.dataset.v===S.sel));drawBoard();},
+  boardreset(){S.L=DEFAULT_L();layoutChanged();toast('Layout reset');},
+  tipamt(b){S.tip.amt=b.dataset.v;render();if(S.tip.amt==='custom'){const i=$('#tip-custom');i&&i.focus();}},
+  tip(){const a=S.tip.amt==='custom'?parseFloat(S.tip.custom):+S.tip.amt;if(!(a>0)){toast('Enter an amount first');const i=$('#tip-custom');i&&i.focus();return;}
+    S.tip.done=true;render();toast('Thank you');},
+  tipreset(){S.tip.done=false;render();},
+  fbtype(b){S.fb.type=b.dataset.v;render();},
+  fbsend(){if(!S.fb.msg.trim()){toast('Write a few words first');$('#fb-msg').focus();return;}S.fb.sent=true;render();toast('Feedback saved');},
+  fbreset(){S.fb={type:'Idea',msg:'',sys:false,sent:false};render();}
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f){e.preventDefault();f(b,e);}});
+document.addEventListener('click',e=>{const a=e.target.closest('a.it');if(a&&S.menu){S.menu=false;renderNav();}});
+document.addEventListener('input',e=>{const el=e.target,k=el.dataset&&el.dataset.in;if(!k)return;
+  if(k==='cooldown'){S.cooldown=+el.value;$('#v-cooldown').textContent=S.cooldown+' ms';}
+  else if(k==='guard'){S.guard=+el.value;$('#v-guard').textContent=S.guard+' ms';}
+  else if(k==='q'){S.ss.q=100-+el.value;$('#v-q').textContent=S.ss.q<40?'favor latency':S.ss.q>60?'favor quality':'balanced';newLat();liveUpdate();}
+  else if(k==='tipcustom'){S.tip.custom=el.value.replace(/[^\d.]/g,'').slice(0,6);if(el.value!==S.tip.custom)el.value=S.tip.custom;$('#tip-amt').textContent=S.tip.custom||'…';}
+  else if(k==='fbmsg'){S.fb.msg=el.value;}
+  else if(k==='fbsys'){S.fb.sys=el.checked;render();}
+});
+
+/* ---------- toast ---------- */
+let toastT=0;
+function toast(m){const el=$('#toast');el.innerHTML=box('done',`<span class="ok">✓</span> ${esc(m)}`);el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2400);}
+
+/* ---------- command bar ---------- */
+const PAGE_ACC=id=>PAGES[id].acc;
+function commands(){const c=[
+  {l:'Turn on clipboard',h:'clipboard',a:'--am',run:()=>setClip(true)},
+  {l:'Turn off clipboard',h:'clipboard',a:'--am',run:()=>setClip(false)},
+  {l:'Turn mouse sharing on',h:'mouse',a:'--vi',run:()=>setMouse(true)},
+  {l:'Turn mouse sharing off',h:'mouse',a:'--vi',run:()=>setMouse(false)},
+  {l:'Lock cursor to this screen',h:'mouse',a:'--vi',run:()=>setLock(true)},
+  {l:'Unlock cursor',h:'mouse',a:'--vi',run:()=>setLock(false)},
+  {l:'Start second screen on MacBook',h:'screen',a:'--te',run:()=>startSS('mac')},
+  {l:'Use Windows PC as a screen for MacBook',h:'screen',a:'--te',run:()=>startSS('pc')},
+  {l:'Stop second screen',h:'screen',a:'--te',run:()=>{const w=S.ss.on;S.ss.on=null;return w?'Second screen stopped':'Second screen was not running';}},
+  {l:'Share my camera',h:'camera',a:'--ro',run:()=>setCam(true)},
+  {l:'Stop sharing my camera',h:'camera',a:'--ro',run:()=>setCam(false)},
+  {l:'Pair a new device',h:'connection',a:'--cy',run:()=>{newPair();go('connection');return 'Pairing code ready';}},
+  {l:'Switch MacBook link to USB cable',h:'connection',a:'--cy',run:()=>setLink('usb')},
+  {l:'Switch MacBook link to Wi-Fi',h:'connection',a:'--cy',run:()=>setLink('wifi')},
+  {l:'Switch MacBook link to Bluetooth',h:'connection',a:'--cy',run:()=>setLink('bt')},
+  {l:'Turn on multi-device mode',h:'devices',a:'--bl',run:()=>{S.multi=true;return 'Multi-device mode';}},
+  {l:'Use two-device mode',h:'devices',a:'--bl',run:()=>{S.multi=false;return 'Two-device mode';}},
+  {l:'Reset screen layout',h:'layout',a:'--vi',run:()=>{S.L=DEFAULT_L();resetSim();return 'Layout reset';}}
+ ];
+ Object.keys(PAGES).forEach(id=>c.push({l:`Go to ${PAGES[id].t}`,h:'go',a:PAGE_ACC(id),run:()=>{go(id);return `Opened ${PAGES[id].t}`;}}));
+ return c;}
+function fuzzy(q,s){q=q.toLowerCase().trim();const sl=s.toLowerCase();if(!q)return{sc:0,ix:[]};let si=0,sc=0,prev=-2;const ix=[];
+  for(const ch of q){if(ch===' ')continue;const i=sl.indexOf(ch,si);if(i<0)return null;sc+=(i===prev+1?3:1)+(i===0||sl[i-1]===' '?2:0);ix.push(i);prev=i;si=i+1;}
+  if(sl.includes(q))sc+=12;return{sc:sc-s.length*.01,ix};}
+const CM={open:false,sel:0,items:[],opener:null,tt:0};
+function hl(s,ix){let o='';[...s].forEach((ch,i)=>{o+=ix.includes(i)?`<em>${esc(ch)}</em>`:esc(ch);});return o;}
+function openCmd(){if(CM.open)return;CM.open=true;CM.opener=document.activeElement;const c=$('#cmd');c.hidden=false;c.style.setProperty('--glow','var(--acc)');
+  $('#cmdbox').innerHTML=box('command',`<div class="prompt"><span class="ps" aria-hidden="true">omnidesk ❯</span><span class="fld"><input id="q" autocomplete="off" spellcheck="false" placeholder="type a command…" aria-label="Command" role="combobox" aria-expanded="true" aria-controls="cmdlist" aria-autocomplete="list"><span class="caret" id="caret" aria-hidden="true"></span></span></div><ul id="cmdlist" role="listbox" aria-label="Commands"></ul><div class="cmd-foot">↑↓ choose · ↵ run · esc close</div>`,{right:'esc'});
+  const q=$('#q');q.addEventListener('input',()=>{CM.sel=0;filterCmd();typingGlow();placeCaret();});
+  ['keyup','click','select','scroll'].forEach(ev=>q.addEventListener(ev,placeCaret));
+  q.addEventListener('keydown',cmdKey);filterCmd();q.focus();placeCaret();}
+function closeCmd(){if(!CM.open)return;CM.open=false;$('#cmd').hidden=true;$('#cmd').classList.remove('typing');$('#cmdbox').innerHTML='';
+  if(CM.opener&&document.contains(CM.opener))CM.opener.focus({preventScroll:true});}
+function typingGlow(){const c=$('#cmd');c.classList.add('typing');clearTimeout(CM.tt);CM.tt=setTimeout(()=>c.classList.remove('typing'),700);}
+function placeCaret(){const q=$('#q'),c=$('#caret');if(!q||!c)return;const pos=q.selectionStart??q.value.length;c.style.left=`calc(${pos}ch - ${q.scrollLeft}px)`;}
+function filterCmd(){const q=$('#q').value;CM.items=commands().map(c=>({...c,m:fuzzy(q,c.l)})).filter(c=>c.m).sort((a,b)=>b.m.sc-a.m.sc);
+  if(!q.trim())CM.items.sort((a,b)=>(a.h==='go')-(b.h==='go'));
+  const ul=$('#cmdlist');
+  ul.innerHTML=CM.items.length?CM.items.map((c,i)=>`<li role="option" id="opt-${i}" data-i="${i}" style="--c:var(${c.a})" aria-selected="${i===CM.sel}"><span class="mk" aria-hidden="true">›</span><span class="lb">${hl(c.l,c.m.ix)}</span><span class="hn">${c.h}</span></li>`).join(''):'<li aria-disabled="true"><span class="lb faint">no matching command</span></li>';
+  const cur=CM.items[CM.sel];$('#cmd').style.setProperty('--glow',cur?`var(${cur.a})`:'var(--acc)');
+  $('#q').setAttribute('aria-activedescendant',cur?'opt-'+CM.sel:'');
+  const li=$('#opt-'+CM.sel);li&&li.scrollIntoView({block:'nearest'});}
+function runCmd(i){const c=CM.items[i];if(!c)return;closeCmd();const msg=c.run();render();if(msg)toast(msg);}
+function cmdKey(e){
+  if(e.key==='ArrowDown'){e.preventDefault();CM.sel=Math.min(CM.items.length-1,CM.sel+1);filterCmd();}
+  else if(e.key==='ArrowUp'){e.preventDefault();CM.sel=Math.max(0,CM.sel-1);filterCmd();}
+  else if(e.key==='Enter'){e.preventDefault();runCmd(CM.sel);}
+  else if(e.key==='Tab'){e.preventDefault();}
+  else if(e.key==='Escape'){e.preventDefault();closeCmd();}
+  else if(e.key.length===1)typingGlow();}
+$('#cmd').addEventListener('click',e=>{const li=e.target.closest('li[data-i]');if(li){runCmd(+li.dataset.i);return;}if(e.target.id==='cmd')closeCmd();});
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();CM.open?closeCmd():openCmd();return;}
+  if(e.key==='Escape'){if(CM.open)closeCmd();else if(S.menu){S.menu=false;renderNav();}}
+  if(e.ctrlKey&&e.altKey&&e.key.toLowerCase()==='l'){e.preventDefault();toast(setLock(!S.locked));render();}
+});
+$('#kbd-hint').textContent=isMac?'⌘K':'Ctrl K';
+
+/* ---------- spectral character field (background) ---------- */
+const cv=$('#field'),fx=cv.getContext('2d');let FW=0,FH=0,FC=0,FR=0;const CW=11,CH=18,RAMP=' ·∙░▒▓';
+function sizeField(){const d=Math.min(window.devicePixelRatio||1,2);FW=innerWidth;FH=innerHeight;cv.width=FW*d;cv.height=FH*d;fx.setTransform(d,0,0,d,0,0);FC=Math.ceil(FW/CW);FR=Math.ceil(FH/CH);fx.textBaseline='top';drawField(performance.now()/1000);}
+function drawField(t){fx.clearRect(0,0,FW,FH);fx.font='12px "JetBrains Mono", ui-monospace, Menlo, monospace';
+  for(let y=0;y<FR;y++)for(let x=0;x<FC;x++){
+    const n=Math.sin(x*.09+t*.06)+Math.sin(y*.16-t*.045)+Math.sin((x+y)*.05+t*.035)+Math.sin(Math.hypot(x-FC*.7,y-FR*.3)*.11-t*.08);
+    const v=(n+4)/8,idx=Math.floor(Math.pow(v,2.3)*5.6);if(idx<=0)continue;
+    const hue=(185+x/FC*250+y/FR*40+t*3)%360;
+    fx.fillStyle=`hsla(${hue|0},46%,64%,${(.05+v*.17).toFixed(3)})`;fx.fillText(RAMP[Math.min(5,idx)],x*CW,y*CH);}}
+addEventListener('resize',sizeField);
+
+/* ---------- loops ---------- */
+let last=performance.now(),lastScene=0,lastField=0;
+function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;const t=now/1000;
+  if(!reduce){simStep(dt);if(now-lastScene>85){lastScene=now;drawScene(t);}if(now-lastField>170){lastField=now;drawField(t);}}
+  requestAnimationFrame(loop);}
+let sec=0;
+setInterval(()=>{sec++;newPing();if(S.ss.on)newLat();if(sec%30===0&&S.batt>5)S.batt--;
+  if(S.pair&&!S.pair.expired){S.pair.left--;if(S.pair.left<=0){S.pair.expired=true;if(S.page==='connection')render();}}
+  liveUpdate();if(reduce)drawScene(2);},1000);
+RM.addEventListener&&RM.addEventListener('change',e=>{reduce=e.matches;drawField(performance.now()/1000);render();});
+
+/* ---------- boot ---------- */
+(function boot(){const now=Date.now();
+  addLog('no-cross reason=not-outer-edge edge=right pos=(2559,812) monitors=[0,0,2560x1440][2560,180,1920x1080]','w',new Date(now-41000));
+  addLog('cross to=MacBook edge=right pos=(4479,640) cooldown=250ms','g',new Date(now-38000));
+  addLog('arrive MacBook pos=(0,460) guard=150ms','g',new Date(now-37800));
+  addLog('no-cross reason=button-held edge=left pos=(0,512)','w',new Date(now-22000));
+  addLog('cross to=Windows PC edge=left pos=(0,498) cooldown=250ms','g',new Date(now-19000));
+  const p=location.hash.slice(1);if(PAGES[p])S.page=p;
+  resetSim();sizeField();render();requestAnimationFrame(loop);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawField(performance.now()/1000));
+})();
+</script>

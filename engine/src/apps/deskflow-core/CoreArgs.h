@@ -1,6 +1,7 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -20,5 +21,9 @@ struct CoreArgs
   inline static const auto configOption =
       QCommandLineOption({"s", "settings"}, "override configuration file to use", "configFile");
 
-  inline static const auto options = {helpOption, versionOption, multiInstanceOption, configOption};
+  inline static const auto ipcVersionOption = QCommandLineOption(
+      "ipc-version", "Print the id the local IPC hello handshake expects (<version>+<gitsha>) and exit"
+  );
+
+  inline static const auto options = {helpOption, versionOption, multiInstanceOption, configOption, ipcVersionOption};
 };

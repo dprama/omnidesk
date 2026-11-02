@@ -1,0 +1,64 @@
+<!-- SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors -->
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="spec" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fd4e8"/>
+      <stop offset=".35" stop-color="#a98bff"/>
+      <stop offset=".65" stop-color="#f483a6"/>
+      <stop offset="1" stop-color="#f2b860"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a1f2b"/>
+      <stop offset="1" stop-color="#0b0d12"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx=".28" cy=".26" r=".6">
+      <stop offset="0" stop-color="#5fd4e8" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#5fd4e8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx=".78" cy=".74" r=".62">
+      <stop offset="0" stop-color="#a98bff" stop-opacity=".40"/>
+      <stop offset="1" stop-color="#a98bff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowC" cx=".82" cy=".18" r=".45">
+      <stop offset="0" stop-color="#f483a6" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#f483a6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6eaf2" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#d7dbe3" stop-opacity=".12"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".30"/>
+      <stop offset=".5" stop-color="#ffffff" stop-opacity=".06"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity=".02"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <clipPath id="clip"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+  </g>
+  <g clip-path="url(#clip)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#glowA)"/>
+    <rect x="100" y="100" width="824" height="824" fill="url(#glowB)"/>
+    <rect x="100" y="100" width="824" height="824" fill="url(#glowC)"/>
+    <!-- back screen: spectral outline, with a soft halo -->
+    <rect x="284.8" y="327.4" width="340.8" height="269.8" rx="71.0" fill="none" stroke="url(#spec)" stroke-width="81.2" opacity=".55" filter="url(#soft)"/>
+    <rect x="284.8" y="327.4" width="340.8" height="269.8" rx="71.0" fill="none" stroke="url(#spec)" stroke-width="36.9"/>
+    <!-- front screen: frosted glass -->
+    <rect x="398.4" y="426.8" width="340.8" height="269.8" rx="71.0" fill="#141824" fill-opacity=".72"/>
+    <rect x="398.4" y="426.8" width="340.8" height="269.8" rx="71.0" fill="url(#front)" stroke="#ebeef4" stroke-opacity=".88" stroke-width="21.3"/>
+    <!-- cursor -->
+    <g transform="translate(228.0 228.0) scale(14.2)">
+      <path d="M20 19.5v8l2.3-2 1.8 3.6 1.5-.7-1.8-3.5h3z" fill="#f4f6fa" stroke="#0b0d12" stroke-opacity=".35" stroke-width="0.35" stroke-linejoin="round"/>
+    </g>
+    <!-- glass rim -->
+    <rect x="101.5" y="101.5" width="821" height="821" rx="183.5" fill="none" stroke="url(#rim)" stroke-width="3"/>
+  </g>
+</svg>

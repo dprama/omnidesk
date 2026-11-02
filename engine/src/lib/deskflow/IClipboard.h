@@ -152,6 +152,14 @@ public:
   */
   static bool copy(IClipboard *dst, const IClipboard *src, Time);
 
+  //! True if \p clipboard holds data in at least one format
+  /*!
+  OmniDesk: a clipboard the engine can't represent (e.g. only files) arrives with
+  no formats; copying it would just empty the destination's system clipboard.
+  Opens and closes \p clipboard, so it must not be open.
+  */
+  static bool hasAnyFormat(const IClipboard *clipboard);
+
   //@}
 
 private:

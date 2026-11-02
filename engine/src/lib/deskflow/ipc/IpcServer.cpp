@@ -1,6 +1,7 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2025-2026 Synergy App Ltd
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -159,11 +160,14 @@ void IpcServer::processMessage(QLocalSocket *clientSocket, const QString &messag
   clientSocket->flush();
 }
 
-void IpcServer::broadcastCommand(const QString &command, const QString &args)
+void IpcServer::broadcastCommand(const QString &command, const QString &args, bool queueIfNoClients)
 {
   const auto message = args.isEmpty() ? command : QStringLiteral("%1=%2").arg(command, args);
 
   if (m_clients.isEmpty()) {
+    if (!queueIfNoClients) {
+      return;
+    }
     LOG_VERBOSE(
         "%s ipc server has no clients, message queued: %s", m_typeName.constData(), message.toUtf8().constData()
     );

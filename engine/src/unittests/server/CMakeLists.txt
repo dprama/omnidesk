@@ -28,3 +28,19 @@ create_test(
   SOURCE ClientProxyTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/server"
 )
+
+create_test(
+  NAME EdgeRulesTests
+  DEPENDS server
+  LIBS base arch ${extra_libs}
+  SOURCE EdgeRulesTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/server"
+)
+
+create_test(
+  NAME ServerConfigReadTests
+  DEPENDS server
+  LIBS base arch net ${extra_libs}
+  SOURCE ServerConfigReadTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/server"
+)

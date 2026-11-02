@@ -1,6 +1,7 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -13,7 +14,8 @@
 #include "common/VersionInfo.h"
 #include "deskflow/ProtocolTypes.h"
 
-const QString CoreArgParser::s_headerText = QStringLiteral("%1: %2\n").arg(kCoreBinName, kDisplayVersion);
+const QString CoreArgParser::s_headerText =
+    QStringLiteral("%1 (%2 engine): %3\n").arg(kCoreBinName, kDisplayName, kDisplayVersion);
 
 CoreArgParser::CoreArgParser(const QStringList &args)
 {
@@ -66,10 +68,10 @@ QString CoreArgParser::helpText() const
 
 QString CoreArgParser::versionText() const
 {
-  const static auto vString = QStringLiteral("%1 v%2, protocol v%3.%4\n%5\n");
+  const static auto vString = QStringLiteral("%1 v%2, protocol v%3.%4\n%5 engine, based on %6\n%7\n");
   return vString.arg(
       kCoreBinName, kDisplayVersion, QString::number(kProtocolMajorVersion), QString::number(kProtocolMinorVersion),
-      kCopyright
+      kDisplayName, kAppName, kCopyright
   );
 }
 
@@ -86,6 +88,11 @@ bool CoreArgParser::help() const
 bool CoreArgParser::version() const
 {
   return m_parser.isSet(CoreArgs::versionOption);
+}
+
+bool CoreArgParser::ipcVersion() const
+{
+  return m_parser.isSet(CoreArgs::ipcVersionOption);
 }
 
 bool CoreArgParser::serverMode() const

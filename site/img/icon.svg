@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <!-- SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors -->
+  <!-- SPDX-License-Identifier: GPL-2.0-only -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fd4e8"/><stop offset=".3" stop-color="#a98bff"/><stop offset=".55" stop-color="#f483a6"/><stop offset=".8" stop-color="#f2b860"/><stop offset="1" stop-color="#52d6aa"/></linearGradient></defs>
+  <rect width="40" height="40" rx="9" fill="#0d1017"/>
+  <rect x="4" y="7" width="24" height="19" rx="5" fill="none" stroke="url(#g)" stroke-width="2.4"/>
+  <rect x="12" y="14" width="24" height="19" rx="5" fill="#2a2e37" stroke="#ebeef4" stroke-width="1.6"/>
+  <path d="M20 19.5v8l2.3-2 1.8 3.6 1.5-.7-1.8-3.5h3z" fill="#eef1f6"/>
+</svg>

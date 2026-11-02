@@ -7,7 +7,10 @@
 
 #pragma once
 
+#include "base/MonitorRect.h"
 #include "server/BaseClientProxy.h"
+
+#include <vector>
 
 namespace deskflow {
 class Computer;
@@ -75,6 +78,9 @@ public:
   the computer that cause the cursor to jump to another computer.
   */
   int32_t getJumpZoneSize() const;
+
+  //! Get the monitor rectangles of the server's own computer
+  std::vector<MonitorRect> getMonitorRects() const;
 
   //! Get cursor center position
   /*!

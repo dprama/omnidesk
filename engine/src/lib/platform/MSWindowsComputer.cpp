@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: (C) 2025 - 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -322,6 +323,11 @@ bool MSWindowsComputer::setClipboard(ClipboardID, const IClipboard *src)
 {
   MSWindowsClipboard dst(m_window);
   if (src != nullptr) {
+    // OmniDesk: nothing we can represent (e.g. a files-only copy elsewhere): keep the clipboard
+    if (!IClipboard::hasAnyFormat(src)) {
+      LOG_DEBUG("not setting clipboard, source has no data");
+      return true;
+    }
     // save clipboard data
     return Clipboard::copy(&dst, src);
   } else {
@@ -687,6 +693,14 @@ void MSWindowsComputer::getCursorCenter(int32_t &x, int32_t &y) const
 {
   x = m_xCenter;
   y = m_yCenter;
+}
+
+std::vector<MonitorRect> MSWindowsComputer::getMonitorRects() const
+{
+  if (m_monitors.empty()) {
+    return {MonitorRect{m_x, m_y, m_w, m_h}};
+  }
+  return m_monitors;
 }
 
 void MSWindowsComputer::fakeMouseButton(ButtonID id, bool press)
@@ -1234,9 +1248,18 @@ bool MSWindowsComputer::onMouseMove(int32_t mx, int32_t my)
 
   LOG_VERBOSE("mouse move - motion delta: %+d=(%+d - %+d),%+d=(%+d - %+d)", x, mx, m_xCursor, y, my, m_yCursor);
 
-  // ignore if the mouse didn't move or if message posted prior
-  // to last mark change.
-  if (ignore() || (x == 0 && y == 0)) {
+  // ignore if message posted prior to last mark change.
+  if (ignore()) {
+    return true;
+  }
+
+  // the mouse didn't move.  on the primary computer this is the user pushing
+  // against a screen edge the cursor can't pass; report it again so the
+  // server can re-check the crossing rules (e.g. once a cooldown has ended).
+  if (x == 0 && y == 0) {
+    if (m_isOnComputer) {
+      sendEvent(EventTypes::PrimaryComputerMotionOnPrimary, MotionInfo::alloc(m_xCursor, m_yCursor));
+    }
     return true;
   }
 
@@ -1437,6 +1460,27 @@ void MSWindowsComputer::updateComputerShape()
   m_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
   m_xCenter = GetSystemMetrics(SM_CXSCREEN) >> 1;
   m_yCenter = GetSystemMetrics(SM_CYSCREEN) >> 1;
+
+  // OmniDesk: remember each monitor so the server can tell outer desktop
+  // edges from edges between two monitors
+  m_monitors.clear();
+  EnumDisplayMonitors(
+      nullptr, nullptr,
+      [](HMONITOR, HDC, LPRECT rect, LPARAM data) -> BOOL {
+        auto *monitors = reinterpret_cast<std::vector<MonitorRect> *>(data);
+        monitors->push_back(
+            MonitorRect{
+                static_cast<int32_t>(rect->left), static_cast<int32_t>(rect->top),
+                static_cast<int32_t>(rect->right - rect->left), static_cast<int32_t>(rect->bottom - rect->top)
+            }
+        );
+        return TRUE;
+      },
+      reinterpret_cast<LPARAM>(&m_monitors)
+  );
+  for (const auto &m : m_monitors) {
+    LOG_DEBUG("monitor: %d,%d %dx%d", m.x, m.y, m.w, m.h);
+  }
 
   // check for multiple monitors
   m_multimon = (m_w != GetSystemMetrics(SM_CXSCREEN) || m_h != GetSystemMetrics(SM_CYSCREEN));

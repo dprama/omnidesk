@@ -2,6 +2,7 @@
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2003 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -9,6 +10,7 @@
 #include "base/IEventQueue.h"
 #include "base/Log.h"
 #include "deskflow/IPlatformComputer.h"
+#include "deskflow/ipc/CoreControls.h"
 
 #include <QProcess>
 
@@ -106,6 +108,9 @@ void Computer::enable()
   } else {
     enableSecondary();
   }
+
+  // OmniDesk: publish this computer's monitors for the app's `monitors?` query
+  deskflow::core::ipc::CoreControls::instance().setLocalMonitors(m_computer->getMonitorRects());
 
   // note activation
   m_enabled = true;
@@ -397,6 +402,11 @@ void *Computer::getEventTarget() const
 bool Computer::getClipboard(ClipboardID id, IClipboard *clipboard) const
 {
   return m_computer->getClipboard(id, clipboard);
+}
+
+std::vector<MonitorRect> Computer::getMonitorRects() const
+{
+  return m_computer->getMonitorRects();
 }
 
 void Computer::getShape(int32_t &x, int32_t &y, int32_t &w, int32_t &h) const

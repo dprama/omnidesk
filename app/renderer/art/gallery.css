@@ -1,0 +1,32 @@
+/* SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors */
+/* SPDX-License-Identifier: GPL-2.0-only */
+
+/* Test page only. The art reads tokens with fallbacks; these mirror the approved concept. */
+:root {
+  color-scheme: dark;
+  --bg: #0c0e13;
+  --ink: #eef1f6; --ink-3: #808999; --ink-4: #596170;
+  --c-home: #c9d2e3; --c-conn: #5fd4e8; --c-mouse: #a98bff; --c-layout: #a98bff; --c-clip: #f2b860;
+  --c-screen: #52d6aa; --c-cam: #f483a6; --c-multi: #6fa6ff; --c-tip: #eba97c; --c-fb: #9fb3cf; --c-about: #c3b8ff;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+.top { display: flex; align-items: center; justify-content: space-between; padding: 18px 28px; border-bottom: 1px solid rgba(255,255,255,.06); }
+h1 { font-size: 16px; font-weight: 600; margin: 0; }
+h2 { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 26px 0 12px; }
+main { padding: 0 28px 40px; }
+.toggle { display: flex; gap: 8px; align-items: center; color: var(--ink-3); cursor: pointer; }
+.devices { display: grid; grid-template-columns: 110px repeat(3, 1fr) 1fr; gap: 10px; align-items: center; }
+.devices .k { color: var(--ink-3); font-size: 12px; }
+.devices .head { color: var(--ink-4); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.cell { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.05); border-radius: 14px; height: 120px; display: flex; align-items: center; justify-content: center; padding: 14px; }
+.cell svg { max-height: 92px; }
+.cell.small { gap: 12px; }
+.scenes { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+.card { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.05); border-radius: 16px; padding: 14px 16px 12px; }
+.card .host { height: 170px; }
+.card.wide .host { height: 190px; }
+.card p { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
+.card p i { width: 7px; height: 7px; border-radius: 50%; background: var(--a); }
+@media (max-width: 700px) { .devices { grid-template-columns: 80px repeat(3, 1fr); } .devices .smallcol { display: none; } }

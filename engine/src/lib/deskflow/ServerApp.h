@@ -54,6 +54,10 @@ public:
 
   void parseArgs() override;
   const char *daemonName() const override;
+  const char *startMode() const override
+  {
+    return "server";
+  }
   void loadConfig() override;
   bool loadConfig(const QString &filename) override;
   deskflow::Computer *createComputer() override;

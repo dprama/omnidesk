@@ -2,6 +2,7 @@
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2024 - 2026 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2025 Synergy App Ltd
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -13,6 +14,11 @@ const auto kAppDescription = "@CMAKE_PROJECT_DESCRIPTION@";
 const auto kDaemonBinName = "@CMAKE_PROJECT_NAME@-daemon";
 const auto kDaemonIpcName = "@CMAKE_PROJECT_NAME@-daemon";
 const auto kRevFqdnName = "@CMAKE_PROJECT_REV_FQDN@";
+
+// Product name for text a user reads (messages, notifications, version output).
+// Display only: paths, services, events, ids and protocol names keep kAppName/kAppId
+// (see OmniDesk docs/DO-NOT-RENAME.md).
+const auto kDisplayName = "OmniDesk";
 
 const auto kCopyright = //
     "Copyright @CMAKE_PROJECT_COPYRIGHT@\n"

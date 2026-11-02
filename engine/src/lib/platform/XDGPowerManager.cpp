@@ -79,7 +79,7 @@ bool XDGPowerManager::inhibitScreenCall(InhibitScreenServices serviceID, bool st
     }
 
     QString msg = "Sleep is manually prevented by the %1 preferences";
-    reply = screenSaverInterface.call("Inhibit", kAppName, msg.arg(kAppName));
+    reply = screenSaverInterface.call("Inhibit", kAppName, msg.arg(kDisplayName));
     if (reply.isValid())
       cookies[serviceNum] = reply.value();
   } else {

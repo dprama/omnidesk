@@ -1,0 +1,37 @@
+{
+  "version": "2.5.0",
+  "files": [
+    {
+      "os": "win",
+      "arch": "x64",
+      "name": "OmniDesk-2.5.0-win-x64.exe",
+      "url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-win-x64.exe",
+      "size": 103217664,
+      "sha256": "814694fa68b3aec954bcded8022fb2b6b882a7ca24c835a30717cbc74bda0c2c"
+    },
+    {
+      "os": "win",
+      "arch": "arm64",
+      "name": "OmniDesk-2.5.0-win-arm64.exe",
+      "url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-win-arm64.exe",
+      "size": 99876352,
+      "sha256": "5c8a40f5d639e6bc236bc9e4d5f34485e72a7bf2cf189488e2f3f5f5c6b8620b"
+    },
+    {
+      "os": "mac",
+      "arch": "x64",
+      "name": "OmniDesk-2.5.0-mac-x64.dmg",
+      "url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-mac-x64.dmg",
+      "size": 117440512,
+      "sha256": "2671db5e1cc5e3f72a73ed1977e7993ba1cd9c600902c7372985d3042b261f38"
+    },
+    {
+      "os": "linux",
+      "arch": "x64",
+      "name": "OmniDesk-2.5.0-linux-x64.AppImage",
+      "url": "https://github.com/dprama/omnidesk/releases/download/v2.5.0/OmniDesk-2.5.0-linux-x64.AppImage",
+      "size": 126353408,
+      "sha256": "a6589dbe8a5f8c3bb8546c4bc130b7b624e8db19fc13ecc7ecdf3a0659e9dc08"
+    }
+  ]
+}

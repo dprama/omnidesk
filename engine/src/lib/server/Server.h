@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
@@ -16,8 +17,11 @@
 #include "deskflow/KeyTypes.h"
 #include "deskflow/MouseTypes.h"
 #include "server/Config.h"
+#include "server/EdgeRules.h"
 
 #include <climits>
+#include <optional>
+#include <string>
 #include <map>
 #include <set>
 #include <vector>
@@ -257,7 +261,41 @@ private:
   // test if a switch is permitted.  this includes testing user
   // options like switch delay and tracking any state required to
   // implement them.  returns true iff a switch is permitted.
+  // xActive/yActive is the cursor on the active computer (used for
+  // corners and for the OmniDesk decision log).
   bool isSwitchOkay(BaseClientProxy *dst, Direction, int32_t x, int32_t y, int32_t xActive, int32_t yActive);
+
+  // OmniDesk: reason a push in \p dir may not cross right now (sharing
+  // off, cursor locked, button held, arrival guard, cooldown), if any.
+  // \p remainingMs is set for a cooldown.
+  std::optional<omnidesk::log::NoCrossReason> crossingBlockedReason(Direction dir, int64_t &remainingMs) const;
+
+  // OmniDesk: reason for a push with no computer to go to
+  omnidesk::log::NoCrossReason noNeighbourReason(Direction dir, int32_t x, int32_t y) const;
+
+  // OmniDesk: the monitors of the active computer (just its shape for a client)
+  std::vector<MonitorRect> activeMonitors() const;
+
+  // OmniDesk: rate-limited `no-cross ...` INFO line
+  void logNoCross(omnidesk::log::NoCrossReason, Direction, int32_t x, int32_t y, int64_t remainingMs = 0);
+
+  // OmniDesk: cross the edge in \p dir to \p dst at \p x, \p y (in dst
+  // coordinates), log `cross ...` with the position \p fromX, \p fromY on
+  // the computer being left and start the cooldown and arrival guard.
+  // returns true iff the cursor is now on \p dst.
+  bool crossTo(BaseClientProxy *dst, Direction dir, int32_t x, int32_t y, int32_t fromX, int32_t fromY);
+
+  // OmniDesk: true if a mouse button is held on the server's mouse
+  bool isButtonHeld() const;
+
+  // OmniDesk: send `cursor=<name>,<x>,<y>` over IPC (at most every 50 ms unless forced)
+  void sendCursorIpc(bool force);
+
+  // OmniDesk: send `clipboardItem=<json>` over IPC for new clipboard data
+  void sendClipboardItemIpc(const std::string &from, ClipboardID id);
+
+  // OmniDesk: apply clipboard / mouse sharing / cursor lock set over IPC
+  void handleOmniDeskControlsChanged();
 
   // update switch state due to a mouse move at \p x, \p y that
   // doesn't switch computers.
@@ -468,4 +506,15 @@ private:
   bool m_defaultLockToComputerState = false;
   bool m_disableLockToComputer = false;
   bool m_enableClipboard = true;
+
+  // OmniDesk edge-crossing rules (outer edge, cooldown, arrival guard, log rate limit)
+  deskflow::server::EdgeRules m_edgeRules;
+
+  // OmniDesk: cursor position on the active computer when a delayed switch was armed
+  int32_t m_switchFromX = 0;
+  int32_t m_switchFromY = 0;
+
+  // OmniDesk: last `cursor=` IPC message
+  int64_t m_lastCursorIpcMs = 0;
+  std::string m_lastCursorIpc;
 };

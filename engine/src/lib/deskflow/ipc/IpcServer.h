@@ -23,7 +23,8 @@ public:
   ~IpcServer() override;
 
   void listen();
-  void broadcastCommand(const QString &command, const QString &args = "");
+  //! \p queueIfNoClients false drops the message when nobody is connected (for frequent, short-lived events)
+  void broadcastCommand(const QString &command, const QString &args = "", bool queueIfNoClients = true);
 
 Q_SIGNALS:
   void logLevelChanged(const QString &logLevel);

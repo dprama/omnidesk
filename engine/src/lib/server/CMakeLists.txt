@@ -32,6 +32,8 @@ add_library(server STATIC
   ClientProxyUnknown.h
   Config.cpp
   Config.h
+  EdgeRules.cpp
+  EdgeRules.h
   InputFilter.cpp
   InputFilter.h
   PrimaryClient.cpp

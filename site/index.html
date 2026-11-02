@@ -1,0 +1,452 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors -->
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c11">
+<title>OmniDesk · One desk for all your computers</title>
+<meta name="description" content="One mouse, one keyboard and one clipboard across Windows and macOS. Push the cursor off the edge and it lands on the other computer. Free and open source, no account, no cloud.">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+<script type="module" src="js/download.js"></script>
+<script src="js/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gSpec" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fd4e8"/><stop offset=".3" stop-color="#a98bff"/><stop offset=".55" stop-color="#f483a6"/><stop offset=".8" stop-color="#f2b860"/><stop offset="1" stop-color="#52d6aa"/>
+    </linearGradient>
+    <linearGradient id="gSweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5fd4e8" stop-opacity="0"/><stop offset="1" stop-color="#5fd4e8" stop-opacity=".45"/>
+    </linearGradient>
+  </defs>
+  <symbol id="logo" viewBox="0 0 40 40">
+    <rect x="4" y="7" width="24" height="19" rx="5" fill="none" stroke="url(#gSpec)" stroke-width="2.4"/>
+    <rect x="12" y="14" width="24" height="19" rx="5" fill="#2a2e37" stroke="#ebeef4" stroke-opacity=".85" stroke-width="1.6"/>
+    <path d="M20 19.5v8l2.3-2 1.8 3.6 1.5-.7-1.8-3.5h3z" fill="#eef1f6"/>
+  </symbol>
+  <symbol id="k-mon" viewBox="0 0 120 96">
+    <rect class="p1" x="4" y="4" width="112" height="70" rx="6"/>
+    <rect class="pc" x="10" y="10" width="100" height="58" rx="2"/>
+    <path class="sheen" d="M10 10h100L66 68H10z"/>
+    <path class="p2" d="M52 74h16l4 12H48z"/>
+    <rect class="p1" x="34" y="85" width="52" height="7" rx="3.5"/>
+  </symbol>
+  <symbol id="k-pc" viewBox="0 0 200 100">
+    <rect class="p1" x="2" y="2" width="110" height="68" rx="6"/>
+    <rect class="pc" x="8" y="8" width="98" height="56" rx="2"/>
+    <path class="sheen" d="M8 8h98L64 64H8z"/>
+    <path class="p2" d="M48 70h18l4 14H44z"/>
+    <rect class="p1" x="32" y="83" width="50" height="7" rx="3.5"/>
+    <rect class="p1" x="116" y="14" width="80" height="52" rx="5"/>
+    <rect class="pc" x="121" y="19" width="70" height="42" rx="2"/>
+    <path class="p2" d="M150 66h12l3 14h-18z"/>
+    <rect class="p1" x="138" y="79" width="36" height="6" rx="3"/>
+  </symbol>
+  <symbol id="k-mac" viewBox="0 0 140 90">
+    <rect class="p1" x="18" y="3" width="104" height="68" rx="6"/>
+    <rect class="pc" x="24" y="9" width="92" height="57" rx="2"/>
+    <path class="sheen" d="M24 9h92L72 66H24z"/>
+    <rect class="p1" x="63" y="9" width="14" height="3" rx="1.5"/>
+    <path class="p1" d="M3 72h134l-5 9a4 4 0 0 1-3.5 2H11.5A4 4 0 0 1 8 81z"/>
+    <rect class="p2" x="58" y="72" width="24" height="3" rx="1.5"/>
+  </symbol>
+  <symbol id="k-mini" viewBox="0 0 100 50">
+    <rect class="p1" x="6" y="14" width="88" height="24" rx="9"/>
+    <rect class="p2" x="12" y="37" width="76" height="5" rx="2.5"/>
+    <circle class="pc" cx="80" cy="26" r="2"/>
+  </symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="5"/><path d="M12 7v3"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><rect x="6" y="4.5" width="12" height="16" rx="2"/><path d="M9.5 3.5h5v3h-5z"/><path d="M9 12h6M9 15.5h4"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><rect x="2.5" y="5" width="12" height="9" rx="1.5"/><path d="M14.5 8.5h6a1 1 0 0 1 1 1V16H11"/><path d="M8 18h14"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2.5"/><path d="M16 11l5-3v8l-5-3"/></symbol>
+  <symbol id="i-conn" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 14 0"/><path d="M8.5 12a3.5 3.5 0 0 1 7 0"/><circle cx="12" cy="12" r="1.2"/><path d="M12 13.5V20"/></symbol>
+  <symbol id="i-multi" viewBox="0 0 24 24"><rect x="2.5" y="5" width="8.5" height="6.5" rx="1.2"/><rect x="13" y="5" width="8.5" height="6.5" rx="1.2"/><rect x="8" y="14" width="8" height="5.5" rx="1.2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M4 4l16 16"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7 9.5 4.25 4.25 0 0 0 7 18z"/><path d="M4 4l16 16"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-win" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="1"/><rect x="13" y="13" width="7.5" height="7.5" rx="1"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="10" rx="1.5"/><path d="M2.5 18.5h19"/></symbol>
+  <symbol id="i-pair" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="2.5"/><path d="M7 12.5h.01M10.3 12.5h.01M13.7 12.5h.01M17 12.5h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3 9.5a13 13 0 0 1 18 0M6 13a8.5 8.5 0 0 1 12 0M9 16.5a4 4 0 0 1 6 0"/><circle cx="12" cy="19.5" r=".6"/></symbol>
+</svg>
+
+<div class="sky" aria-hidden="true"><div class="spectrum"></div><div class="frost"></div></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="OmniDesk home"><svg aria-hidden="true"><use href="#logo"/></svg><span>OmniDesk</span></a>
+    <nav aria-label="Site">
+      <a class="opt" href="#features">Features</a>
+      <a class="opt" href="#how">How it works</a>
+      <a class="opt" href="privacy.html">Privacy</a>
+      <a class="opt" href="https://github.com/dprama/omnidesk">Source</a>
+      <a class="nav-dl" href="download.html">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ================= hero ================= -->
+<section class="hero" aria-labelledby="hero-h">
+  <div class="wrap">
+    <div>
+      <span class="kick c-mouse"><i></i>Free and open source · Windows and macOS</span>
+      <h1 id="hero-h">One desk for <span class="spec">all your computers.</span></h1>
+      <p class="lead">One mouse, one keyboard and one clipboard for every computer on your desk. Push the cursor off the outer edge of one screen and it lands on the other computer.</p>
+      <div class="cta">
+        <a class="btn dl-btn" data-dl data-dl-release href="https://github.com/dprama/omnidesk/releases/latest">
+          <svg aria-hidden="true"><use href="#i-dl"/></svg><span data-dl-label>Download OmniDesk</span>
+        </a>
+        <p class="dl-meta" data-dl-meta>Version 2.5.0 for Windows, macOS and Linux.</p>
+        <p class="dl-note" data-dl-note hidden></p>
+        <p class="dl-more"><a href="download.html">All downloads and first-run steps</a></p>
+      </div>
+      <ul class="facts" aria-label="At a glance">
+        <li>No account</li><li>No cloud</li><li>Encrypted</li><li>GPL-2.0</li>
+      </ul>
+    </div>
+
+    <div class="glass desk" role="img" aria-label="A Windows PC with two monitors and a MacBook side by side. The cursor slides off the right edge of the PC's second monitor and appears on the MacBook.">
+      <span class="desk-tab" aria-hidden="true"><i></i>Your desk</span>
+      <div class="desk-in" aria-hidden="true">
+        <svg class="scene" viewBox="0 44 560 210">
+          <use href="#k-pc" x="6" y="52" width="300" height="150" class="cut"/>
+          <use href="#k-mac" x="338" y="92" width="210" height="135" class="cut"/>
+          <rect class="h-macglow" x="374" y="105.5" width="138" height="85.5" rx="2"/>
+          <line class="h-edge" x1="293" y1="84" x2="293" y2="140"/>
+          <text class="lbl" x="232" y="72">outer edge</text>
+          <g transform="translate(430 140)"><g class="h-clip">
+            <rect class="p1" x="0" y="0" width="30" height="20" rx="3"/>
+            <path d="M5 7h20M5 12h14" stroke="#c99a4b" stroke-width="2" stroke-linecap="round"/>
+          </g></g>
+          <g transform="translate(70 100)"><g class="h-cursor">
+            <path class="curs" d="M0 0L0 17L4.8 12.7L8.4 20.6L11.4 19.4L7.8 11.5L13.8 11.5Z"/>
+          </g></g>
+          <text class="lbl big" x="16" y="222">Windows PC · 2 monitors</text>
+          <text class="lbl big" x="404" y="246">MacBook</text>
+        </svg>
+        <div class="desk-bar">
+          <span><i class="ok"></i><b>2</b> computers</span>
+          <span><svg><use href="#i-wifi"/></svg>Wi-Fi · 4 ms</span>
+          <span><svg><use href="#i-clip"/></svg>Clipboard on</span>
+          <span><svg><use href="#i-lock"/></svg>Encrypted</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= features: glass folders ================= -->
+<section class="section" id="features" aria-labelledby="features-h">
+  <div class="wrap">
+    <header>
+      <span class="kick c-conn"><i></i>Features</span>
+      <h2 id="features-h">Everything on your desk, working as one.</h2>
+      <p>Open a folder. Each one is a thing OmniDesk shares between your computers.</p>
+    </header>
+
+    <div class="folders" data-folders>
+      <div class="tabs-wrap" hidden data-tabs-wrap>
+        <div class="tabs" role="tablist" aria-label="Features">
+          <a class="tab c-mouse" role="tab" href="#f-mouse" id="t-mouse" aria-controls="f-mouse" aria-selected="true"><svg aria-hidden="true"><use href="#i-mouse"/></svg>Mouse &amp; keyboard</a>
+          <a class="tab c-clip" role="tab" href="#f-clip" id="t-clip" aria-controls="f-clip" aria-selected="false" tabindex="-1"><svg aria-hidden="true"><use href="#i-clip"/></svg>Clipboard</a>
+          <a class="tab c-screen" role="tab" href="#f-screen" id="t-screen" aria-controls="f-screen" aria-selected="false" tabindex="-1"><svg aria-hidden="true"><use href="#i-screen"/></svg>Second screen</a>
+          <a class="tab c-cam" role="tab" href="#f-cam" id="t-cam" aria-controls="f-cam" aria-selected="false" tabindex="-1"><svg aria-hidden="true"><use href="#i-cam"/></svg>Camera</a>
+          <a class="tab c-conn" role="tab" href="#f-conn" id="t-conn" aria-controls="f-conn" aria-selected="false" tabindex="-1"><svg aria-hidden="true"><use href="#i-conn"/></svg>Connection</a>
+          <a class="tab c-multi" role="tab" href="#f-multi" id="t-multi" aria-controls="f-multi" aria-selected="false" tabindex="-1"><svg aria-hidden="true"><use href="#i-multi"/></svg>Multi-device</a>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="ghost g2" aria-hidden="true" data-ghost></div>
+        <div class="ghost g1" aria-hidden="true" data-ghost></div>
+
+        <article class="sheet c-mouse" id="f-mouse">
+          <div>
+            <span class="kick"><i></i>Mouse &amp; keyboard</span>
+            <h3>Push past the edge. Keep typing.</h3>
+            <p>Move the cursor off the outer edge of your screen and it carries on, onto the other computer, with your keyboard following it. Windows to Mac, Mac to Windows.</p>
+            <ul>
+              <li>Crosses only at the outer edge, never between your own monitors.</li>
+              <li>Won't cross while you hold a button, so drags stay put.</li>
+              <li>Lock the cursor to one screen with a hotkey when you're gaming.</li>
+            </ul>
+          </div>
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 440 150">
+              <rect class="scr" x="10" y="22" width="170" height="96" rx="4"/>
+              <rect class="scr" x="180" y="34" width="128" height="72" rx="4"/>
+              <rect class="scr on" x="330" y="38" width="100" height="64" rx="5"/>
+              <line class="outer edge-pulse" x1="308" y1="36" x2="308" y2="104"/>
+              <text class="lbl" x="16" y="36">1 · 2560×1440</text><text class="lbl" x="186" y="48">2 · 1920×1080</text><text class="lbl" x="336" y="52">MacBook</text>
+              <text class="lbl" x="12" y="140">Windows PC</text><text class="lbl" x="268" y="126">outer edge</text>
+              <g transform="translate(80 64)"><g class="m-cursor"><path class="curs" d="M0 0L0 14L4 10.5L7 17L9.5 16L6.5 9.5L11.5 9.5Z"/></g></g>
+            </svg>
+          </div>
+        </article>
+
+        <article class="sheet c-clip" id="f-clip">
+          <div>
+            <span class="kick"><i></i>Clipboard</span>
+            <h3>Copy here. Paste there.</h3>
+            <p>One clipboard for every computer. Copy on the Mac, paste on the PC, without thinking about it.</p>
+            <ul>
+              <li>Text, images and files.</li>
+              <li>Works in both directions.</li>
+              <li>Turn it off with one switch when you want the computers apart.</li>
+            </ul>
+          </div>
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 360 150">
+              <use href="#k-mac" x="6" y="46" width="128" height="82" class="cut"/>
+              <use href="#k-mon" x="236" y="28" width="116" height="93" class="cut"/>
+              <g class="fly"><g transform="translate(60 52)"><path class="p1" d="M0 0h16l6 6v22H0z"/><path class="p2" d="M16 0v6h6"/><path d="M4 11h13M4 16h13M4 21h9" class="acc" stroke-width="1.4" stroke-linecap="round"/></g></g>
+              <text class="lbl" x="44" y="144">MacBook</text><text class="lbl" x="262" y="144">Windows PC</text>
+            </svg>
+          </div>
+        </article>
+
+        <article class="sheet c-screen" id="f-screen">
+          <div>
+            <span class="kick"><i></i>Second screen</span>
+            <h3>Your laptop, as one more monitor.</h3>
+            <p>Use the MacBook as an extra screen for the PC, or the PC's monitor as an extra screen for the Mac. Drag windows across like any other display.</p>
+            <ul>
+              <li>Works both directions.</li>
+              <li>Lowest latency over a USB cable; Wi-Fi works too.</li>
+              <li>Pick quality or speed, and the resolution.</li>
+            </ul>
+          </div>
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 360 150">
+              <use href="#k-mon" x="14" y="18" width="130" height="104" class="cut"/>
+              <use href="#k-mac" x="214" y="44" width="136" height="87" class="cut"/>
+              <rect class="slide-disp" x="25" y="29" width="108" height="63" rx="2"/>
+              <text class="lbl" x="44" y="144">Windows PC</text><text class="lbl" x="258" y="144">MacBook</text>
+            </svg>
+          </div>
+        </article>
+
+        <article class="sheet c-cam" id="f-cam">
+          <div>
+            <span class="kick"><i></i>Camera <span class="badge">Multi-device mode</span></span>
+            <h3>One camera for every computer.</h3>
+            <p>Share the good camera with the rest of your desk. One switch, and every paired computer can use it.</p>
+            <ul>
+              <li>Only one camera runs at a time, and you always see which one.</li>
+              <li>See who is watching right now.</li>
+            </ul>
+          </div>
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 360 140">
+              <use href="#k-mac" x="6" y="58" width="96" height="62" class="cut"/>
+              <use href="#k-mon" x="270" y="48" width="84" height="67" class="cut"/>
+              <path d="M102 86L140 72M220 72L270 80" class="flow soft"/>
+              <circle class="ring" cx="180" cy="70" r="46"/>
+              <circle class="p1 cut" cx="180" cy="70" r="44"/>
+              <circle class="pc" cx="180" cy="70" r="30"/>
+              <circle class="lens" cx="180" cy="70" r="15"/>
+              <circle class="glint" cx="174" cy="64" r="4"/>
+              <circle class="rec" cx="214" cy="38" r="3.5"/>
+            </svg>
+          </div>
+        </article>
+
+        <article class="sheet c-conn" id="f-conn">
+          <div>
+            <span class="kick"><i></i>Connection</span>
+            <h3>Pair once with a 6-digit code.</h3>
+            <p>Click Pair on one computer and type the code it shows on the other. After that they find each other on their own.</p>
+            <ul>
+              <li>Wi-Fi, USB cable or Bluetooth.</li>
+              <li>Encrypted end to end between your computers.</li>
+              <li>No account, no cloud, nothing leaves your desk.</li>
+            </ul>
+          </div>
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 220 160">
+              <circle cx="110" cy="80" r="70" class="acc" stroke-opacity=".22"/><circle cx="110" cy="80" r="47" class="acc" stroke-opacity=".16"/><circle cx="110" cy="80" r="24" class="acc" stroke-opacity=".12"/>
+              <path class="grid-line" d="M110 10v140M40 80h140"/>
+              <g class="sweep"><path class="sweepfill" d="M110 80L110 10A70 70 0 0 1 159.5 30.5Z"/><line x1="110" y1="80" x2="159.5" y2="30.5" class="acc" stroke-width="1.5"/></g>
+              <circle class="blip d1 accf" cx="150" cy="57" r="4"/>
+              <text class="lbl" x="158" y="54">MacBook</text>
+              <circle class="blip d2 acc" cx="72" cy="118" r="3.5"/>
+              <text class="lbl" x="22" y="140">Studio Mac mini</text>
+              <circle cx="110" cy="80" r="4" fill="#eef1f6"/>
+            </svg>
+          </div>
+        </article>
+
+        <article class="sheet c-multi" id="f-multi">
+          <div>
+            <span class="kick"><i></i>Multi-device</span>
+            <h3>More than two? Bring them all.</h3>
+            <p>Put three or more computers on one desk. Arrange them the way they really sit, and the cursor goes where you'd expect.</p>
+            <ul>
+              <li>Drag the screens into place; edges snap together.</li>
+              <li>See every device, its link and its battery at a glance.</li>
+            </ul>
+          </div>
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 360 150">
+              <path d="M150 50H234" class="flow"/>
+              <path d="M86 90L140 118M292 92L226 118" class="ghostline"/>
+              <use href="#k-pc" x="6" y="12" width="150" height="75" class="cut"/>
+              <use href="#k-mac" x="232" y="14" width="122" height="78" class="cut"/>
+              <use href="#k-mini" x="134" y="98" width="96" height="48" class="cut"/>
+            </svg>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= how it works ================= -->
+<section class="section" id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <header>
+      <span class="kick c-screen"><i></i>How it works</span>
+      <h2 id="how-h">Three steps, about two minutes.</h2>
+    </header>
+    <ol class="grid3 steps" role="list">
+      <li class="card step">
+        <span class="n">1</span>
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 200 90"><use href="#k-pc" x="2" y="12" width="120" height="60" class="cut"/><use href="#k-mac" x="118" y="30" width="80" height="52" class="cut"/></svg></div>
+        <h3>Install on both computers</h3>
+        <p>Download OmniDesk for each computer and open it. The first run takes a couple of clicks; the steps are below.</p>
+      </li>
+      <li class="card step c-conn">
+        <span class="n">2</span>
+        <div class="art" aria-hidden="true"><div class="digits"><span>4</span><span>8</span><span>1</span><span>7</span><span>2</span><span>9</span></div></div>
+        <h3>Pair with a 6-digit code</h3>
+        <p>Click <b>Pair</b> on one computer, then type the code it shows on the other. You only do this once.</p>
+      </li>
+      <li class="card step c-mouse">
+        <span class="n">3</span>
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 200 90">
+          <use href="#k-mon" x="4" y="12" width="80" height="64" class="cut"/>
+          <use href="#k-mac" x="118" y="22" width="80" height="52" class="cut"/>
+          <line x1="86" y1="40" x2="128" y2="40" class="ghostline"/>
+          <circle class="travel accf" cx="86" cy="40" r="3.4"/></svg></div>
+        <h3>Push the cursor off the edge</h3>
+        <p>Move the mouse past the outer edge of your screen. It appears on the other computer, and so does your keyboard.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= first run ================= -->
+<section class="section" id="first-run" aria-labelledby="fr-h">
+  <div class="wrap">
+    <header>
+      <span class="kick c-clip"><i></i>First run</span>
+      <h2 id="fr-h">Before you open it the first time.</h2>
+      <p>OmniDesk isn't signed with a paid certificate yet, so Windows and macOS ask once whether you trust it. Here is what to click.</p>
+    </header>
+    <div class="grid3 fr">
+      <div class="card">
+        <div class="os-h"><svg aria-hidden="true"><use href="#i-win"/></svg><h3>Windows</h3></div>
+        <ol class="howto">
+          <li>Open the installer. If SmartScreen says <b>“Windows protected your PC”</b>, click <b>More info</b>.</li>
+          <li>Click <b>Run anyway</b>.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="os-h"><svg aria-hidden="true"><use href="#i-laptop"/></svg><h3>macOS</h3></div>
+        <ol class="howto">
+          <li>Open the .dmg and drag OmniDesk to <b>Applications</b>.</li>
+          <li>In Terminal, run:
+            <div class="cmd"><code data-copy-src>xattr -dr com.apple.quarantine /Applications/OmniDesk.app</code><button class="btn sm" type="button" data-copy hidden><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+          </li>
+          <li>In <b>System Settings → Privacy &amp; Security</b>, allow OmniDesk under <b>Accessibility</b> and <b>Input Monitoring</b>.</li>
+        </ol>
+      </div>
+      <div class="card c-conn">
+        <div class="os-h"><svg aria-hidden="true"><use href="#i-pair"/></svg><h3>Pair</h3></div>
+        <ol class="howto">
+          <li>Open OmniDesk on both computers.</li>
+          <li>Click <b>Pair</b> on one.</li>
+          <li>Type the 6-digit code on the other.</li>
+        </ol>
+      </div>
+    </div>
+    <p class="small"><a href="download.html#first-run">Full first-run steps</a>, including Screen Recording for Second screen.</p>
+  </div>
+</section>
+
+<!-- ================= privacy ================= -->
+<section class="section" id="privacy" aria-labelledby="pv-h">
+  <div class="wrap">
+    <header>
+      <span class="kick c-screen"><i></i>Privacy</span>
+      <h2 id="pv-h">Your desk stays on your desk.</h2>
+      <p>OmniDesk talks only to your own computers. There is nothing to sign up for and nothing to sync. <a href="privacy.html">Read the privacy note</a>.</p>
+    </header>
+    <div class="privacy-grid">
+      <div class="card pv c-conn"><svg aria-hidden="true"><use href="#i-lock"/></svg><h3>Encrypted</h3><p>Every connection between your computers is encrypted, and pinned at pairing.</p></div>
+      <div class="card pv c-mouse"><svg aria-hidden="true"><use href="#i-user"/></svg><h3>No account</h3><p>No sign-up, no email, no login. Install and pair.</p></div>
+      <div class="card pv c-clip"><svg aria-hidden="true"><use href="#i-cloud"/></svg><h3>No cloud</h3><p>No servers in the middle. Your clipboard and screens go straight across.</p></div>
+      <div class="card pv c-cam"><svg aria-hidden="true"><use href="#i-code"/></svg><h3>Open source</h3><p>GPL-2.0. Read every line, build it yourself.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= download ================= -->
+<section class="section" id="download" aria-labelledby="dl-h">
+  <div class="wrap">
+    <div class="glass dl-panel">
+      <div>
+        <span class="kick c-multi"><i></i>Download</span>
+        <h2 id="dl-h">Free, for every computer you own.</h2>
+        <p class="lead">No trial, no account. If OmniDesk saves you time, there's a tip jar inside the app.</p>
+        <div class="cta">
+          <p><a class="btn dl-btn" data-dl data-dl-release href="https://github.com/dprama/omnidesk/releases/latest"><svg aria-hidden="true"><use href="#i-dl"/></svg><span data-dl-label>Download OmniDesk</span></a></p>
+          <p class="dl-meta" data-dl-meta>Version 2.5.0 for Windows, macOS and Linux.</p>
+          <p class="dl-note" data-dl-note hidden></p>
+          <p class="dl-more"><a href="download.html#files">Other platforms and checksums</a></p>
+        </div>
+        <ul class="reqs" aria-label="Builds">
+          <li>Windows 10 and 11 · x64 and Arm64</li>
+          <li>macOS · Intel (x64)</li>
+          <li>Linux · AppImage x64</li>
+        </ul>
+      </div>
+      <svg class="logo-big" aria-hidden="true"><use href="#logo"/></svg>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="./"><svg aria-hidden="true"><use href="#logo"/></svg><span>OmniDesk 2.5.0</span></a>
+      <p>Free and open source, licensed under GPL-2.0-only.</p>
+      <p class="credits">Built on <a href="https://github.com/deskflow/deskflow">Deskflow</a>. Copyright (C) 2025 Deskflow Developers, (C) 2012 Synergy App Ltd, (C) 2002 Chris Schoeneman.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="download.html">Download</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/dprama/omnidesk">Source code</a>
+      <a href="https://github.com/dprama/omnidesk/issues">Report a problem</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

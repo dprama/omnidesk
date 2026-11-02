@@ -1,0 +1,9 @@
+/* SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors */
+/* SPDX-License-Identifier: GPL-2.0-only */
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; cursor: none; user-select: none; }
+/* The stream is the laptop's native resolution: show it 1:1 when it matches, letterboxed otherwise. */
+video { display: block; width: 100vw; height: 100vh; object-fit: contain; background: #000; }
+.hint { position: fixed; left: 50%; bottom: 48px; transform: translateX(-50%); padding: 10px 16px; border-radius: 10px;
+  background: rgba(20, 22, 28, 0.82); color: #e8eaf0; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  transition: opacity 400ms ease; }
+.hint.gone { opacity: 0; }

@@ -1,0 +1,154 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors -->
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c11">
+<title>Download OmniDesk</title>
+<meta name="description" content="Download OmniDesk for Windows, macOS and Linux, with checksums and first-run steps.">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+<script type="module" src="js/download.js"></script>
+<script src="js/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gSpec" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fd4e8"/><stop offset=".3" stop-color="#a98bff"/><stop offset=".55" stop-color="#f483a6"/><stop offset=".8" stop-color="#f2b860"/><stop offset="1" stop-color="#52d6aa"/>
+    </linearGradient>
+  </defs>
+  <symbol id="logo" viewBox="0 0 40 40">
+    <rect x="4" y="7" width="24" height="19" rx="5" fill="none" stroke="url(#gSpec)" stroke-width="2.4"/>
+    <rect x="12" y="14" width="24" height="19" rx="5" fill="#2a2e37" stroke="#ebeef4" stroke-opacity=".85" stroke-width="1.6"/>
+    <path d="M20 19.5v8l2.3-2 1.8 3.6 1.5-.7-1.8-3.5h3z" fill="#eef1f6"/>
+  </symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-win" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="1"/><rect x="13" y="13" width="7.5" height="7.5" rx="1"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="10" rx="1.5"/><path d="M2.5 18.5h19"/></symbol>
+  <symbol id="i-linux" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="13" rx="2"/><path d="M7 9.5l2.5 2-2.5 2M12 14h4M8 20.5h8"/></symbol>
+  <symbol id="i-pair" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="2.5"/><path d="M7 12.5h.01M10.3 12.5h.01M13.7 12.5h.01M17 12.5h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol>
+</svg>
+
+<div class="sky" aria-hidden="true"><div class="spectrum"></div><div class="frost"></div></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="OmniDesk home"><svg aria-hidden="true"><use href="#logo"/></svg><span>OmniDesk</span></a>
+    <nav aria-label="Site">
+      <a class="opt" href="./#features">Features</a>
+      <a class="opt" href="./#how">How it works</a>
+      <a class="opt" href="privacy.html">Privacy</a>
+      <a class="opt" href="https://github.com/dprama/omnidesk">Source</a>
+      <a class="nav-dl" href="download.html" aria-current="page">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<section class="page-head" aria-labelledby="dl-h">
+  <div class="wrap">
+    <span class="kick c-multi"><i></i>Download · version <span data-dl-version>2.5.0</span></span>
+    <h1 id="dl-h">Get OmniDesk.</h1>
+    <p class="lead">Install it on every computer you want on your desk, then pair them once. Free and open source, no account.</p>
+    <div class="cta">
+      <p><a class="btn dl-btn" data-dl data-dl-release data-dl-all="#files" href="https://github.com/dprama/omnidesk/releases/latest"><svg aria-hidden="true"><use href="#i-dl"/></svg><span data-dl-label>Download OmniDesk</span></a></p>
+      <p class="dl-meta" data-dl-meta>Version 2.5.0 for Windows, macOS and Linux.</p>
+      <p class="dl-note" data-dl-note hidden></p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="files-h" id="files">
+  <div class="wrap">
+    <h2 class="sr" id="files-h">All files</h2>
+    <div class="glass table-wrap">
+      <table class="files">
+        <thead><tr><th scope="col">System</th><th scope="col">Chip</th><th scope="col">File</th><th scope="col">Size</th><th scope="col">SHA-256</th></tr></thead>
+        <tbody data-dl-files>
+          <tr><td>Windows</td><td>x64</td><td><a class="fname" data-dl-release href="https://github.com/dprama/omnidesk/releases/latest">OmniDesk-2.5.0-win-x64.exe</a></td><td class="num"></td><td class="sha">listed on the release page</td></tr>
+          <tr><td>Windows</td><td>Arm64</td><td><a class="fname" data-dl-release href="https://github.com/dprama/omnidesk/releases/latest">OmniDesk-2.5.0-win-arm64.exe</a></td><td class="num"></td><td class="sha">listed on the release page</td></tr>
+          <tr><td>macOS</td><td>Intel (x64)</td><td><a class="fname" data-dl-release href="https://github.com/dprama/omnidesk/releases/latest">OmniDesk-2.5.0-mac-x64.dmg</a></td><td class="num"></td><td class="sha">listed on the release page</td></tr>
+          <tr><td>Linux</td><td>x64</td><td><a class="fname" data-dl-release href="https://github.com/dprama/omnidesk/releases/latest">OmniDesk-2.5.0-linux-x64.AppImage</a></td><td class="num"></td><td class="sha">listed on the release page</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">The Mac build is for Intel Macs; on Apple silicon it needs Rosetta. Check a download with <code>shasum -a 256 &lt;file&gt;</code> on macOS and Linux, or <code>certutil -hashfile &lt;file&gt; SHA256</code> on Windows. Older versions and source code are on the <a data-dl-release href="https://github.com/dprama/omnidesk/releases/latest">releases page</a>.</p>
+  </div>
+</section>
+
+<section class="section" id="first-run" aria-labelledby="fr-h">
+  <div class="wrap">
+    <header>
+      <span class="kick c-clip"><i></i>First run</span>
+      <h2 id="fr-h">Open it the first time.</h2>
+      <p>OmniDesk isn't signed with a paid certificate yet, so your computer asks once whether you trust it. You only do this once per computer.</p>
+    </header>
+    <div class="grid2">
+      <div class="card">
+        <div class="os-h"><svg aria-hidden="true"><use href="#i-win"/></svg><h3>Windows</h3></div>
+        <ol class="howto">
+          <li>Open <b>OmniDesk-…-win-x64.exe</b> (or the Arm64 one).</li>
+          <li>If SmartScreen says <b>“Windows protected your PC”</b>, click <b>More info</b>.</li>
+          <li>Click <b>Run anyway</b>, then follow the installer.</li>
+          <li>If Windows asks to let OmniDesk use the network, allow <b>Private networks</b>.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="os-h"><svg aria-hidden="true"><use href="#i-laptop"/></svg><h3>macOS</h3></div>
+        <ol class="howto">
+          <li>Open <b>OmniDesk-…-mac-x64.dmg</b> and drag OmniDesk to <b>Applications</b>.</li>
+          <li>Open Terminal and run this, exactly:
+            <div class="cmd"><code data-copy-src>xattr -dr com.apple.quarantine /Applications/OmniDesk.app</code><button class="btn sm" type="button" data-copy hidden><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+            <span class="small">It removes the “downloaded from the internet” flag from OmniDesk only.</span>
+          </li>
+          <li>Open OmniDesk. Then go to <b>System Settings → Privacy &amp; Security</b> and allow OmniDesk under <b>Accessibility</b> and <b>Input Monitoring</b>.</li>
+          <li>Using Second screen? Also allow it under <b>Screen Recording</b>. Otherwise you can skip this.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="os-h"><svg aria-hidden="true"><use href="#i-linux"/></svg><h3>Linux</h3></div>
+        <ol class="howto">
+          <li>Make the AppImage executable: <code>chmod +x OmniDesk-*.AppImage</code></li>
+          <li>Double-click it, or run it from a terminal.</li>
+        </ol>
+      </div>
+      <div class="card c-conn">
+        <div class="os-h"><svg aria-hidden="true"><use href="#i-pair"/></svg><h3>Pair your computers</h3></div>
+        <ol class="howto">
+          <li>Open OmniDesk on both computers.</li>
+          <li>Click <b>Pair</b> on one of them. It shows a 6-digit code.</li>
+          <li>Type that code on the other computer. Done: push the cursor off the outer edge.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="./"><svg aria-hidden="true"><use href="#logo"/></svg><span>OmniDesk 2.5.0</span></a>
+      <p>Free and open source, licensed under GPL-2.0-only.</p>
+      <p class="credits">Built on <a href="https://github.com/deskflow/deskflow">Deskflow</a>. Copyright (C) 2025 Deskflow Developers, (C) 2012 Synergy App Ltd, (C) 2002 Chris Schoeneman.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="download.html">Download</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/dprama/omnidesk">Source code</a>
+      <a href="https://github.com/dprama/omnidesk/issues">Report a problem</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

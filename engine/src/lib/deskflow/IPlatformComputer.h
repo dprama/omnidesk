@@ -3,17 +3,21 @@
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
+ * SPDX-FileCopyrightText: (C) 2026 OmniDesk contributors
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
 #pragma once
 
+#include "base/MonitorRect.h"
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/IComputer.h"
 #include "deskflow/IKeyState.h"
 #include "deskflow/IPrimaryComputer.h"
 #include "deskflow/ISecondaryComputer.h"
 #include "deskflow/OptionTypes.h"
+
+#include <vector>
 
 class IClipboard;
 
@@ -144,6 +148,21 @@ public:
   Return true iff this computer is a primary computer.
   */
   virtual bool isPrimary() const = 0;
+
+  //! Get the monitor rectangles
+  /*!
+  Return the rectangle of every monitor, in the same coordinates as
+  getShape(). The shared edge-crossing code uses them to tell outer
+  desktop edges from edges between two monitors. The default is the
+  single bounding rectangle from getShape(); platforms that know their
+  monitor layout (Windows, macOS) override it.
+  */
+  virtual std::vector<MonitorRect> getMonitorRects() const
+  {
+    MonitorRect rect;
+    getShape(rect.x, rect.y, rect.w, rect.h);
+    return {rect};
+  }
 
   //@}
   // IKeyState overrides

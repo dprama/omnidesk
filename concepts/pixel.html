@@ -1,0 +1,1344 @@
+<title>OmniDesk · Pixel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{
+  color-scheme:dark;
+  --ink0:#080b16; --ink1:#0f1324; --ink2:#161b31; --ink3:#232a47; --ink4:#363f63;
+  --mute:#8790b2; --text:#d6daea; --hi:#f1ede0; --moon:#d8cca6;
+  --cyan:#5fc6d6; --violet:#a493f0; --amber:#e6b25c; --teal:#5ccaa0; --rose:#e58aa2; --blue:#6f9ff0;
+  --good:#8bd27a; --warn:#e3a25a; --bad:#e06c6c;
+  --panel:rgba(14,18,34,.93); --panel2:rgba(20,25,46,.95);
+  --px:"Silkscreen","Courier New",ui-monospace,monospace;
+  --sans:"IBM Plex Sans","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --acc:var(--blue); --bc:var(--ink4); --sb:236px;
+  --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px));
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ink0);color:var(--text);font:400 15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+[hidden]{display:none!important}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--hi);outline-offset:4px}
+h1,h2,h3{margin:0;font-weight:400}
+p{margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+canvas.px{image-rendering:crisp-edges;image-rendering:pixelated;display:block}
+.ic{width:16px;height:16px;flex:none;display:inline-block;vertical-align:-3px}
+
+/* pixel border: stepped corners via 4-way hard shadows */
+.pnl,.phead,.card,.btn,.seg>button,.sw,.pill,.field,.cmd-panel,.toast,.tile,.code-d,.rule,.st-cmd,.navcmd,.ibtn,.chk,.logbox,.item,.devrow,.dir{
+  box-shadow:0 -2px 0 0 var(--bc),0 2px 0 0 var(--bc),-2px 0 0 0 var(--bc),2px 0 0 0 var(--bc);
+}
+
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;image-rendering:crisp-edges;image-rendering:pixelated}
+
+/* shell */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:var(--sb) minmax(0,1fr);gap:28px;min-height:100vh;padding-left:var(--gl);padding-right:var(--gr)}
+.side{position:sticky;top:0;height:100vh;overflow:auto;padding:22px 4px 70px 4px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;font:16px/1 var(--px);color:var(--hi);letter-spacing:.5px}
+.brand svg{width:33px;height:21px}
+.navcmd{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:var(--ink0);border:0;cursor:pointer;color:var(--mute);font-size:14px;--bc:var(--ink3);text-align:left}
+.navcmd:hover{--bc:var(--ink4);color:var(--text)}
+.navcmd kbd{margin-left:auto}
+kbd{font:500 12px/1 var(--mono);color:var(--text);background:var(--ink3);padding:3px 6px;box-shadow:0 2px 0 var(--ink0)}
+.ngroup{display:flex;flex-direction:column;gap:2px}
+.nlabel{font:16px/1 var(--px);color:var(--mute);opacity:.75;padding:6px 10px 6px;letter-spacing:.5px}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;color:var(--text);text-decoration:none;font-size:14.5px;position:relative}
+.nav a .ic{color:var(--c,var(--mute))}
+.nav a:hover{background:rgba(54,63,99,.35)}
+.nav a[aria-current="page"]{background:var(--ink2);color:var(--hi);box-shadow:0 -2px 0 0 var(--ink3),0 2px 0 0 var(--ink3),-2px 0 0 0 var(--ink3),2px 0 0 0 var(--ink3)}
+.nav a[aria-current="page"]::before{content:"";position:absolute;left:-2px;top:6px;bottom:6px;width:4px;background:var(--c)}
+.nav a .nst{margin-left:auto;width:6px;height:6px;background:var(--ink4)}
+.nav a .nst.on{background:var(--c)}
+main{min-width:0;padding:26px 2px 110px;outline:none}
+.topbar{display:none}
+
+/* headers */
+.phead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,480px);gap:24px;align-items:center;padding:22px;background:var(--panel);margin:2px 2px 28px;--bc:var(--ink4)}
+.kicker{display:flex;align-items:center;gap:8px;font:16px/1 var(--px);color:var(--acc);letter-spacing:.5px}
+.phead h1{font:32px/1.1 var(--px);color:var(--hi);margin:12px 0 10px;letter-spacing:.5px;outline:none}
+.lede{color:var(--mute);max-width:46ch}
+.live{display:flex;flex-wrap:wrap;gap:10px 12px;margin-top:16px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;background:var(--ink0);font-size:13px;--bc:var(--ink3);margin:2px}
+.pill b,.num{font-weight:600;color:var(--hi);font-variant-numeric:tabular-nums}
+.dot{width:8px;height:8px;display:inline-block;background:var(--mute);flex:none}
+.dot.good{background:var(--good)}.dot.bad{background:var(--bad)}.dot.warn{background:var(--warn)}.dot.acc{background:var(--acc)}
+.ph-scene{background:#0a0e1d;box-shadow:inset 0 0 0 2px var(--ink3);padding:2px}
+.ph-scene canvas{width:100%;height:auto}
+
+/* panels */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-bottom:24px}
+.stack{display:flex;flex-direction:column;gap:24px}
+.pnl{background:var(--panel);padding:20px;min-width:0;margin:2px}
+.pnl h2{display:flex;align-items:center;gap:10px;font:16px/1.2 var(--px);color:var(--hi);margin-bottom:14px;letter-spacing:.5px}
+.pnl h2::before{content:"";width:8px;height:8px;background:var(--acc);flex:none}
+.pnl h2 .badge{margin-left:auto}
+.pnl > p,.note{color:var(--mute);font-size:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;background:linear-gradient(90deg,var(--ink3) 50%,transparent 0) top left/4px 2px repeat-x}
+.row:first-of-type{background:none;padding-top:4px}
+.row .rl{min-width:0}
+.row .rl b{display:block;color:var(--hi);font-weight:500}
+.row .rl span{display:block;color:var(--mute);font-size:13.5px}
+.badge{font:16px/1 var(--px);font-size:16px;padding:3px 8px;background:color-mix(in srgb,var(--acc) 22%,var(--ink0));color:var(--acc);letter-spacing:.5px}
+.badge.sm{font:500 12px/1 var(--sans);padding:4px 7px;letter-spacing:0}
+.meta{color:var(--mute);font-size:13.5px}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+
+/* buttons & controls */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;background:var(--ink3);color:var(--hi);border:0;cursor:pointer;font-weight:600;font-size:14px;--bc:var(--ink4);margin:2px}
+.btn:hover{background:var(--ink4)}
+.btn:active{transform:translateY(2px)}
+.btn.pri{background:var(--acc);color:var(--ink0);--bc:color-mix(in srgb,var(--acc) 60%,var(--hi))}
+.btn.pri:hover{background:color-mix(in srgb,var(--acc) 85%,var(--hi))}
+.btn.ghost{background:transparent;--bc:var(--ink3);color:var(--text)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.sw{position:relative;width:44px;height:22px;flex:none;background:var(--ink0);border:0;padding:0;cursor:pointer;--bc:var(--ink4);margin:2px}
+.sw-k{position:absolute;left:4px;top:4px;width:14px;height:14px;background:var(--mute);transition:left .16s steps(3)}
+.sw[aria-checked="true"]{background:color-mix(in srgb,var(--acc) 30%,var(--ink0));--bc:var(--acc)}
+.sw[aria-checked="true"] .sw-k{left:26px;background:var(--acc)}
+.sw:disabled{opacity:.4;cursor:not-allowed}
+.seg{display:inline-flex;flex-wrap:wrap;gap:6px}
+.seg>button{background:var(--ink0);border:0;padding:7px 12px;cursor:pointer;font-size:13.5px;color:var(--text);--bc:var(--ink3);margin:2px}
+.seg>button:hover{--bc:var(--ink4)}
+.seg>button[aria-pressed="true"]{background:color-mix(in srgb,var(--acc) 24%,var(--ink0));color:var(--hi);--bc:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:var(--ink0);box-shadow:0 -2px var(--ink4),0 2px var(--ink4),-2px 0 var(--ink4),2px 0 var(--ink4)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-4px;background:var(--acc);border:0;box-shadow:0 0 0 2px var(--ink0)}
+input[type=range]::-moz-range-track{height:6px;background:var(--ink0);box-shadow:0 -2px var(--ink4),0 2px var(--ink4),-2px 0 var(--ink4),2px 0 var(--ink4)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;background:var(--acc);border:0;border-radius:0;box-shadow:0 0 0 2px var(--ink0)}
+.rng{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;align-items:center;padding:14px 0;background:linear-gradient(90deg,var(--ink3) 50%,transparent 0) top left/4px 2px repeat-x}
+.rng label{color:var(--hi);font-weight:500}
+.rng output{font:500 14px var(--mono);color:var(--acc);text-align:right}
+.rng .meta{grid-column:1/-1}
+.field{width:100%;background:var(--ink0);border:0;padding:10px 12px;--bc:var(--ink3);font-size:15px;margin:2px;color:var(--hi)}
+.field:focus{--bc:var(--acc);outline:none}
+.field:focus-visible{outline:none}
+textarea.field{min-height:120px;resize:vertical}
+.chk{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin:2px;background:var(--ink0);--bc:var(--ink4);cursor:pointer;flex:none}
+.chk:checked{background:var(--acc);box-shadow:inset 0 0 0 4px var(--ink0),0 -2px 0 0 var(--acc),0 2px 0 0 var(--acc),-2px 0 0 0 var(--acc),2px 0 0 0 var(--acc)}
+.chkrow{display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--hi)}
+
+/* home cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:24px;margin-bottom:24px}
+.card{background:var(--panel);padding:18px;margin:2px;--bc:var(--ink4);position:relative;min-width:0}
+.card.here{--bc:var(--acc)}
+.card.off{opacity:.72}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.devpic{width:144px;height:90px}
+.here-badge{visibility:hidden;font:500 12px/1 var(--sans);padding:4px 7px;background:color-mix(in srgb,var(--acc) 22%,var(--ink0));color:var(--acc)}
+.card.here .here-badge{visibility:visible}
+.card h3{font:16px/1.2 var(--px);color:var(--hi);letter-spacing:.5px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:12px 0 0;font-size:13.5px}
+.kv dt{color:var(--mute)}.kv dd{margin:0;color:var(--text)}
+.batbar{display:inline-flex;gap:2px;vertical-align:-1px;margin-right:6px}
+.batbar i{width:5px;height:10px;background:var(--ink3)}
+.batbar i.on{background:var(--good)}
+.shared{margin-top:14px;padding-top:12px;background:linear-gradient(90deg,var(--ink3) 50%,transparent 0) top left/4px 2px repeat-x}
+.lbl{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 8px;background:color-mix(in srgb,var(--c) 16%,var(--ink0));color:var(--c)}
+.chip::before{content:"";width:6px;height:6px;background:var(--c)}
+
+/* connection */
+.code{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 14px}
+.code-d{width:44px;height:56px;display:grid;place-items:center;background:var(--ink0);font:32px/1 var(--px);color:var(--acc);--bc:var(--acc);margin:2px}
+.code-gap{width:8px}
+.big{color:var(--hi);font-weight:500;font-size:16px}
+.cdbar{height:6px;background:var(--ink0);margin:12px 2px 2px;box-shadow:0 -2px var(--ink3),0 2px var(--ink3),-2px 0 var(--ink3),2px 0 var(--ink3)}
+.cdbar i{display:block;height:100%;background:var(--acc);transition:width 1s steps(4)}
+.devrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px;background:var(--ink0);--bc:var(--ink3);margin:2px 2px 14px}
+.devrow canvas{width:72px;height:45px}
+.devrow b{color:var(--hi);font-weight:500}
+.devrow .seg{grid-column:1/-1}
+.rule{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--ink0);--bc:var(--ink3);margin:2px}
+.rule .ic{color:var(--acc);margin-top:3px}
+.rule b{color:var(--hi);font-weight:500}
+
+/* mouse */
+.logbox{background:#060910;--bc:var(--ink3);margin:2px;padding:12px 14px;overflow-x:auto;max-width:100%}
+.logbox pre{margin:0;font:12.5px/1.75 var(--mono);color:var(--mute);white-space:pre}
+.logbox .ok{color:var(--good)}.logbox .no{color:var(--warn)}.logbox .t{color:#566089}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;font-size:13px;color:var(--mute)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+
+/* layout */
+.stage{position:relative;width:100%;aspect-ratio:260/120;background:
+  linear-gradient(90deg,rgba(54,63,99,.35) 1px,transparent 1px) 0 0/20px 20px,
+  linear-gradient(rgba(54,63,99,.35) 1px,transparent 1px) 0 0/20px 20px,#0a0e1c;
+  box-shadow:inset 0 0 0 2px var(--ink3);overflow:hidden;touch-action:none}
+.tile{position:absolute;background:transparent;--bc:transparent;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.tile:focus-visible{outline:2px solid var(--hi);outline-offset:4px}
+.tile.drag{cursor:grabbing;z-index:3}
+.mon{position:absolute;background:var(--ink2);box-shadow:inset 0 0 0 2px var(--ink4);display:grid;place-items:center;font:500 12px/1 var(--sans);color:var(--mute);overflow:hidden;text-align:center}
+.tile.drag .mon,.tile:hover .mon{box-shadow:inset 0 0 0 2px var(--mute)}
+.tile.mac .mon{background:color-mix(in srgb,var(--acc) 14%,var(--ink2))}
+.edge{position:absolute;background:var(--acc);pointer-events:none;animation:edge 1.6s steps(2) infinite}
+@keyframes edge{50%{opacity:.35}}
+.dir{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--ink0);--bc:var(--ink3);margin:2px 2px 12px}
+
+/* clipboard */
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px;background:var(--ink0);--bc:var(--ink3);margin:2px 2px 14px}
+.item svg{width:32px;height:32px}
+.item b{display:block;color:var(--hi);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .to{font-size:12.5px;color:var(--acc);white-space:nowrap}
+
+/* second screen */
+.dircards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-bottom:24px}
+.dircard{display:flex;flex-direction:column;gap:10px}
+.dircard.live{--bc:var(--acc)}
+.bignum{font:32px/1 var(--px);color:var(--acc)}
+
+/* camera */
+.camopt{display:flex;align-items:center;gap:12px;padding:12px;background:var(--ink0);margin:2px 2px 12px;--bc:var(--ink3);box-shadow:0 -2px 0 0 var(--bc),0 2px 0 0 var(--bc),-2px 0 0 0 var(--bc),2px 0 0 0 var(--bc);width:calc(100% - 4px);border:0;cursor:pointer;text-align:left}
+.camopt[aria-checked="true"]{--bc:var(--acc)}
+.camopt .radio{width:14px;height:14px;background:var(--ink0);box-shadow:0 0 0 2px var(--ink4);flex:none}
+.camopt[aria-checked="true"] .radio{background:var(--acc);box-shadow:0 0 0 2px var(--acc),inset 0 0 0 3px var(--ink0)}
+.camopt b{color:var(--hi);font-weight:500}
+.camopt .badge{margin-left:auto}
+
+/* tip / feedback */
+.sysinfo{margin-top:14px;background:#060910;padding:12px 14px;box-shadow:inset 0 0 0 2px var(--ink3)}
+.sysinfo pre{margin:0;font:12.5px/1.75 var(--mono);color:var(--text);white-space:pre-wrap;word-break:break-word}
+.confirm{display:flex;gap:16px;align-items:flex-start}
+.confirm svg{width:42px;height:36px;flex:none}
+.confirm h3{font:16px/1.3 var(--px);color:var(--hi);margin-bottom:6px;letter-spacing:.5px}
+.credits p{margin-bottom:10px}
+.credits p:last-child{margin-bottom:0}
+.verline{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* status bar */
+.status{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;gap:6px;padding:7px var(--gr) calc(7px + env(safe-area-inset-bottom,0px)) var(--gl);background:rgba(8,11,22,.94);box-shadow:0 -2px 0 var(--ink3);font-size:13px;color:var(--mute)}
+#stItems{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;min-width:0;flex:1;overflow:hidden;max-height:22px}
+.st{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.st b{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
+.st.off{color:#5a6388}
+.st-cmd{display:inline-flex;align-items:center;gap:8px;background:var(--ink2);border:0;padding:4px 10px;cursor:pointer;color:var(--text);--bc:var(--ink4);margin:2px;flex:none;font-size:13px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:58px;z-index:30;transform:translate(-50%,12px);opacity:0;pointer-events:none;background:var(--ink1);color:var(--hi);padding:10px 16px;--bc:var(--acc);font-weight:500;display:flex;align-items:center;gap:10px;transition:opacity .2s steps(2),transform .2s steps(2);max-width:calc(100vw - 40px)}
+.toast::before{content:"";width:8px;height:8px;background:var(--acc);flex:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* command bar */
+.cmd{position:fixed;inset:0;z-index:40}
+.cmd-back{position:absolute;inset:0;background:rgba(4,6,12,.66)}
+.cmd-panel{position:relative;margin:13vh auto 0;width:min(620px,calc(100vw - 40px));background:var(--ink1);--bc:var(--ink4);
+  --h1:var(--acc);--h2:color-mix(in srgb,var(--acc) 42%,transparent);--h3:color-mix(in srgb,var(--acc) 16%,transparent)}
+.cmd-panel.typing{animation:halo .9s step-end infinite;
+  box-shadow:0 -2px 0 0 var(--h1),0 2px 0 0 var(--h1),-2px 0 0 0 var(--h1),2px 0 0 0 var(--h1),
+    0 0 0 2px var(--h2),0 -6px 0 0 var(--h2),0 6px 0 0 var(--h2),-6px 0 0 0 var(--h2),6px 0 0 0 var(--h2),
+    0 0 0 6px var(--h3),0 -10px 0 0 var(--h3),0 10px 0 0 var(--h3),-10px 0 0 0 var(--h3),10px 0 0 0 var(--h3)}
+@keyframes halo{50%{box-shadow:0 -2px 0 0 var(--h1),0 2px 0 0 var(--h1),-2px 0 0 0 var(--h1),2px 0 0 0 var(--h1),
+    0 0 0 2px var(--h2),0 -6px 0 0 var(--h2),0 6px 0 0 var(--h2),-6px 0 0 0 var(--h2),6px 0 0 0 var(--h2),
+    0 0 0 6px var(--h2),0 -10px 0 0 var(--h2),0 10px 0 0 var(--h2),-10px 0 0 0 var(--h2),10px 0 0 0 var(--h2),
+    0 0 0 10px var(--h3),0 -14px 0 0 var(--h3),0 14px 0 0 var(--h3),-14px 0 0 0 var(--h3),14px 0 0 0 var(--h3)}}
+.cmd-in{display:flex;align-items:center;gap:12px;padding:14px 16px;box-shadow:0 2px 0 var(--ink3)}
+.cmd-in .ic{color:var(--acc);width:18px;height:18px}
+.cmd-in input{flex:1;min-width:0;background:transparent;border:0;outline:none;font-size:18px;color:var(--hi)}
+.cmd-in input::placeholder{color:#5f6890}
+#cmdList{list-style:none;margin:0;padding:8px;max-height:min(52vh,420px);overflow:auto}
+#cmdList li{display:flex;align-items:center;gap:12px;padding:9px 12px;cursor:pointer;color:var(--text);position:relative}
+#cmdList li .ic{color:var(--c,var(--mute))}
+#cmdList li .hint{margin-left:auto;font-size:12px;color:var(--mute);white-space:nowrap}
+#cmdList li[aria-selected="true"]{background:var(--ink2);color:var(--hi)}
+#cmdList li[aria-selected="true"]::before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:4px;background:var(--acc)}
+#cmdList .empty{color:var(--mute);cursor:default}
+.cmd-foot{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 16px;box-shadow:0 -2px 0 var(--ink3);font-size:12px;color:var(--mute)}
+.scrim{display:none}
+
+/* responsive */
+@media (max-width:1060px){
+  .phead{grid-template-columns:minmax(0,1fr)}
+  .ph-scene{max-width:480px}
+}
+@media (max-width:820px){
+  .grid2,.dircards{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr);gap:0}
+  .topbar{display:flex;position:sticky;top:0;z-index:8;align-items:center;gap:12px;padding:10px var(--gr) 10px var(--gl);background:rgba(8,11,22,.95);box-shadow:0 2px 0 var(--ink3)}
+  .topbar .brand{flex:1}
+  .ibtn{display:inline-grid;place-items:center;width:38px;height:38px;background:var(--ink2);border:0;cursor:pointer;color:var(--text);--bc:var(--ink4);margin:2px}
+  .side{position:fixed;left:0;top:0;bottom:0;height:auto;width:min(280px,86vw);z-index:20;background:var(--ink1);padding:20px 16px 80px var(--gl);transform:translateX(-105%);transition:transform .2s steps(4);box-shadow:2px 0 0 var(--ink3)}
+  .side.open{transform:none}
+  .scrim.show{display:block;position:fixed;inset:0;z-index:15;background:rgba(4,6,12,.6)}
+  main{padding-top:18px}
+  .phead{padding:16px}
+  .phead h1{font-size:24px}
+  .hide-sm{display:none!important}
+  .devpic{width:96px;height:60px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<div class="topbar">
+  <button class="ibtn" id="menuBtn" data-act="drawer" aria-label="Open navigation" aria-expanded="false" aria-controls="side"></button>
+  <span class="brand" id="brandTop"></span>
+  <button class="ibtn" data-act="cmd" aria-label="Open command bar" id="cmdTop"></button>
+</div>
+
+<div class="app">
+  <aside class="side" id="side" aria-label="Sidebar">
+    <div class="brand" id="brandSide"></div>
+    <button class="navcmd" id="navcmd" data-act="cmd" aria-label="Open command bar"></button>
+    <nav class="nav" id="nav" aria-label="Pages"></nav>
+  </aside>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div class="scrim" id="scrim" data-act="drawer"></div>
+
+<footer class="status" aria-label="Status">
+  <div id="stItems"></div>
+  <button class="st-cmd" id="stCmd" data-act="cmd" aria-label="Open command bar"></button>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="cmd" id="cmd" hidden>
+  <div class="cmd-back" data-act="cmdclose"></div>
+  <div class="cmd-panel" id="cmdPanel" role="dialog" aria-modal="true" aria-label="Command bar">
+    <div class="cmd-in">
+      <span id="cmdIc"></span>
+      <input id="cmdInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type a command or a page…" role="combobox" aria-expanded="true" aria-controls="cmdList" aria-autocomplete="list" aria-label="Command">
+      <kbd>Esc</kbd>
+    </div>
+    <ul id="cmdList" role="listbox" aria-label="Commands"></ul>
+    <div class="cmd-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>Enter</kbd> run</span><span><kbd>Esc</kbd> close</span></div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const RM = matchMedia('(prefers-reduced-motion: reduce)');
+const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const KEY = IS_MAC ? '⌘K' : 'Ctrl K';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, f) => a + (b - a) * f;
+const ease = f => f * f * (3 - 2 * f);
+
+/* ---------- pages ---------- */
+const PAGES = [
+  {id:'home', t:'Home', g:'', acc:'blue', ic:'home', k:'Your desk'},
+  {id:'mouse', t:'Mouse & keyboard', g:'Share', acc:'violet', ic:'mouse', k:'Share'},
+  {id:'layout', t:'Screen layout', g:'Share', acc:'violet', ic:'layout', k:'Share'},
+  {id:'clipboard', t:'Clipboard', g:'Share', acc:'amber', ic:'clip', k:'Share'},
+  {id:'screen', t:'Second screen', g:'Share', acc:'teal', ic:'screen', k:'Share'},
+  {id:'camera', t:'Camera', g:'Share', acc:'rose', ic:'camera', k:'Share'},
+  {id:'connection', t:'Connection', g:'Devices', acc:'cyan', ic:'link', k:'Devices'},
+  {id:'devices', t:'Multi-device', g:'Devices', acc:'blue', ic:'devices', k:'Devices'},
+  {id:'tip', t:'Tip', g:'More', acc:'amber', ic:'heart', k:'More'},
+  {id:'feedback', t:'Feedback', g:'More', acc:'moon', ic:'bubble', k:'More'},
+  {id:'about', t:'About', g:'More', acc:'moon', ic:'info', k:'More'}
+];
+const PG = Object.fromEntries(PAGES.map(p => [p.id, p]));
+const LINKS = {wifi:{l:'Wi-Fi'}, usb:{l:'USB cable'}, bt:{l:'Bluetooth'}};
+
+/* ---------- state ---------- */
+const S = {
+  page:'home',
+  mouse:true, locked:false, cooldown:250, guard:80, hotkey:IS_MAC ? '⌃⌥L' : 'Ctrl+Alt+L',
+  clipboard:true, clipDir:'both', clipLimit:'25',
+  macLink:'wifi', ping:4, battery:82, tick:0, lat:61,
+  active:'Windows PC',
+  screen:{running:false, dir:'pc2mac', res:'1920×1080', quality:60},
+  camera:false, camDevice:'MacBook',
+  multi:true,
+  pair:{code:null, left:0, total:120},
+  layout:{pc:{x:46, y:40}, mac:{x:158, y:46}},
+  logs:[],
+  fb:{type:'bug', msg:'', sys:false, sent:false, err:false},
+  tip:{amt:'5', custom:'', done:false}
+};
+const CLIPS = [
+  {kind:'file', name:'Quarterly plan v3.docx', meta:'Word document · 2.4 MB', from:'MacBook', to:'Windows PC', ago:'2 min ago'},
+  {kind:'image', name:'Screenshot 2026-11-01 at 11.52.png', meta:'PNG image · 1440×900', from:'Windows PC', to:'MacBook', ago:'9 min ago'},
+  {kind:'text', name:'“meet at 4:30, room B”', meta:'Text · 20 characters', from:'MacBook', to:'Windows PC', ago:'14 min ago'}
+];
+
+/* ---------- sprites ---------- */
+const ICONS = {
+  home:["...##...","..####..",".######.","########",".#....#.",".#.##.#.",".#.##.#.",".######."],
+  link:["........",".######.","#......#","..####..",".#....#.","...##...","...##...","........"],
+  mouse:["..####..",".#.##.#.",".#.##.#.",".######.",".#....#.",".#....#.",".#....#.","..####.."],
+  layout:["####....","#..#....","#..#####","####...#","...#...#","...#####","........","........"],
+  clip:["..####..",".#.##.#.",".#....#.",".#.##.#.",".#....#.",".#.##.#.",".#....#.",".######."],
+  screen:["########","#......#","#......#","#......#","########","...##...","..####..","........"],
+  camera:["........",".####...","#....###","#.##.#.#","#.##.#.#","#....###",".####...","........"],
+  devices:["###..###","#.#..#.#","###..###","........","...###..","...#.#..","...###..","........"],
+  heart:["........",".##.##..","#######.","#######.",".#####..","..###...","...#....","........"],
+  bubble:["########","#......#","#.#.#..#","#......#","########","..#.....",".#......","........"],
+  info:["..####..",".#.##.#.","#......#","#..##..#","#..##..#",".#.##.#.","..####..","........"],
+  search:["..###...",".#...#..","#.....#.","#.....#.",".#...#..","..####..",".....##.","......##"],
+  lock:["..####..",".#....#.",".#....#.","########","########","###..###","########","########"],
+  menu:["........","########","........","........","########","........","........","########"],
+  bat:["........","#######.","#.....##","#.###.##","#.....##","#######.","........","........"],
+  bolt:["....##..","...##...","..##....",".######.","....##..","...##...","..##....","........"]
+};
+const SP = {
+  CURSOR:["k.....","kk....","kWk...","kWWk..","kWWWk.","kWWWWk","kWWkkk","kk...."],
+  CUR_S:["W..","WW.","WWW","W.."],
+  DOC:["kkkk..","kWWkk.","kWWWWk","kaaaWk","kWWWWk","kaaWWk","kkkkkk"],
+  IMG:["kkkkkkkk","kddddWdk","kddddddk","kdaddddk","kaaadadk","kaaaaaak","kkkkkkkk"],
+  TXT:["kkkkkkk","kWWWWWk","kaaaaWk","kWWWWWk","kaaWWWk","kWWWWWk","kkkkkkk"],
+  CAM:[".kkkkk.","kLLLLLk","kLkakLk","kLLLLLk",".kkkkk."],
+  ZZ:["aaaa","..a.",".a..","aaaa"],
+  COIN:[".kkk.","kaaak","kaWak","kaaak",".kkk."],
+  HEART:[".kk.kk.","kaakaak","kaaaaak",".kaaak.","..kak..","...k..."],
+  CHECK:["......a",".....aa","a...aa.","aa.aa..",".aaa...","..a...."],
+  LOGO:["aaaaa.bbbbb","a...a.b...b","a...acb...b","a...a.b...b","aaaaa.bbbbb","..a.....b..","ccccccccccc"]
+};
+function svgS(s, map = {}, cls = 'ic') {
+  const h = s.length, w = s[0].length; let r = '';
+  for (let y = 0; y < h; y++) {
+    let x = 0;
+    while (x < w) {
+      const ch = s[y][x];
+      if (ch === '.') { x++; continue; }
+      let x2 = x; while (x2 < w && s[y][x2] === ch) x2++;
+      r += `<rect x="${x}" y="${y}" width="${x2 - x}" height="1" fill="${map[ch] || 'currentColor'}"/>`;
+      x = x2;
+    }
+  }
+  return `<svg class="${cls}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true" focusable="false">${r}</svg>`;
+}
+const ic = n => svgS(ICONS[n]);
+const CSS = n => getComputedStyle(document.documentElement).getPropertyValue('--' + n).trim();
+
+/* canvas palette (~14 colours + feature accents) */
+const PAL = {K:'#080b16', k:'#080b16', D:'#121730', G:'#2c3555', L:'#56618c', M:'#8a94b8', W:'#e6e3d6', B:'#1b2240'};
+const ACC = {
+  cyan:['#5fc6d6','#1d4652'], violet:['#a493f0','#3a3270'], amber:['#e6b25c','#5a4322'],
+  teal:['#5ccaa0','#1d4a3e'], rose:['#e58aa2','#58293a'], blue:['#6f9ff0','#243a66'], moon:['#d8cca6','#4a4536']
+};
+const LOGO_SVG = svgS(SP.LOGO, {a:ACC.cyan[0], b:ACC.violet[0], c:ACC.moon[0]}, 'logo');
+
+function R(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function spr(c, s, x, y, a, d, map) {
+  x = Math.round(x); y = Math.round(y);
+  for (let j = 0; j < s.length; j++) for (let i = 0; i < s[j].length; i++) {
+    const ch = s[j][i]; if (ch === '.') continue;
+    c.fillStyle = ch === 'a' ? a : ch === 'd' ? d : (map && map[ch]) || PAL[ch];
+    c.fillRect(x + i, y + j, 1, 1);
+  }
+}
+function outline(c, x, y, w, h, col) { R(c, x, y, w, 1, col); R(c, x, y + h - 1, w, 1, col); R(c, x, y, 1, h, col); R(c, x + w - 1, y, 1, h, col); }
+function screenBox(c, [x, y, w, h], fill) { R(c, x, y, w, h, PAL.G); R(c, x + 1, y + 1, w - 2, h - 2, fill || PAL.D); }
+function monitor(c, x, y, w, h, fill) {
+  screenBox(c, [x, y, w, h], fill);
+  R(c, x + 1, y + 1, w - 2, 1, 'rgba(255,255,255,.07)');
+  const cx = x + Math.floor(w / 2);
+  R(c, cx - 1, y + h, 2, 3, PAL.G); R(c, cx - 5, y + h + 3, 10, 1, PAL.L);
+}
+function tower(c, x, y, h, a) {
+  R(c, x, y, 8, h, PAL.G); R(c, x + 1, y + 1, 6, h - 2, PAL.B);
+  R(c, x + 2, y + 3, 4, 1, PAL.L); R(c, x + 2, y + 5, 4, 1, PAL.L);
+  R(c, x + 3, y + h - 4, 2, 1, a);
+}
+function laptop(c, x, y, w, h, fill) {
+  screenBox(c, [x, y, w, h], fill);
+  R(c, x + Math.floor(w / 2) - 1, y, 2, 1, PAL.k);
+  R(c, x - 3, y + h, w + 6, 2, PAL.L); R(c, x - 2, y + h + 2, w + 4, 1, PAL.G);
+  R(c, x + Math.floor(w / 2) - 3, y + h, 6, 1, PAL.G);
+}
+function miniBox(c, x, y, a) { R(c, x, y, 18, 6, PAL.G); R(c, x + 1, y + 1, 16, 4, PAL.B); R(c, x + 3, y + 3, 1, 1, a); }
+function floorLine(c, y, W = 160) {
+  R(c, 0, y, W, 1, PAL.G);
+  for (let x = 0; x < W; x += 2) R(c, x + (y & 1), y + 2, 1, 1, '#192039');
+  for (let x = 1; x < W; x += 4) R(c, x, y + 4, 1, 1, '#141a33');
+  for (let x = 3; x < W; x += 8) R(c, x, y + 6, 1, 1, '#11162c');
+}
+function circle(c, cx, cy, r, col, dash = 1) {
+  let x = r, y = 0, e = 1 - r, n = 0; c.fillStyle = col;
+  while (x >= y) {
+    if (n++ % dash === 0) [[x,y],[y,x],[-y,x],[-x,y],[-x,-y],[-y,-x],[y,-x],[x,-y]].forEach(([a,b]) => c.fillRect(cx + a, cy + b, 1, 1));
+    y++; if (e < 0) e += 2 * y + 1; else { x--; e += 2 * (y - x) + 1; }
+  }
+}
+function line(c, x0, y0, x1, y1, col) {
+  x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let e = dx + dy; c.fillStyle = col;
+  for (let i = 0; i < 400; i++) {
+    c.fillRect(x0, y0, 1, 1);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; }
+  }
+}
+function windows(c, [x, y, w, h], col) {
+  R(c, x + 3, y + 3, Math.floor(w * .45), Math.floor(h * .42), col);
+  R(c, x + Math.floor(w * .45) + 5, y + 5, Math.floor(w * .3), Math.floor(h * .5), col);
+  R(c, x + 3, y + h - 4, w - 6, 1, col);
+}
+
+/* ---------- cursor simulation (drives status bar + mouse scene) ---------- */
+const DESK = {mon0:[0,0,2560,1440], mon1:[2560,180,1920,1080], mac:[4480,230,1512,982]};
+const WP = [[1100,720],[2200,800],[2559,812],[3500,900],[4479,760],[5200,600],[5700,900],[5100,1050],[4480,1000],[3800,1100],[2000,1000],[1100,720]];
+let curPos = {x:1100, y:720}, curDev = 'mon0', simPrev = 'mon0', simBlocked = false;
+const devAt = x => x < 2560 ? 'mon0' : x < 4480 ? 'mon1' : 'mac';
+function sim(t) {
+  const n = WP.length - 1, T = (t / 1.15) % n, i = Math.floor(T), f = ease(T - i);
+  let x = lerp(WP[i][0], WP[i + 1][0], f), y = lerp(WP[i][1], WP[i + 1][1], f);
+  let dev = devAt(x);
+  if (i === 0) simBlocked = false;
+  if ((!S.mouse || S.locked) && dev === 'mac') {
+    x = 4479; y = clamp(y, 180, 1259); dev = 'mon1';
+    if (!simBlocked) { simBlocked = true; log(`no-cross reason=${S.locked ? 'cursor-locked' : 'sharing-off'} edge=right pos=(4479,${Math.round(y)})`); }
+  }
+  if (dev !== simPrev) {
+    if (simPrev === 'mon0' && dev === 'mon1') log(`no-cross reason=not-outer-edge edge=right pos=(2559,${Math.round(y)}) monitors=[0,0,2560x1440][2560,180,1920x1080]`);
+    else if (simPrev === 'mon1' && dev === 'mac') log(`cross ok edge=right pos=(4479,${Math.round(y)}) to=MacBook cooldown=${S.cooldown}ms`);
+    else if (simPrev === 'mac' && dev === 'mon1') log(`cross ok edge=left pos=(0,${Math.round(y - 230)}) to=WindowsPC guard=${S.guard}ms`);
+    simPrev = dev;
+  }
+  curPos = {x, y}; curDev = dev;
+  const act = dev === 'mac' ? 'MacBook' : 'Windows PC';
+  if (act !== S.active) { S.active = act; updateLive(); }
+}
+function mapCur(B) {
+  const d = DESK[curDev], b = B[curDev];
+  return {x: b[0] + 1 + (curPos.x - d[0]) / d[2] * (b[2] - 3), y: b[1] + 1 + (curPos.y - d[1]) / d[3] * (b[3] - 3)};
+}
+function ts(off = 0) { const d = new Date(Date.now() + off * 1000); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, '0')).join(':'); }
+function log(msg, off = 0) {
+  S.logs.push(ts(off) + ' ' + msg);
+  if (S.logs.length > 9) S.logs.shift();
+  const el = $('#logPre'); if (el) el.innerHTML = logHTML();
+}
+function logHTML() {
+  return S.logs.map(l => {
+    const t = esc(l.slice(0, 8)), r = esc(l.slice(9));
+    const cls = r.startsWith('cross ok') ? 'ok' : 'no';
+    return `<span class="t">${t}</span> <span class="${cls}">${r.split(' ')[0]}${r.startsWith('cross ok') ? ' ok' : ''}</span>${r.slice(r.startsWith('cross ok') ? 8 : r.indexOf(' '))}`;
+  }).join('\n');
+}
+log('no-cross reason=not-outer-edge edge=right pos=(2559,812) monitors=[0,0,2560x1440][2560,180,1920x1080]', -62);
+log('cross ok edge=right pos=(4479,760) to=MacBook cooldown=250ms', -60);
+log('no-cross reason=button-held edge=right pos=(4479,904) button=left', -41);
+log('no-cross reason=cooldown edge=left pos=(0,512) wait=120ms', -19);
+
+/* ---------- scenes ---------- */
+const SC = {};
+const HOME_B = {mon0:[8,14,34,20], mon1:[44,18,26,15], mac:[112,30,32,20]};
+SC.home = (c, t) => {
+  const a = ACC.blue; floorLine(c, 54);
+  monitor(c, 8, 14, 34, 20, curDev === 'mon0' ? a[1] : PAL.D);
+  monitor(c, 44, 18, 26, 15, curDev === 'mon1' ? a[1] : PAL.D);
+  tower(c, 78, 32, 22, a[0]);
+  laptop(c, 112, 30, 32, 20, curDev === 'mac' ? a[1] : PAL.D);
+  windows(c, HOME_B.mon0, 'rgba(230,227,214,.10)'); windows(c, HOME_B.mac, 'rgba(230,227,214,.10)');
+  for (let x = 88; x < 108; x += 2) R(c, x, 47, 1, 1, PAL.L);
+  const p = (t * 0.45) % 1, px = 88 + Math.floor(p * 18);
+  R(c, px, 46, 2, 3, a[0]);
+  const cp = mapCur(HOME_B); spr(c, SP.CUR_S, cp.x, cp.y);
+};
+SC.connection = (c, t) => {
+  const a = ACC.cyan, cx = 80, cy = 33;
+  for (let x = cx - 27; x <= cx + 27; x += 2) R(c, x, cy, 1, 1, '#11303a');
+  for (let y = cy - 27; y <= cy + 27; y += 2) R(c, cx, y, 1, 1, '#11303a');
+  [9, 18, 27].forEach((r, i) => circle(c, cx, cy, r, i === 2 ? a[1] : '#163945', i === 2 ? 1 : 2));
+  const ang = t * 1.05;
+  for (let k = 14; k >= 0; k--) {
+    const A = ang - k * 0.05;
+    line(c, cx, cy, cx + Math.cos(A) * 26, cy + Math.sin(A) * 26, k < 2 ? a[0] : k < 6 ? '#2a7684' : k < 10 ? a[1] : '#14343e');
+  }
+  const blips = [{A:0.7, r:17, on:true}, {A:3.95, r:22, on:false}];
+  blips.forEach(b => {
+    const d = (((ang - b.A) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const x = Math.round(cx + Math.cos(b.A) * b.r), y = Math.round(cy + Math.sin(b.A) * b.r);
+    if (b.on) {
+      if (d < 0.5) { R(c, x - 1, y - 1, 3, 3, a[0]); circle(c, x, y, 4, a[1], 1); }
+      else if (d < 1.6) R(c, x - 1, y - 1, 2, 2, a[0]);
+      else R(c, x, y, 2, 2, '#2a7684');
+    } else if (d < 0.9) R(c, x, y, 2, 2, PAL.L);
+  });
+  R(c, cx - 1, cy - 1, 3, 3, PAL.W);
+  monitor(c, 10, 20, 26, 16, a[1]); windows(c, [10,20,26,16], 'rgba(230,227,214,.12)');
+  laptop(c, 126, 24, 24, 15, PAL.D);
+  const lp = Math.sin(t * 2) > 0 ? a[0] : a[1]; R(c, 137, 30, 2, 2, lp);
+};
+const MOUSE_B = {mon0:[4,8,64,36], mon1:[68,12,48,27], mac:[119,14,38,25]};
+SC.mouse = (c, t) => {
+  const a = ACC.violet, blocked = !S.mouse || S.locked;
+  ['mon0', 'mon1'].forEach(k => screenBox(c, MOUSE_B[k], curDev === k ? a[1] : PAL.D));
+  laptop(c, 119, 14, 38, 25, curDev === 'mac' ? a[1] : PAL.D);
+  windows(c, MOUSE_B.mon0, 'rgba(230,227,214,.07)'); windows(c, MOUSE_B.mac, 'rgba(230,227,214,.07)');
+  const off = Math.floor(t * 4);
+  for (let y = 14; y < 38; y++) if ((y + off) % 3 !== 0) R(c, 117, y, 1, 1, blocked ? '#7a3542' : a[0]);
+  for (let y = 12; y < 39; y += 3) R(c, 67, y, 2, 1, PAL.L);
+  for (let x = 0; x < 160; x += 2) R(c, x, 57, 1, 1, '#192039');
+  const cp = mapCur(MOUSE_B); spr(c, SP.CURSOR, cp.x, cp.y);
+};
+SC.layout = (c, t) => {
+  const a = ACC.violet, s = 0.58, ox = 5, oy = -2;
+  const pc = S.layout.pc, m = S.layout.mac;
+  screenBox(c, [ox + pc.x * s, oy + pc.y * s, 64 * s, 36 * s], PAL.D);
+  screenBox(c, [ox + (pc.x + 64) * s, oy + (pc.y + 4.5) * s, 48 * s, 27 * s], PAL.D);
+  screenBox(c, [ox + m.x * s, oy + m.y * s, 38 * s, 25 * s], a[1]);
+  const e = sharedEdge(), on = Math.floor(t * 1.25) % 2 === 0;
+  const col = on ? a[0] : '#6a5db0';
+  if (e) line(c, ox + e.x1 * s, oy + e.y1 * s, ox + e.x2 * s, oy + e.y2 * s, col);
+  for (let x = 0; x < 160; x += 4) for (let y = 2; y < 64; y += 4) if (!((x + y) % 8)) R(c, x, y, 1, 1, '#151b34');
+};
+const CL_P = {pc:[29,25], mac:[128,38]};
+SC.clipboard = (c, t) => {
+  const a = ACC.amber; floorLine(c, 54);
+  monitor(c, 10, 14, 38, 24, PAL.D); tower(c, 54, 32, 22, a[0]); laptop(c, 110, 28, 36, 22, PAL.D);
+  const items = [{s:SP.DOC, from:'mac'}, {s:SP.IMG, from:'pc'}, {s:SP.TXT, from:'mac'}];
+  const cyc = 3.4, i = Math.floor(t / cyc) % 3, p = (t % cyc) / cyc, it = items[i];
+  const src = CL_P[it.from], dst = CL_P[it.from === 'pc' ? 'mac' : 'pc'];
+  const ok = S.clipboard && (S.clipDir === 'both' || (S.clipDir === 'toMac' && it.from === 'pc') || (S.clipDir === 'toPc' && it.from === 'mac'));
+  for (let q = 0; q <= 1; q += 0.07) R(c, lerp(src[0], dst[0], q), lerp(src[1], dst[1], q) - Math.sin(q * Math.PI) * 22, 1, 1, ok ? '#3a2e1e' : '#1a2038');
+  let x = src[0], y = src[1];
+  if (ok && p >= 0.18 && p < 0.72) {
+    const q = Math.round(ease((p - 0.18) / 0.54) * 20) / 20;
+    x = lerp(src[0], dst[0], q); y = lerp(src[1], dst[1], q) - Math.sin(q * Math.PI) * 22;
+  } else if (ok && p >= 0.72) {
+    x = dst[0]; y = dst[1];
+    if (p < 0.86) [[-6,-5],[6,-5],[-7,3],[7,3]].forEach(([dx, dy]) => R(c, x + dx, y + dy, 1, 1, a[0]));
+  }
+  spr(c, it.s, x - 3, y - 3, ok ? a[0] : PAL.L, ok ? a[1] : PAL.G, ok ? null : {W:PAL.M});
+};
+SC.screen = (c, t) => {
+  const a = ACC.teal; floorLine(c, 54);
+  const M = [10, 12, 40, 26], L = [110, 26, 36, 22];
+  monitor(c, ...M, PAL.D); tower(c, 56, 32, 22, a[0]); laptop(c, ...L, PAL.D);
+  const pc2mac = S.screen.dir === 'pc2mac', src = pc2mac ? M : L, dst = pc2mac ? L : M;
+  windows(c, src, 'rgba(230,227,214,.12)');
+  const inner = r => [r[0] + 1, r[1] + 1, r[2] - 2, r[3] - 2];
+  if (S.screen.running) {
+    const d = inner(dst); R(c, d[0], d[1], d[2], d[3], a[1]); windows(c, dst, '#2f7a62'); outline(c, ...d, a[0]);
+    const off = Math.floor(t * 6) % 4;
+    for (let x = 66 + off; x < 106; x += 4) R(c, x, 48, 2, 1, a[0]);
+    if (Math.floor(t * 1.5) % 2) R(c, dst[0] + dst[2] - 4, dst[1] + 2, 2, 2, '#e6e3d6');
+  } else {
+    const cyc = 7, p = (t % cyc) / cyc, s = inner(src), d = inner(dst);
+    if (p >= 0.12 && p < 0.55) {
+      const q = Math.round(ease((p - 0.12) / 0.43) * 14) / 14;
+      const r = s.map((v, i) => Math.round(lerp(v, d[i], q)));
+      R(c, r[0], r[1], r[2], r[3], 'rgba(29,74,62,.55)'); outline(c, ...r, a[0]);
+    } else if (p >= 0.55 && p < 0.94) {
+      R(c, d[0], d[1], d[2], d[3], a[1]); windows(c, dst, '#2f7a62'); outline(c, ...d, a[0]);
+    }
+  }
+};
+function portrait(c, [x, y, w, h], a) {
+  R(c, x + 1, y + 1, w - 2, h - 2, a[1]);
+  const cx = x + Math.floor(w / 2);
+  R(c, cx - 2, y + 4, 5, 5, '#c98a99'); R(c, cx - 1, y + 3, 3, 1, '#c98a99');
+  R(c, cx - 6, y + h - 6, 13, 5, '#8c4d5e'); R(c, cx - 4, y + h - 7, 9, 1, '#8c4d5e');
+}
+SC.camera = (c, t) => {
+  const a = ACC.rose; floorLine(c, 54);
+  const PCm = [10, 16, 38, 24], MB = [110, 28, 36, 22];
+  monitor(c, ...PCm, PAL.D); tower(c, 54, 32, 22, a[0]); laptop(c, ...MB, PAL.D);
+  const onPc = S.camDevice === 'Windows PC';
+  const cam = onPc ? [26, 10] : [125, 22];
+  const viewer = onPc ? MB : PCm;
+  if (S.camera) {
+    portrait(c, viewer, a);
+    const from = [cam[0] + 3, cam[1] + 2], to = [viewer[0] + viewer[2] / 2, viewer[1] + 4];
+    for (let k = 0; k < 5; k++) {
+      const q = ((t * 0.3) + k / 5) % 1;
+      R(c, lerp(from[0], to[0], q), lerp(from[1], to[1], q) - Math.sin(q * Math.PI) * 14, 1, 1, k % 2 ? a[1] : a[0]);
+    }
+    if (Math.floor(t * 1.2) % 2 === 0) R(c, cam[0] + 8, cam[1] + 1, 2, 2, '#e06c6c');
+  } else {
+    windows(c, viewer, 'rgba(230,227,214,.07)');
+  }
+  spr(c, SP.CAM, cam[0], cam[1], S.camera ? a[0] : PAL.M, a[1], S.camera ? null : {L:PAL.G});
+};
+SC.devices = (c, t) => {
+  const a = ACC.blue; floorLine(c, 54);
+  monitor(c, 6, 18, 30, 20, a[1]); windows(c, [6,18,30,20], 'rgba(230,227,214,.10)'); tower(c, 40, 32, 22, a[0]);
+  laptop(c, 70, 30, 30, 20, a[1]);
+  miniBox(c, 128, 48, S.multi ? '#7a4040' : PAL.G);
+  for (let x = 50; x < 66; x += 2) R(c, x, 47, 1, 1, PAL.L);
+  R(c, 50 + Math.floor((t * 0.5 % 1) * 14), 46, 2, 3, a[0]);
+  if (S.multi) {
+    for (let x = 106; x < 126; x += 3) R(c, x, 51, 1, 1, PAL.G);
+    const zy = 44 - Math.floor((t * 3) % 14);
+    spr(c, SP.ZZ, 140, zy, PAL.L, PAL.L);
+  }
+};
+SC.tip = (c, t) => {
+  const a = ACC.amber; floorLine(c, 56);
+  const jx = 66, jy = 24;
+  R(c, jx + 4, jy - 4, 20, 2, PAL.L); R(c, jx + 6, jy - 2, 16, 2, PAL.G);
+  outline(c, jx, jy, 28, 32, PAL.L); R(c, jx + 1, jy + 1, 1, 30, 'rgba(230,227,214,.15)');
+  const lvl = S.tip.done ? 14 : 9;
+  R(c, jx + 2, jy + 30 - lvl, 24, lvl, a[1]);
+  for (let i = 0; i < 6; i++) spr(c, SP.COIN, jx + 3 + (i % 3) * 7 + (i > 2 ? 3 : 0), jy + 25 - (i > 2 ? 5 : 0) - (S.tip.done ? 5 : 0), a[0], a[1]);
+  const p = (t % 2.2) / 2.2;
+  if (p < 0.55) spr(c, SP.COIN, jx + 12, Math.round(lerp(-6, jy + 6, ease(p / 0.55))), a[0], a[1]);
+  if (S.tip.done) {
+    const hy = 30 - Math.floor((t * 6) % 26);
+    spr(c, SP.HEART, 112, hy, ACC.rose[0], ACC.rose[1]);
+    spr(c, SP.HEART, 40, (hy + 13) % 26 + 6, ACC.rose[0], ACC.rose[1]);
+  }
+};
+SC.feedback = (c, t) => {
+  const a = ACC.moon;
+  outline(c, 48, 10, 64, 32, PAL.L); R(c, 49, 11, 62, 30, PAL.D);
+  R(c, 60, 42, 6, 1, PAL.L); R(c, 60, 43, 4, 1, PAL.L); R(c, 60, 44, 2, 1, PAL.L);
+  if (S.fb.sent) spr(c, SP.CHECK, 77, 23, '#8bd27a', '#8bd27a');
+  else {
+    const k = Math.floor(t * 2.5) % 4;
+    for (let i = 0; i < 3; i++) R(c, 70 + i * 8, 24, 4, 4, i < k ? a[0] : PAL.G);
+  }
+  const col = ACC[S.fb.type === 'bug' ? 'rose' : S.fb.type === 'idea' ? 'amber' : 'teal'][0];
+  R(c, 54, 15, 3, 3, col);
+  floorLine(c, 56);
+};
+SC.about = (c, t) => {
+  const s = 4, w = 11 * s, x0 = 80 - w / 2, y0 = 14;
+  SP.LOGO.forEach((row, j) => [...row].forEach((ch, i) => {
+    if (ch === '.') return;
+    R(c, x0 + i * s, y0 + j * s, s, s, ch === 'a' ? ACC.cyan[0] : ch === 'b' ? ACC.violet[0] : ACC.moon[1]);
+  }));
+  const stars = [[12,8],[30,40],[22,52],[136,10],[148,34],[124,52],[52,4],[110,6]];
+  stars.forEach(([x, y], i) => { const on = (Math.floor(t * 1.3) + i) % 3; R(c, x, y, 1, 1, on ? PAL.L : PAL.W); if (!on) { R(c, x - 1, y, 1, 1, PAL.G); R(c, x + 1, y, 1, 1, PAL.G); } });
+};
+const SCENE_LABEL = {
+  home:'Pixel illustration: Windows PC with two monitors and a tower linked to a MacBook; the cursor moves between them.',
+  connection:'Radar sweep finding nearby devices; the MacBook shows up as a bright blip.',
+  mouse:'Screen map: two Windows monitors and the MacBook; the cursor crosses at the outer right edge.',
+  layout:'Mini map of the current screen layout with the crossing edge highlighted.',
+  clipboard:'A file, an image and a note hop between the PC and the MacBook.',
+  screen:'A display slides out of the PC onto the MacBook.',
+  camera:'A camera on one computer streams a portrait to the other.',
+  devices:'Three devices: Windows PC and MacBook linked, Studio Mac mini asleep.',
+  tip:'Coins dropping into a tip jar.',
+  feedback:'A speech bubble with typing dots.',
+  about:'The OmniDesk mark: two screens on one desk.'
+};
+
+/* ---------- helpers for markup ---------- */
+function sw(id, on, act, label, dis) {
+  return `<button class="sw" id="${id}" type="button" role="switch" aria-checked="${on}" aria-label="${esc(label)}" data-act="${act}"${dis ? ' disabled' : ''}><span class="sw-k"></span></button>`;
+}
+function seg(name, opts, cur, act, label) {
+  return `<div class="seg" role="group" aria-label="${esc(label)}">${opts.map(([v, l]) => `<button type="button" id="${name}-${v}" data-act="${act}" data-v="${v}" aria-pressed="${v === cur}">${l}</button>`).join('')}</div>`;
+}
+function head(id, lede, live) {
+  const p = PG[id];
+  return `<header class="phead"><div class="ph-txt"><div class="kicker">${ic(p.ic)}${p.k}</div><h1 id="h1" tabindex="-1">${p.t}</h1><p class="lede">${lede}</p><div class="live">${live}</div></div><div class="ph-scene"><canvas id="scene" class="px" width="160" height="64" role="img" aria-label="${esc(SCENE_LABEL[id])}"></canvas></div></header>`;
+}
+const pill = (h) => `<span class="pill">${h}</span>`;
+function batbar() { const n = Math.round(S.battery / 10); let h = ''; for (let i = 0; i < 10; i++) h += `<i class="${i < n ? 'on' : ''}"></i>`; return `<span class="batbar" aria-hidden="true">${h}</span>`; }
+function sharedFor(id) {
+  if (id === 'Studio Mac mini') return [];
+  const out = [];
+  if (S.mouse) out.push(['violet', id === 'Windows PC' ? 'Mouse & keyboard (source)' : 'Mouse & keyboard']);
+  if (S.clipboard) out.push(['amber', 'Clipboard']);
+  if (S.screen.running) { const tgt = S.screen.dir === 'pc2mac' ? 'MacBook' : 'Windows PC'; out.push(['teal', id === tgt ? 'Acting as second screen' : 'Extending a display']); }
+  if (S.camera && S.multi) out.push(['rose', id === S.camDevice ? 'Camera live' : 'Watching camera']);
+  return out;
+}
+const chips = list => list.length ? `<div class="chips">${list.map(([c, l]) => `<span class="chip" style="--c:var(--${c})">${l}</span>`).join('')}</div>` : `<span class="meta">Nothing right now</span>`;
+const linkLabel = () => LINKS[S.macLink].l;
+function edgeText() {
+  const r = relation();
+  return {
+    right:'MacBook sits to the right. The cursor crosses at the right edge of Monitor 2 (1920×1080) and arrives at the MacBook’s left edge.',
+    left:'MacBook sits to the left. The cursor crosses at the left edge of Monitor 1 (2560×1440) and arrives at the MacBook’s right edge.',
+    above:'MacBook sits above. The cursor crosses at the top edge of the Windows monitors and arrives at the MacBook’s bottom edge.',
+    below:'MacBook sits below. The cursor crosses at the bottom edge of the Windows monitors and arrives at the MacBook’s top edge.'
+  }[r];
+}
+
+/* ---------- pages ---------- */
+const P = {};
+P.home = () => {
+  const devs = [
+    {id:'Windows PC', kind:'pc', os:'Windows 11 · x64', link:'Wired Ethernet', ping:'This device', extra:'2560×1440 + 1920×1080'},
+    {id:'MacBook', kind:'mac', os:'macOS 15 · Apple silicon', link:linkLabel(), ping:'<b class="num" data-live="ping"></b> ms', bat:true, extra:'3024×1964 (1512×982 pt)'},
+    {id:'Studio Mac mini', kind:'mini', os:'macOS 15', link:'—', ping:'<span style="color:var(--bad)">Offline</span>', extra:'Last seen 2 days ago', off:true}
+  ];
+  return head('home', 'One desk for all your computers. One mouse, one keyboard, one clipboard.',
+    pill(`<i class="dot good"></i>MacBook · <b data-live="ping"></b> ms`) + pill(`${ic('bat')} Battery <span><b data-live="battery"></b>%</span>`) + pill(`Cursor on <b data-live="active"></b>`)) +
+  `<div class="cards">${devs.map(d => `<article class="card${d.off ? ' off' : ''}" data-dev="${d.id}">
+      <div class="card-top"><canvas class="devpic px" data-kind="${d.kind}" width="48" height="30" aria-hidden="true"></canvas><span class="here-badge">Cursor here</span></div>
+      <h3>${d.id}</h3><p class="meta">${d.os}</p>
+      <dl class="kv"><dt>Link</dt><dd>${d.link}</dd><dt>Ping</dt><dd>${d.ping}</dd>
+      ${d.bat ? `<dt>Battery</dt><dd><span data-batbar></span><b class="num" data-live="battery"></b>%</dd>` : ''}<dt>Screens</dt><dd>${d.extra}</dd></dl>
+      <div class="shared"><div class="lbl">Shared now</div>${d.off ? '<span class="meta">Nothing while offline</span>' : chips(sharedFor(d.id))}</div>
+    </article>`).join('')}</div>
+  <div class="grid2">
+    <section class="pnl" aria-labelledby="qs"><h2 id="qs">Quick switches</h2>
+      <div class="row"><div class="rl"><b>Mouse & keyboard</b><span>${S.mouse ? (S.locked ? 'On, cursor locked to this screen' : 'Crossing at the outer edge') : 'Off'}</span></div>${sw('h-mouse', S.mouse, 'mouse', 'Mouse and keyboard sharing')}</div>
+      <div class="row"><div class="rl"><b>Clipboard</b><span>${S.clipboard ? 'Copy here, paste there' : 'Off'}</span></div>${sw('h-clip', S.clipboard, 'clip', 'Clipboard sharing')}</div>
+      <div class="row"><div class="rl"><b>Second screen</b><span>${S.screen.running ? (S.screen.dir === 'pc2mac' ? 'MacBook is a screen for Windows PC' : 'Windows PC is a screen for MacBook') : 'Not running'}</span></div><a class="btn ghost" href="#screen">Open</a></div>
+    </section>
+    <section class="pnl" aria-labelledby="hk"><h2 id="hk">Good to know</h2>
+      <p class="note">Press <kbd>${KEY}</kbd> anywhere to run a command, like “turn off clipboard” or “start second screen on MacBook”.</p>
+      <div class="rule" style="margin-top:16px">${ic('lock')}<div><b>Encrypted, no account, no cloud.</b><br><span class="meta">Your computers talk directly to each other.</span></div></div>
+    </section>
+  </div>`;
+};
+P.connection = () => {
+  const p = S.pair;
+  let pair;
+  if (!p.code) pair = `<p class="note">Pair a computer on the same desk or network. You’ll get a 6-digit code to type on the other computer.</p><div class="btns"><button class="btn pri" id="pairBtn" type="button" data-act="pair">Pair a new device</button></div>`;
+  else if (p.left <= 0) pair = `<p class="big">This code expired.</p><p class="note">Codes last two minutes. Make a new one when the other computer is ready.</p><div class="btns"><button class="btn pri" id="pairBtn" type="button" data-act="pair">New code</button></div>`;
+  else pair = `<div class="code" role="group" aria-label="Pairing code ${p.code.split('').join(' ')}">${[...p.code].map((d, i) => `<span class="code-d" aria-hidden="true">${d}</span>${i === 2 ? '<span class="code-gap"></span>' : ''}`).join('')}</div>
+    <p class="big">Type this on the other computer.</p>
+    <p class="note">In OmniDesk there: Connection → Enter a code. Expires in <b class="num" data-live="pairLeft"></b>.</p>
+    <div class="cdbar" aria-hidden="true"><i data-cd style="width:${p.left / p.total * 100}%"></i></div>
+    <div class="btns"><button class="btn" id="pairBtn" type="button" data-act="pair">New code</button><button class="btn ghost" id="pairCancel" type="button" data-act="pairCancel">Cancel</button></div>`;
+  return head('connection', 'Find computers nearby and pair them with a short code.',
+    pill(`<i class="dot acc"></i>Scanning · 1 device nearby`) + pill(`MacBook · ${linkLabel()} · <b data-live="ping"></b> ms`) + pill(`${ic('lock')} Encrypted`)) +
+  `<div class="grid2">
+    <section class="pnl" aria-labelledby="pr"><h2 id="pr">Pair a new device</h2>${pair}</section>
+    <section class="pnl" aria-labelledby="ln"><h2 id="ln">Links</h2>
+      <div class="devrow"><canvas class="px" data-kind="pc" width="48" height="30" aria-hidden="true"></canvas><div><b>Windows PC</b><div class="meta">This device · Wired Ethernet</div></div><span class="badge sm">This PC</span></div>
+      <div class="devrow"><canvas class="px" data-kind="mac" width="48" height="30" aria-hidden="true"></canvas><div><b>MacBook</b><div class="meta">${linkLabel()} · ping <b class="num" data-live="ping"></b> ms</div></div><i class="dot good" title="Connected"></i>
+        ${seg('lk', [['wifi', 'Wi-Fi'], ['usb', 'USB cable'], ['bt', 'Bluetooth']], S.macLink, 'link', 'MacBook link type')}</div>
+      <div class="devrow" style="opacity:.7"><canvas class="px" data-kind="mini" width="48" height="30" aria-hidden="true"></canvas><div><b>Studio Mac mini</b><div class="meta">Offline · last seen 2 days ago</div></div><i class="dot bad" title="Offline"></i></div>
+      <div class="rule">${ic('lock')}<div><b>Encrypted, no account, no cloud.</b><br><span class="meta">Devices talk to each other directly, end to end. Nothing leaves your desk.</span></div></div>
+    </section>
+  </div>`;
+};
+P.mouse = () => head('mouse', 'One mouse and keyboard for every computer. Push the cursor past the outer edge to cross.',
+  pill(`Cursor on <b data-live="active"></b>`) + pill(`<i class="dot ${S.mouse && !S.locked ? 'good' : 'warn'}"></i>${!S.mouse ? 'Sharing off' : S.locked ? 'Locked to this screen' : 'Crossing allowed'}`) + pill(`Cooldown <b>${S.cooldown} ms</b>`)) +
+  `<div class="legend" style="margin:-16px 4px 24px"><span><i class="dot" style="background:var(--ink4)"></i>Monitor 1 · 2560×1440</span><span><i class="dot" style="background:var(--ink4)"></i>Monitor 2 · 1920×1080</span><span><i class="dot" style="background:var(--violet)"></i>Outer edge → MacBook</span></div>
+  <div class="grid2">
+    <section class="pnl" aria-labelledby="mk"><h2 id="mk">Sharing</h2>
+      <div class="row"><div class="rl"><b>Share mouse & keyboard</b><span>${S.mouse ? 'On. Move past the right edge of Monitor 2.' : 'Off. The cursor stays on Windows PC.'}</span></div>${sw('m-mouse', S.mouse, 'mouse', 'Share mouse and keyboard')}</div>
+      <div class="row"><div class="rl"><b>Lock cursor to this screen</b><span>Hotkey <kbd>${S.hotkey}</kbd></span></div><button class="btn${S.locked ? ' pri' : ''}" id="m-lock" type="button" data-act="lock">${S.locked ? 'Unlock' : 'Lock now'}</button></div>
+      <div class="rng"><label for="r-cool">Cooldown after crossing</label><output id="o-cool">${S.cooldown} ms</output><input id="r-cool" type="range" min="0" max="1000" step="50" value="${S.cooldown}" data-input="cooldown"><span class="meta">Pause before the cursor may cross back. Stops accidental ping-pong.</span></div>
+      <div class="rng"><label for="r-guard">Arrival guard</label><output id="o-guard">${S.guard} ms</output><input id="r-guard" type="range" min="0" max="500" step="10" value="${S.guard}" data-input="guard"><span class="meta">Ignore the edge you just arrived through for this long.</span></div>
+      <div class="rule" style="margin-top:12px">${ic('lock')}<div><b>Don’t cross while a button is held</b> <span class="badge sm">Always on</span><br><span class="meta">Dragging a window or selecting text never sends the cursor to another computer.</span></div></div>
+    </section>
+    <section class="pnl" aria-labelledby="why"><h2 id="why">Why didn’t it cross?</h2>
+      <p class="note" style="margin-bottom:12px">The last few edge decisions, newest at the bottom.</p>
+      <div class="logbox" tabindex="0" aria-label="Edge decision log"><pre id="logPre">${logHTML()}</pre></div>
+    </section>
+  </div>`;
+P.layout = () => head('layout', 'Drag the tiles to match your desk. They snap together edge to edge.',
+  pill(`<span id="layoutPill">${relation() === 'right' ? 'MacBook right of PC' : relation() === 'left' ? 'MacBook left of PC' : relation() === 'above' ? 'MacBook above PC' : 'MacBook below PC'}</span>`) + pill(`3 screens · 2 computers`)) +
+  `<section class="pnl" aria-labelledby="ar" style="margin-bottom:24px"><h2 id="ar">Arrange</h2>
+    <div class="stage" id="stage">
+      <div class="tile" id="tile-pc" data-tile="pc" tabindex="0" role="button" aria-label="Windows PC tile. Drag, or use arrow keys to move.">
+        <div class="mon" style="left:0;top:0;width:${64 / 112 * 100}%;height:100%">1</div>
+        <div class="mon" style="left:${64 / 112 * 100}%;top:${4.5 / 36 * 100}%;width:${48 / 112 * 100}%;height:${27 / 36 * 100}%">2</div>
+      </div>
+      <div class="tile mac" id="tile-mac" data-tile="mac" tabindex="0" role="button" aria-label="MacBook tile. Drag, or use arrow keys to move.">
+        <div class="mon" style="inset:0">Mac</div>
+      </div>
+      <div class="edge" id="edge"></div>
+    </div>
+    <div class="legend"><span><i class="dot" style="background:var(--ink4)"></i>Windows PC: 1 = 2560×1440, 2 = 1920×1080</span><span><i class="dot acc"></i>MacBook 1512×982 pt</span><span><i class="dot acc"></i>Crossing edge</span></div>
+  </section>
+  <div class="grid2">
+    <section class="pnl" aria-labelledby="ce"><h2 id="ce">Crossing edges</h2>
+      <div class="dir">${ic('mouse')}<span id="layoutInfo">${edgeText()}</span></div>
+      <p class="note">Edges that touch nothing never cross. That keeps corners and inner monitor edges calm.</p>
+    </section>
+    <section class="pnl" aria-labelledby="pl"><h2 id="pl">Place MacBook</h2>
+      ${seg('pl', [['left', 'Left'], ['right', 'Right'], ['above', 'Above'], ['below', 'Below']], relation(), 'place', 'Place MacBook')}
+      <div class="btns"><button class="btn ghost" id="lay-reset" type="button" data-act="resetLayout">Reset layout</button></div>
+    </section>
+  </div>`;
+P.clipboard = () => head('clipboard', 'Copy on one computer, paste on the other. Text, images and files.',
+  pill(`<i class="dot ${S.clipboard ? 'good' : 'warn'}"></i>${S.clipboard ? 'On' : 'Off'}`) + pill(`Last: <b>${S.clipboard ? 'Quarterly plan v3.docx' : '—'}</b>`) + pill(`Files up to <b>${S.clipLimit === '0' ? 'off' : S.clipLimit + ' MB'}</b>`)) +
+  `<div class="grid2">
+    <section class="pnl" aria-labelledby="cs"><h2 id="cs">Sharing</h2>
+      <div class="row"><div class="rl"><b>Share clipboard</b><span>${S.clipboard ? 'Everything you copy is ready on the other computer.' : 'Off. Copies stay on the computer you made them on.'}</span></div>${sw('c-clip', S.clipboard, 'clip', 'Share clipboard')}</div>
+      <div class="row" style="flex-wrap:wrap"><div class="rl"><b>Direction</b><span>Which way copies travel.</span></div>${seg('cd', [['both', 'Both ways'], ['toMac', 'To MacBook'], ['toPc', 'To Windows PC']], S.clipDir, 'clipDir', 'Clipboard direction')}</div>
+      <div class="row" style="flex-wrap:wrap"><div class="rl"><b>Files up to…</b><span>Bigger files stay put.</span></div>${seg('cl', [['10', '10 MB'], ['25', '25 MB'], ['100', '100 MB'], ['0', 'No files']], S.clipLimit, 'clipLimit', 'File size limit')}</div>
+    </section>
+    <section class="pnl" aria-labelledby="rc"><h2 id="rc">Recently shared</h2>
+      ${CLIPS.map(it => {
+        const s = it.kind === 'file' ? SP.DOC : it.kind === 'image' ? SP.IMG : SP.TXT;
+        return `<div class="item">${svgS(s, {k:'#080b16', W:'#e6e3d6', a:ACC.amber[0], d:ACC.amber[1]}, '')}<div style="min-width:0"><b>${esc(it.name)}</b><span class="meta">${it.meta} · ${it.ago}</span></div><span class="to">${it.from === 'MacBook' ? 'Mac → PC' : 'PC → Mac'}</span></div>`;
+      }).join('')}
+      <p class="note">History lives in memory only and clears when you quit.</p>
+    </section>
+  </div>`;
+P.screen = () => {
+  const run = S.screen.running, dir = S.screen.dir;
+  const card = (d, title, sub) => {
+    const live = run && dir === d;
+    return `<section class="pnl dircard${live ? ' live' : ''}" aria-labelledby="dc-${d}"><h2 id="dc-${d}">${title}${live ? '<span class="badge">Live</span>' : ''}</h2><p class="note">${sub}</p>
+      <div class="btns">${live ? `<button class="btn" id="s-stop-${d}" type="button" data-act="scrStop">Stop</button>` : `<button class="btn pri" id="s-start-${d}" type="button" data-act="scrStart" data-v="${d}">Start</button>`}</div></section>`;
+  };
+  return head('screen', 'Turn the other computer into an extra display. Works both ways.',
+    pill(`<i class="dot ${run ? 'good' : ''}"></i>${run ? (dir === 'pc2mac' ? 'MacBook → screen for PC' : 'PC → screen for MacBook') : 'Not running'}`) + pill(`Latency <b data-live="lat"></b> ms over ${linkLabel()}`)) +
+  `<div class="dircards">
+    ${card('pc2mac', 'Use MacBook as a screen for Windows PC', 'Windows sees a third monitor. Put it to the right of Monitor 2 and keep working.')}
+    ${card('mac2pc', 'Use Windows PC as a screen for MacBook', 'The MacBook gets a second display that shows up on Monitor 2.')}
+  </div>
+  <div class="grid2">
+    <section class="pnl" aria-labelledby="ss"><h2 id="ss">Picture</h2>
+      <div class="row" style="flex-wrap:wrap"><div class="rl"><b>Resolution</b></div>${seg('rs', [['1920×1080', '1920×1080'], ['2560×1600', '2560×1600']], S.screen.res, 'res', 'Resolution')}</div>
+      <div class="row"><div class="rl"><b>Refresh rate</b></div><span class="badge sm">60 Hz</span></div>
+      <div class="rng"><label for="r-q">Quality vs latency</label><output id="o-q">${S.screen.quality < 40 ? 'Faster' : S.screen.quality > 70 ? 'Sharper' : 'Balanced'}</output><input id="r-q" type="range" min="0" max="100" step="5" value="${S.screen.quality}" data-input="quality"><span class="meta">Left for snappier motion, right for crisper text.</span></div>
+    </section>
+    <section class="pnl" aria-labelledby="lt"><h2 id="lt">Measured latency</h2>
+      <p><span class="bignum"><span data-live="lat"></span> ms</span></p>
+      <p class="note" style="margin-top:10px">Over ${linkLabel()} right now. Typical: 38 ms over USB cable, 61 ms over Wi-Fi.</p>
+      <div class="btns">${seg('sl', [['usb', 'USB cable'], ['wifi', 'Wi-Fi'], ['bt', 'Bluetooth']], S.macLink, 'link', 'Link for second screen')}</div>
+      <p class="note" style="margin-top:12px">On Windows the extra display comes from Virtual Display Driver.</p>
+    </section>
+  </div>`;
+};
+P.camera = () => {
+  const watchers = ['Windows PC', 'MacBook'].filter(d => d !== S.camDevice);
+  return head('camera', 'Use one camera on every computer, so video calls work wherever you are.',
+    pill(`<i class="dot ${S.camera ? 'bad' : ''}"></i>${S.camera ? `Live from ${S.camDevice}` : 'Camera off'}`) + pill(`Watching <b>${S.camera ? watchers.length : 0}</b>`) + `<span class="badge">Coming soon</span>`) +
+  `<div class="grid2">
+    <section class="pnl" aria-labelledby="cm"><h2 id="cm">Camera</h2>
+      <div class="row"><div class="rl"><b>Share my camera with every device</b><span>${S.multi ? (S.camera ? 'Every connected computer can use it as a webcam.' : 'Off.') : 'Needs Multi-device mode.'}</span></div>${sw('cam-sw', S.camera, 'cam', 'Share my camera with every device', !S.multi)}</div>
+      ${S.multi ? '' : `<div class="btns"><button class="btn" id="cam-multi" type="button" data-act="multi">Turn on Multi-device mode</button></div>`}
+      <p class="lbl" style="margin-top:14px">Only one camera runs at a time</p>
+      <div role="radiogroup" aria-label="Camera source">
+      ${[['Windows PC', 'Windows PC · USB webcam'], ['MacBook', 'MacBook · FaceTime HD camera']].map(([d, l]) => `<button class="camopt" type="button" role="radio" id="cd-${d.replace(/\s/g, '')}" aria-checked="${S.camDevice === d}" data-act="camDev" data-v="${d}"><span class="radio"></span><b>${l}</b>${S.camera && S.camDevice === d ? '<span class="badge sm">Live</span>' : ''}</button>`).join('')}
+      </div>
+    </section>
+    <section class="pnl" aria-labelledby="wn"><h2 id="wn">Watching now</h2>
+      ${S.camera ? watchers.map(w => `<div class="devrow"><canvas class="px" data-kind="${w === 'MacBook' ? 'mac' : 'pc'}" width="48" height="30" aria-hidden="true"></canvas><div><b>${w}</b><div class="meta">Receiving · 1280×720 · 30 fps</div></div><i class="dot good"></i></div>`).join('') : `<p class="note">Nobody. Turn the camera on and it appears on the other computer as “OmniDesk Camera”.</p>`}
+      <div class="devrow" style="opacity:.6"><canvas class="px" data-kind="mini" width="48" height="30" aria-hidden="true"></canvas><div><b>Studio Mac mini</b><div class="meta">Offline, can’t watch</div></div><i class="dot bad"></i></div>
+      <p class="note">The light on the live camera stays on while anyone is watching.</p>
+    </section>
+  </div>`;
+};
+P.devices = () => head('devices', 'More than two computers on one desk. Each one keeps its own screen layout.',
+  pill(`<i class="dot good"></i><b>${S.multi ? '2 of 3' : '2 of 2'}</b> online`) + pill(`Mode: <b>${S.multi ? 'Multi-device' : 'Two computers'}</b>`)) +
+  `<div class="grid2">
+    <section class="pnl" aria-labelledby="md"><h2 id="md">Mode</h2>
+      <div class="row"><div class="rl"><b>Multi-device mode</b><span>${S.multi ? 'Up to 8 computers share one mouse, keyboard, clipboard and camera.' : 'Two computers: Windows PC and MacBook.'}</span></div>${sw('d-multi', S.multi, 'multi', 'Multi-device mode')}</div>
+      <p class="note" style="margin-top:8px">Switching modes keeps your pairings and layout.</p>
+    </section>
+    <section class="pnl" aria-labelledby="dv"><h2 id="dv">On this desk</h2>
+      <div class="devrow"><canvas class="px" data-kind="pc" width="48" height="30" aria-hidden="true"></canvas><div><b>Windows PC</b><div class="meta">Windows 11 · keyboard and mouse live here</div></div><i class="dot good"></i></div>
+      <div class="devrow"><canvas class="px" data-kind="mac" width="48" height="30" aria-hidden="true"></canvas><div><b>MacBook</b><div class="meta">macOS 15 · ${linkLabel()} · <b class="num" data-live="ping"></b> ms</div></div><i class="dot good"></i></div>
+      ${S.multi ? `<div class="devrow"><canvas class="px" data-kind="mini" width="48" height="30" aria-hidden="true"></canvas><div><b>Studio Mac mini</b><div class="meta">macOS 15 · offline · last seen 2 days ago</div></div><button class="btn ghost" id="d-wake" type="button" data-act="wake">Retry</button></div>` : `<p class="note">Studio Mac mini is hidden in two-computer mode.</p>`}
+    </section>
+  </div>`;
+P.tip = () => {
+  const amt = S.tip.amt === 'custom' ? (S.tip.custom || '') : S.tip.amt;
+  const body = S.tip.done
+    ? `<div class="confirm">${svgS(SP.HEART, {k:'#080b16', a:ACC.rose[0]}, '')}<div><h3>Thank you</h3><p>Your $${esc(amt)} tip means a lot. It keeps OmniDesk free, open and quietly improving.</p><p class="note" style="margin-top:8px">This is a preview: no payment was made.</p><div class="btns"><button class="btn ghost" id="t-again" type="button" data-act="tipAgain">Back</button></div></div></div>`
+    : `<p class="note" style="margin-bottom:14px">OmniDesk is free and always will be. If it saves you a few cable swaps, a one-time tip helps a small team keep going. No subscription.</p>
+      ${seg('ta', [['3', '$3'], ['5', '$5'], ['10', '$10'], ['custom', 'Custom']], S.tip.amt, 'tipAmt', 'Tip amount')}
+      ${S.tip.amt === 'custom' ? `<div style="margin-top:14px;max-width:220px"><label class="lbl" for="t-custom">Amount in dollars</label><input class="field" id="t-custom" type="number" min="1" step="1" inputmode="numeric" value="${esc(S.tip.custom)}" data-input="tipCustom"></div>` : ''}
+      <div class="btns"><button class="btn pri" id="t-send" type="button" data-act="tipSend">${ic('heart')}<span id="tipLbl">Leave a $${esc(amt || '…')} tip</span></button></div>`;
+  return head('tip', 'A one-time thank-you, if you’d like.', pill(`${ic('heart')} One time, no account`)) +
+    `<div class="grid2"><section class="pnl" aria-labelledby="tj"><h2 id="tj">Tip jar</h2>${body}</section>
+     <section class="pnl" aria-labelledby="tw"><h2 id="tw">Where it goes</h2><p class="note">Tips pay for test hardware (yes, the Mac mini), code signing, and quiet evenings fixing edge cases in the cursor code.</p></section></div>`;
+};
+P.feedback = () => {
+  const f = S.fb;
+  const body = f.sent
+    ? `<div class="confirm">${svgS(SP.CHECK, {a:'#8bd27a'}, '')}<div><h3>Got it, thank you</h3><p>Your ${f.type === 'bug' ? 'bug report' : f.type === 'idea' ? 'idea' : 'note'} is saved for the next release review.</p><p class="note" style="margin-top:8px">Preview only: nothing was sent over the network.</p><div class="btns"><button class="btn ghost" id="f-again" type="button" data-act="fbAgain">Write another</button></div></div></div>`
+    : `${seg('ft', [['bug', 'Bug'], ['idea', 'Idea'], ['thanks', 'Thank you']], f.type, 'fbType', 'Feedback type')}
+      <label class="lbl" for="f-msg" style="display:block;margin-top:16px">Message</label>
+      <textarea class="field" id="f-msg" data-input="fbMsg" placeholder="${f.type === 'bug' ? 'What happened, and what did you expect?' : f.type === 'idea' ? 'What would make your desk calmer?' : 'Say hi.'}">${esc(f.msg)}</textarea>
+      ${f.err ? '<p class="note" style="color:var(--warn);margin-top:6px">Write a few words first.</p>' : ''}
+      <label class="chkrow" style="margin-top:16px"><input class="chk" type="checkbox" id="f-sys" data-change="fbSys"${f.sys ? ' checked' : ''}> Include system info</label>
+      ${f.sys ? `<div class="sysinfo"><pre>OS              Windows 11 (x64)
+App version     2.5.0
+Engine version  1.19.0
+Monitor layout  [0,0,2560x1440][2560,180,1920x1080]
+Peers           macOS 15 (2), link Wi-Fi/USB</pre><p class="note" style="margin-top:8px">Exactly this, nothing more. No device names, user names or emails.</p></div>` : ''}
+      <div class="btns"><button class="btn pri" id="f-send" type="button" data-act="fbSend">Send feedback</button></div>`;
+  return head('feedback', 'Tell us what broke, what you wish for, or just say thanks.', pill(`${ic('bubble')} Read by a human`)) +
+    `<div class="grid2"><section class="pnl" aria-labelledby="fb"><h2 id="fb">Feedback</h2>${body}</section>
+     <section class="pnl" aria-labelledby="fp"><h2 id="fp">Privacy</h2><p class="note">System info is off unless you tick the box. When it’s on, you see every line before it goes.</p></section></div>`;
+};
+P.about = () => head('about', 'One desk for all your computers.', pill(`Version <b>2.5.0</b>`) + pill(`GPL-2.0-only`)) +
+  `<div class="grid2">
+    <section class="pnl" aria-labelledby="ab"><h2 id="ab">OmniDesk 2.5.0</h2>
+      <div class="verline" style="margin-bottom:12px">${LOGO_SVG.replace('class="logo"', 'style="width:66px;height:42px"')}<div><b style="color:var(--hi)">OmniDesk</b><div class="meta">Windows 11 · macOS 15</div></div></div>
+      <p>Licensed under GPL-2.0-only.</p>
+    </section>
+    <section class="pnl credits" aria-labelledby="cr"><h2 id="cr">Credits</h2>
+      <p>Built on Deskflow (github.com/deskflow/deskflow). Copyright (C) 2025 Deskflow Developers, (C) 2012 Synergy App Ltd, (C) 2002 Chris Schoeneman.</p>
+      <p>Second screen on Windows uses Virtual Display Driver (MIT).</p>
+      <p class="note">Pixel type: Silkscreen. Text: IBM Plex Sans.</p>
+    </section>
+  </div>`;
+
+/* ---------- layout model ---------- */
+const WORLD = {w:260, h:120};
+const SIZES = {pc:{w:112, h:36}, mac:{w:38, h:25}};
+const rectOf = k => ({...S.layout[k], ...SIZES[k]});
+function candidates(mk) {
+  const fk = mk === 'pc' ? 'mac' : 'pc', m = rectOf(mk), f = rectOf(fk);
+  const cy = clamp(m.y, f.y - m.h + 6, f.y + f.h - 6), cx = clamp(m.x, f.x - m.w + 6, f.x + f.w - 6);
+  return [
+    {side:'right', x:f.x + f.w, y:cy}, {side:'left', x:f.x - m.w, y:cy},
+    {side:'above', x:cx, y:f.y - m.h}, {side:'below', x:cx, y:f.y + f.h}
+  ].map(c => ({...c, d:Math.hypot(c.x - m.x, c.y - m.y)}));
+}
+const inWorld = (c, k) => c.x >= 0 && c.y >= 0 && c.x + SIZES[k].w <= WORLD.w && c.y + SIZES[k].h <= WORLD.h;
+function snap(mk) {
+  const c = candidates(mk).sort((a, b) => a.d - b.d);
+  const ok = c.find(x => inWorld(x, mk)) || c[0];
+  S.layout[mk] = {x:ok.x, y:ok.y};
+}
+function relation() {
+  const p = rectOf('pc'), m = rectOf('mac');
+  if (Math.abs(m.x - (p.x + p.w)) < .6) return 'right';
+  if (Math.abs(m.x + m.w - p.x) < .6) return 'left';
+  if (Math.abs(m.y + m.h - p.y) < .6) return 'above';
+  return 'below';
+}
+function sharedEdge() {
+  const p = rectOf('pc'), m = rectOf('mac'), r = relation();
+  if (r === 'right') { const a = Math.max(p.y + 4.5, m.y), b = Math.min(p.y + 31.5, m.y + m.h); return b > a ? {x1:m.x, y1:a, x2:m.x, y2:b} : null; }
+  if (r === 'left') { const a = Math.max(p.y, m.y), b = Math.min(p.y + p.h, m.y + m.h); return b > a ? {x1:p.x, y1:a, x2:p.x, y2:b} : null; }
+  const a = Math.max(p.x, m.x), b = Math.min(p.x + p.w, m.x + m.w);
+  const y = r === 'above' ? p.y : p.y + p.h;
+  return b > a ? {x1:a, y1:y, x2:b, y2:y} : null;
+}
+function positionTiles() {
+  ['pc', 'mac'].forEach(k => {
+    const el = $('#tile-' + k); if (!el) return; const r = rectOf(k);
+    Object.assign(el.style, {left:r.x / WORLD.w * 100 + '%', top:r.y / WORLD.h * 100 + '%', width:r.w / WORLD.w * 100 + '%', height:r.h / WORLD.h * 100 + '%'});
+  });
+  const e = $('#edge'); if (!e) return; const s = sharedEdge();
+  if (!s) { e.hidden = true; return; } e.hidden = false;
+  const vert = s.x1 === s.x2;
+  Object.assign(e.style, vert
+    ? {left:`calc(${s.x1 / WORLD.w * 100}% - 2px)`, top:s.y1 / WORLD.h * 100 + '%', width:'4px', height:(s.y2 - s.y1) / WORLD.h * 100 + '%'}
+    : {left:s.x1 / WORLD.w * 100 + '%', top:`calc(${s.y1 / WORLD.h * 100}% - 2px)`, height:'4px', width:(s.x2 - s.x1) / WORLD.w * 100 + '%'});
+}
+function layoutChanged(say) {
+  positionTiles();
+  const i = $('#layoutInfo'); if (i) i.textContent = edgeText();
+  const r = relation();
+  const pl = $('#layoutPill'); if (pl) pl.textContent = 'MacBook ' + (r === 'right' ? 'right of' : r === 'left' ? 'left of' : r) + (r === 'above' || r === 'below' ? ' PC' : ' PC');
+  $$('[data-act="place"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === r));
+  if (say) toast('Snapped: MacBook ' + (r === 'above' || r === 'below' ? r : r + ' of') + ' Windows PC');
+}
+function placeMac(side) {
+  const c = candidates('mac').find(x => x.side === side);
+  const p = rectOf('pc');
+  if (side === 'right' || side === 'left') c.y = p.y + 4; else c.x = p.x + (p.w - 38) / 2;
+  if (!inWorld(c, 'mac')) { S.layout.pc = {x:side === 'left' ? 110 : 46, y:side === 'above' ? 64 : side === 'below' ? 20 : 40}; return placeMac(side); }
+  S.layout.mac = {x:c.x, y:c.y}; layoutChanged(true);
+}
+
+/* ---------- live values ---------- */
+const fmtLeft = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const LIVE = {ping:() => S.ping, battery:() => S.battery, active:() => S.active, lat:() => S.lat, pairLeft:() => fmtLeft(Math.max(0, S.pair.left))};
+function updateLive() {
+  $$('[data-live]').forEach(el => { const f = LIVE[el.dataset.live]; if (f) { const v = String(f()); if (el.textContent !== v) el.textContent = v; } });
+  $$('[data-dev]').forEach(el => el.classList.toggle('here', el.dataset.dev === S.active));
+  const bb = batbar(); $$('[data-batbar]').forEach(el => { if (el.innerHTML !== bb) el.innerHTML = bb; });
+  $$('[data-cd]').forEach(el => el.style.width = (Math.max(0, S.pair.left) / S.pair.total * 100) + '%');
+  renderStatus();
+}
+let stCache = '';
+function renderStatus() {
+  const h = `<span class="st"><i class="dot good"></i><b>${S.multi ? '2 of 3' : '2'}</b> connected</span>
+    <span class="st">${ic('mouse')}Cursor <b>${S.active}</b></span>
+    <span class="st${S.clipboard ? '' : ' off'}">${ic('clip')}Clipboard <b>${S.clipboard ? 'on' : 'off'}</b></span>
+    <span class="st hide-sm">${ic('link')}${linkLabel()} <b>${S.ping} ms</b></span>
+    <span class="st hide-sm">${ic('lock')}Encrypted</span>`;
+  if (h !== stCache) { $('#stItems').innerHTML = h; stCache = h; }
+}
+
+/* ---------- render ---------- */
+function renderNav() {
+  const groups = [['', ['home']], ['Share', ['mouse', 'layout', 'clipboard', 'screen', 'camera']], ['Devices', ['connection', 'devices']], ['More', ['tip', 'feedback', 'about']]];
+  const on = {mouse:S.mouse, clipboard:S.clipboard, screen:S.screen.running, camera:S.camera, devices:S.multi, connection:true};
+  $('#nav').innerHTML = groups.map(([g, ids]) => `<div class="ngroup">${g ? `<div class="nlabel">${g}</div>` : ''}${ids.map(id => {
+    const p = PG[id];
+    return `<a href="#${id}" style="--c:var(--${p.acc})"${S.page === id ? ' aria-current="page"' : ''}>${ic(p.ic)}<span>${p.t}</span>${id in on ? `<i class="nst${on[id] ? ' on' : ''}" aria-hidden="true"></i>` : ''}</a>`;
+  }).join('')}</div>`).join('');
+}
+function drawDevpics() {
+  $$('canvas[data-kind]').forEach(cv => {
+    const c = cv.getContext('2d'); c.clearRect(0, 0, 48, 30); const k = cv.dataset.kind;
+    if (k === 'pc') { monitor(c, 2, 4, 20, 13, PAL.D); monitor(c, 23, 6, 14, 10, PAL.D); tower(c, 39, 9, 18, ACC.blue[0]); windows(c, [2,4,20,13], 'rgba(230,227,214,.12)'); }
+    else if (k === 'mac') { laptop(c, 10, 8, 28, 17, ACC.blue[1]); windows(c, [10,8,28,17], 'rgba(230,227,214,.14)'); }
+    else { miniBox(c, 15, 18, '#7a4040'); spr(c, SP.ZZ, 34, 8, PAL.L, PAL.L); }
+  });
+}
+function render(focusHead) {
+  const p = PG[S.page];
+  document.documentElement.style.setProperty('--acc', `var(--${p.acc})`);
+  const fid = document.activeElement && document.activeElement.id;
+  $('#main').innerHTML = P[S.page]();
+  renderNav(); drawDevpics(); updateLive();
+  if (S.page === 'layout') positionTiles();
+  drawScene(T());
+  if (focusHead) { const h = $('#h1'); if (h) h.focus({preventScroll:true}); }
+  else if (fid) { const el = document.getElementById(fid); if (el && el !== document.activeElement) el.focus({preventScroll:true}); }
+}
+const rerender = () => render(false);
+function go(id) {
+  if (!PG[id]) id = 'home';
+  if (location.hash.slice(1) !== id) { location.hash = id; return; }
+  S.page = id; closeDrawer(); render(true); window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', () => { const id = location.hash.slice(1); S.page = PG[id] ? id : 'home'; closeDrawer(); render(true); window.scrollTo(0, 0); });
+
+/* ---------- actions ---------- */
+let toastT;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+function setMouse(v) { if (S.mouse === v) return toast(`Mouse sharing is already ${v ? 'on' : 'off'}`); S.mouse = v; if (!v) S.locked = false; rerender(); toast(`Mouse sharing is ${v ? 'on' : 'off'}`); }
+function setClip(v) { if (S.clipboard === v) return toast(`Clipboard is already ${v ? 'on' : 'off'}`); S.clipboard = v; rerender(); toast(`Clipboard is ${v ? 'on' : 'off'}`); }
+function setLock(v) { S.locked = v; rerender(); toast(v ? 'Cursor locked to this screen' : 'Cursor unlocked'); }
+function setLink(v) { S.macLink = v; S.ping = v === 'usb' ? 1 : v === 'bt' ? 12 : 4; calcLat(); rerender(); toast(`MacBook now on ${LINKS[v].l}`); }
+function startScreen(d) { S.screen.running = true; S.screen.dir = d; calcLat(); rerender(); toast(d === 'pc2mac' ? 'Second screen started on MacBook' : 'Second screen started on Windows PC'); }
+function stopScreen() { if (!S.screen.running) return toast('Second screen isn’t running'); S.screen.running = false; rerender(); toast('Second screen stopped'); }
+function setCam(v) {
+  if (v && !S.multi) { S.multi = true; toast('Multi-device mode on. Camera shared from ' + S.camDevice); }
+  else toast(v ? `Camera shared from ${S.camDevice}` : 'Camera sharing stopped');
+  S.camera = v; rerender();
+}
+function setMulti(v) { S.multi = v; if (!v) S.camera = false; rerender(); toast(v ? 'Multi-device mode is on' : 'Two-computer mode'); }
+function newCode() { S.pair = {code:String(Math.floor(Math.random() * 1e6)).padStart(6, '0'), left:120, total:120}; if (S.page === 'connection') rerender(); toast('New pairing code ready'); }
+function calcLat() {
+  const base = {usb:38, wifi:61, bt:118}[S.macLink];
+  S.lat = base + Math.round((S.screen.quality - 50) / 8) + Math.round(Math.random() * 4 - 2);
+}
+const ACT = {
+  cmd:() => openCmd(), cmdclose:() => closeCmd(), drawer:() => toggleDrawer(),
+  mouse:() => setMouse(!S.mouse), clip:() => setClip(!S.clipboard), lock:() => setLock(!S.locked),
+  link:el => setLink(el.dataset.v),
+  pair:() => newCode(), pairCancel:() => { S.pair = {code:null, left:0, total:120}; rerender(); toast('Pairing cancelled'); },
+  clipDir:el => { S.clipDir = el.dataset.v; rerender(); toast({both:'Clipboard goes both ways', toMac:'Clipboard goes to MacBook only', toPc:'Clipboard goes to Windows PC only'}[el.dataset.v]); },
+  clipLimit:el => { S.clipLimit = el.dataset.v; rerender(); toast(el.dataset.v === '0' ? 'Files won’t be shared' : `Files up to ${el.dataset.v} MB`); },
+  scrStart:el => startScreen(el.dataset.v), scrStop:() => stopScreen(),
+  res:el => { S.screen.res = el.dataset.v; rerender(); toast(`Resolution ${el.dataset.v}`); },
+  cam:() => setCam(!S.camera),
+  camDev:el => { S.camDevice = el.dataset.v; rerender(); toast(S.camera ? `Camera now live from ${S.camDevice}` : `${S.camDevice} camera selected`); },
+  multi:() => setMulti(!S.multi), wake:() => toast('Studio Mac mini is still offline'),
+  place:el => placeMac(el.dataset.v),
+  resetLayout:() => { S.layout = {pc:{x:46, y:40}, mac:{x:158, y:46}}; layoutChanged(false); toast('Layout reset'); },
+  fbType:el => { S.fb.type = el.dataset.v; rerender(); },
+  fbSend:() => { if (!S.fb.msg.trim()) { S.fb.err = true; rerender(); const m = $('#f-msg'); if (m) m.focus(); return; } S.fb.sent = true; S.fb.err = false; rerender(); toast('Feedback saved'); },
+  fbAgain:() => { S.fb = {type:'bug', msg:'', sys:false, sent:false, err:false}; rerender(); },
+  tipAmt:el => { S.tip.amt = el.dataset.v; rerender(); if (el.dataset.v === 'custom') { const i = $('#t-custom'); if (i) i.focus(); } },
+  tipSend:() => { const a = S.tip.amt === 'custom' ? S.tip.custom : S.tip.amt; if (!a || +a < 1) { toast('Enter an amount first'); return; } S.tip.done = true; rerender(); toast('Thank you!'); },
+  tipAgain:() => { S.tip.done = false; rerender(); }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const f = ACT[el.dataset.act]; if (f) { e.preventDefault(); f(el); }
+});
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.input; if (!k) return;
+  const v = e.target.value;
+  if (k === 'cooldown') { S.cooldown = +v; $('#o-cool').textContent = v + ' ms'; }
+  else if (k === 'guard') { S.guard = +v; $('#o-guard').textContent = v + ' ms'; }
+  else if (k === 'quality') { S.screen.quality = +v; $('#o-q').textContent = v < 40 ? 'Faster' : v > 70 ? 'Sharper' : 'Balanced'; calcLat(); updateLive(); }
+  else if (k === 'fbMsg') { S.fb.msg = v; }
+  else if (k === 'tipCustom') { S.tip.custom = v.replace(/[^\d]/g, ''); const l = $('#tipLbl'); if (l) l.textContent = `Leave a $${S.tip.custom || '…'} tip`; }
+});
+document.addEventListener('change', e => {
+  const k = e.target.dataset && e.target.dataset.change;
+  if (k === 'fbSys') { S.fb.sys = e.target.checked; rerender(); }
+  if (e.target.dataset && (e.target.dataset.input === 'cooldown' || e.target.dataset.input === 'guard')) toast(`${e.target.dataset.input === 'cooldown' ? 'Cooldown' : 'Arrival guard'} set to ${e.target.value} ms`);
+});
+
+/* layout dragging */
+document.addEventListener('pointerdown', e => {
+  const tile = e.target.closest('[data-tile]'); if (!tile) return;
+  const stage = $('#stage'), r = stage.getBoundingClientRect(), k = tile.dataset.tile;
+  const sx = WORLD.w / r.width, sy = WORLD.h / r.height, st = {...S.layout[k]}, x0 = e.clientX, y0 = e.clientY;
+  tile.setPointerCapture(e.pointerId); tile.classList.add('drag'); e.preventDefault();
+  const mv = ev => { S.layout[k] = {x:clamp(st.x + (ev.clientX - x0) * sx, 0, WORLD.w - SIZES[k].w), y:clamp(st.y + (ev.clientY - y0) * sy, 0, WORLD.h - SIZES[k].h)}; positionTiles(); };
+  const up = () => { tile.removeEventListener('pointermove', mv); tile.removeEventListener('pointerup', up); tile.removeEventListener('pointercancel', up); tile.classList.remove('drag'); snap(k); layoutChanged(true); };
+  tile.addEventListener('pointermove', mv); tile.addEventListener('pointerup', up); tile.addEventListener('pointercancel', up);
+});
+
+/* ---------- drawer ---------- */
+function toggleDrawer(force) {
+  const s = $('#side'), open = force !== undefined ? force : !s.classList.contains('open');
+  s.classList.toggle('open', open); $('#scrim').classList.toggle('show', open);
+  $('#menuBtn').setAttribute('aria-expanded', open);
+  if (open) { const a = $('#nav a'); if (a) a.focus(); }
+}
+const closeDrawer = () => { if ($('#side').classList.contains('open')) toggleDrawer(false); };
+
+/* ---------- command bar ---------- */
+function commands() {
+  const C = [
+    {l:'Turn on clipboard', ic:'clip', c:'amber', w:() => !S.clipboard, run:() => setClip(true)},
+    {l:'Turn off clipboard', ic:'clip', c:'amber', w:() => S.clipboard, run:() => setClip(false)},
+    {l:'Turn mouse sharing on', ic:'mouse', c:'violet', w:() => !S.mouse, run:() => setMouse(true)},
+    {l:'Turn mouse sharing off', ic:'mouse', c:'violet', w:() => S.mouse, run:() => setMouse(false)},
+    {l:'Lock cursor to this screen', ic:'lock', c:'violet', w:() => !S.locked, run:() => setLock(true)},
+    {l:'Unlock cursor', ic:'lock', c:'violet', w:() => S.locked, run:() => setLock(false)},
+    {l:'Start second screen on MacBook', ic:'screen', c:'teal', w:() => !(S.screen.running && S.screen.dir === 'pc2mac'), run:() => startScreen('pc2mac')},
+    {l:'Start second screen on Windows PC', ic:'screen', c:'teal', w:() => !(S.screen.running && S.screen.dir === 'mac2pc'), run:() => startScreen('mac2pc')},
+    {l:'Stop second screen', ic:'screen', c:'teal', w:() => S.screen.running, run:() => stopScreen()},
+    {l:'Share my camera', ic:'camera', c:'rose', w:() => !S.camera, run:() => setCam(true)},
+    {l:'Stop sharing my camera', ic:'camera', c:'rose', w:() => S.camera, run:() => setCam(false)},
+    {l:'Pair a new device', ic:'link', c:'cyan', run:() => { newCode(); go('connection'); }},
+    {l:'Switch MacBook to USB cable', ic:'link', c:'cyan', w:() => S.macLink !== 'usb', run:() => setLink('usb')},
+    {l:'Switch MacBook to Wi-Fi', ic:'link', c:'cyan', w:() => S.macLink !== 'wifi', run:() => setLink('wifi')},
+    {l:'Switch MacBook to Bluetooth', ic:'link', c:'cyan', w:() => S.macLink !== 'bt', run:() => setLink('bt')},
+    {l:'Turn on Multi-device mode', ic:'devices', c:'blue', w:() => !S.multi, run:() => setMulti(true)},
+    {l:'Turn off Multi-device mode', ic:'devices', c:'blue', w:() => S.multi, run:() => setMulti(false)}
+  ];
+  PAGES.forEach(p => C.push({l:'Go to ' + p.t, ic:p.ic, c:p.acc, hint:'Page', run:() => go(p.id)}));
+  return C.filter(c => !c.w || c.w());
+}
+function fuzzyWord(q, s) {
+  let qi = 0, score = 0, prev = -2;
+  for (let i = 0; i < s.length && qi < q.length; i++) {
+    if (s[i] === q[qi]) { score += 1 + (i === prev + 1 ? 2 : 0) + (i === 0 || s[i - 1] === ' ' ? 3 : 0); prev = i; qi++; }
+  }
+  return qi === q.length ? score : 0;
+}
+function fuzzy(q, s) {
+  const words = q.toLowerCase().trim().split(/\s+/).filter(Boolean); s = s.toLowerCase();
+  if (!words.length) return 1;
+  let total = 0; for (const w of words) { const v = fuzzyWord(w, s); if (!v) return 0; total += v; }
+  return total;
+}
+let cmdView = [], cmdSel = 0, lastFocus = null, typingT;
+function filterCmd() {
+  const q = $('#cmdInput').value;
+  cmdView = commands().map((c, i) => ({...c, s:fuzzy(q, c.l), i})).filter(c => c.s > 0).sort((a, b) => b.s - a.s || a.i - b.i);
+  cmdSel = 0; drawCmd();
+}
+function drawCmd() {
+  const ul = $('#cmdList'), inp = $('#cmdInput');
+  if (!cmdView.length) { ul.innerHTML = `<li class="empty" role="option" aria-disabled="true">No matching command</li>`; inp.removeAttribute('aria-activedescendant'); return; }
+  ul.innerHTML = cmdView.map((c, i) => `<li role="option" id="co-${i}" data-i="${i}" aria-selected="${i === cmdSel}" style="--c:var(--${c.c})">${ic(c.ic)}<span>${esc(c.l)}</span><span class="hint">${c.hint || 'Action'}</span></li>`).join('');
+  inp.setAttribute('aria-activedescendant', 'co-' + cmdSel);
+  const sel = $('#co-' + cmdSel); if (sel) sel.scrollIntoView({block:'nearest'});
+}
+function openCmd() {
+  if (!$('#cmd').hidden) return;
+  lastFocus = document.activeElement; closeDrawer();
+  $('#cmd').hidden = false; const i = $('#cmdInput'); i.value = ''; filterCmd(); i.focus();
+}
+function closeCmd() {
+  $('#cmd').hidden = true; $('#cmdPanel').classList.remove('typing');
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+function runCmd(i) { const c = cmdView[i]; if (!c) return; closeCmd(); c.run(); }
+$('#cmdInput').addEventListener('input', () => {
+  const p = $('#cmdPanel'); p.classList.add('typing'); clearTimeout(typingT);
+  typingT = setTimeout(() => p.classList.remove('typing'), 900);
+  filterCmd();
+});
+$('#cmdInput').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); if (cmdView.length) { cmdSel = (cmdSel + 1) % cmdView.length; drawCmd(); } }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); if (cmdView.length) { cmdSel = (cmdSel - 1 + cmdView.length) % cmdView.length; drawCmd(); } }
+  else if (e.key === 'Enter') { e.preventDefault(); runCmd(cmdSel); }
+  else if (e.key === 'Tab') e.preventDefault();
+});
+$('#cmdList').addEventListener('click', e => { const li = e.target.closest('li[data-i]'); if (li) runCmd(+li.dataset.i); });
+$('#cmdList').addEventListener('mousemove', e => { const li = e.target.closest('li[data-i]'); if (li && +li.dataset.i !== cmdSel) { cmdSel = +li.dataset.i; drawCmd(); } });
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); if ($('#cmd').hidden) openCmd(); else closeCmd(); return; }
+  if (e.key === 'Escape') { if (!$('#cmd').hidden) { e.preventDefault(); closeCmd(); } else closeDrawer(); return; }
+  const tile = e.target.closest && e.target.closest('[data-tile]');
+  if (tile && e.key.startsWith('Arrow')) {
+    e.preventDefault(); const k = tile.dataset.tile, d = 8;
+    const L = S.layout[k];
+    if (e.key === 'ArrowLeft') L.x -= d; if (e.key === 'ArrowRight') L.x += d; if (e.key === 'ArrowUp') L.y -= d; if (e.key === 'ArrowDown') L.y += d;
+    L.x = clamp(L.x, 0, WORLD.w - SIZES[k].w); L.y = clamp(L.y, 0, WORLD.h - SIZES[k].h);
+    snap(k); layoutChanged(false);
+  }
+});
+
+/* ---------- sky: ordered-dither spectral gradient ---------- */
+const sky = $('#sky'), sc = sky.getContext('2d');
+const RAMP = [[8,11,22],[10,14,30],[14,18,40],[19,23,52],[27,26,64],[38,31,76],[26,46,80],[21,60,74],[52,44,66],[70,58,60]];
+const B4 = [0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5].map(v => (v + .5) / 16);
+const PXS = 5;
+let SW = 0, SH = 0, img = null, colC, colS, stars = [];
+function skySize() {
+  SW = Math.max(1, Math.ceil((innerWidth || 1280) / PXS)); SH = Math.max(1, Math.ceil((innerHeight || 800) / PXS));
+  sky.width = SW; sky.height = SH; img = sc.createImageData(SW, SH);
+  colC = new Float32Array(SW); colS = new Float32Array(SW);
+  stars = []; let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < Math.round(SW * SH / 600); i++) stars.push([Math.floor(rnd() * SW), Math.floor(rnd() * SH * .7), rnd() * 6.28, rnd() > .8]);
+}
+function drawSky(t) {
+  if (!img) return;
+  const d = img.data, N = RAMP.length - 1;
+  for (let x = 0; x < SW; x++) { const u = x / SW; colC[x] = .5 + .13 * Math.sin(u * 5.2 + t * .05) + .06 * Math.sin(u * 11 - t * .08); colS[x] = Math.sin(u * 3.1 + t * .03); }
+  for (let y = 0; y < SH; y++) {
+    const v = y / SH, base = .25 + 2.3 * v * v;
+    for (let x = 0; x < SW; x++) {
+      const dy = (v - colC[x]) / .15, band = Math.exp(-dy * dy);
+      let idx = base * (1 - band * .35) + band * (4.3 + 2.1 * colS[x]);
+      idx = idx < 0 ? 0 : idx > N - .001 ? N - .001 : idx;
+      const i0 = idx | 0, c = RAMP[(idx - i0) > B4[(y & 3) * 4 + (x & 3)] ? i0 + 1 : i0];
+      const o = (y * SW + x) * 4; d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+    }
+  }
+  for (const [x, y, ph, big] of stars) {
+    const tw = Math.sin(t * .9 + ph); if (tw < -.4) continue;
+    const o = (y * SW + x) * 4, b = big ? 180 : 110;
+    d[o] = b - 10; d[o + 1] = b - 6; d[o + 2] = b + 20 > 255 ? 255 : b + 20;
+  }
+  sc.putImageData(img, 0, 0);
+}
+
+/* ---------- loop ---------- */
+const t0 = performance.now();
+const T = () => RM.matches ? 2.2 : (performance.now() - t0) / 1000;
+function drawScene(t) {
+  const cv = $('#scene'); if (!cv) return;
+  const c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height);
+  (SC[S.page] || SC.home)(c, t);
+}
+let lastS = 0, lastK = 0, running = false;
+function loop(now) {
+  if (RM.matches) { running = false; return; }
+  // rAF timestamps can predate t0 on the first frame; never let time go negative
+  const t = Math.max(0, now - t0) / 1000;
+  sim(t);
+  if (now - lastS > 83) { lastS = now; drawScene(t); }
+  if (now - lastK > 160) { lastK = now; drawSky(t); }
+  requestAnimationFrame(loop);
+}
+function startMotion() {
+  if (RM.matches) { curPos = {x:1100, y:720}; curDev = 'mon0'; S.active = 'Windows PC'; drawSky(4); drawScene(T()); updateLive(); return; }
+  if (!running) { running = true; requestAnimationFrame(loop); }
+}
+(RM.addEventListener ? RM.addEventListener.bind(RM, 'change') : RM.addListener.bind(RM))(startMotion);
+window.addEventListener('resize', () => { skySize(); drawSky(T()); });
+
+setInterval(() => {
+  S.tick++;
+  if (S.macLink === 'wifi') S.ping = clamp(S.ping + Math.round(Math.random() * 2 - 1), 3, 7);
+  else if (S.macLink === 'usb') S.ping = 1;
+  else S.ping = clamp(S.ping + Math.round(Math.random() * 4 - 2), 9, 16);
+  calcLat();
+  if (S.tick % 24 === 0 && S.battery > 5) S.battery--;
+  if (S.pair.code && S.pair.left > 0) { S.pair.left--; if (S.pair.left === 0 && S.page === 'connection') rerender(); }
+  updateLive();
+  if (RM.matches && (S.page === 'layout' || S.page === 'camera')) drawScene(T());
+}, 1000);
+
+/* ---------- boot ---------- */
+$('#brandSide').innerHTML = LOGO_SVG + '<span>OmniDesk</span>';
+$('#brandTop').innerHTML = LOGO_SVG + '<span>OmniDesk</span>';
+$('#menuBtn').innerHTML = ic('menu');
+$('#cmdTop').innerHTML = ic('search');
+$('#cmdIc').innerHTML = ic('search');
+$('#navcmd').innerHTML = `${ic('search')}<span>Search or run…</span><kbd>${KEY}</kbd>`;
+$('#stCmd').innerHTML = `${ic('search')}<span>${KEY}</span>`;
+skySize();
+const startId = location.hash.slice(1);
+S.page = PG[startId] ? startId : 'home';
+calcLat();
+render(false);
+drawSky(T());
+startMotion();
+})();
+</script>

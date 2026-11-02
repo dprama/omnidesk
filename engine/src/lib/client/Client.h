@@ -213,6 +213,8 @@ private:
   void handleDisconnectRequested(const Event &event);
   void handleShapeChanged();
   void handleClipboardGrabbed(const Event &event);
+  // OmniDesk: clipboard sharing allowed by the server options and the app (`clipboard=on|off` IPC)
+  bool clipboardAllowed() const;
   void handleHello();
   void handleSuspend();
   void handleResume();

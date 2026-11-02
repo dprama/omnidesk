@@ -15,6 +15,8 @@
 #include "net/NetworkAddress.h"
 #include "server/InputFilter.h"
 
+#include <QString>
+
 #include <iosfwd>
 #include <map>
 #include <set>
@@ -396,6 +398,7 @@ public:
 private:
   void readSection(ConfigReadContext &);
   void readSectionOptions(ConfigReadContext &);
+  void readOmniDeskOption(const ConfigReadContext &, const QString &line);
   void readSectionScreens(ConfigReadContext &);
   void readSectionLinks(ConfigReadContext &);
   void readSectionAliases(ConfigReadContext &);
