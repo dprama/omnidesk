@@ -26,6 +26,13 @@
 
   function start() {
     pc = new RTCPeerConnection(U.RTC_CONFIG);
+    // Still not connected after 8 s: log what has been tried so far, on both computers
+    // (the side that gives up first closes before the other can look).
+    const slow = pc;
+    setTimeout(() => {
+      if (pc !== slow || slow.connectionState === 'connected') return;
+      slow.getStats().then((r) => send({ type: 'log', message: `ice ${slow.connectionState} after 8s: ${U.iceSummary(Array.from(r.values()))}` })).catch(() => {});
+    }, 8000);
     pc.onicecandidate = (e) => {
       if (e.candidate && U.isHostCandidate(e.candidate.candidate)) {
         send({ type: 'signal', kind: 'ice', data: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex } });

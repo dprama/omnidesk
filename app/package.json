@@ -1,7 +1,7 @@
 {
   "name": "omnidesk",
   "productName": "OmniDesk",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "description": "One mouse, one keyboard, one clipboard across your computers.",
   "license": "GPL-2.0-only",
   "private": true,
