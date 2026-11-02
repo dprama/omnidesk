@@ -13,7 +13,7 @@
     "test": "node --test \"main/**/*.test.js\"",
     "test-window": "node test/run.mjs --headed",
     "test:page": "node test/run.mjs",
-    "test:mock": "node --test test/",
+    "test:mock": "node --test \"test/*.test.mjs\"",
     "smoke": "electron . --smoke-test",
     "dist:mac": "electron-builder --config electron-builder.config.js --mac dmg --x64",
     "dist:win": "electron-builder --config electron-builder.config.js --win nsis --x64 --arm64",

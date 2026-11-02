@@ -74,7 +74,7 @@ if ($dumpbin) {
   'deskflow-core.exe', 'deskflow-daemon.exe' | ForEach-Object { $queue.Enqueue((Join-Path $OutDir $_)) }
   while ($queue.Count) {
     $f = $queue.Dequeue()
-    $deps = & $dumpbin /nologo /dependents $f | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '\.dll$' }
+    $deps = & $dumpbin /nologo /dependents $f | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^[\w.+-]+\.dll$' } # bare names only, not the "Dump of file ...dll" header
     foreach ($d in $deps) {
       if ($seen.ContainsKey($d.ToLower())) { continue }
       $seen[$d.ToLower()] = $true

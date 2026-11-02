@@ -25,9 +25,9 @@ QT_PLUGINS=$(qtpaths6 --query QT_INSTALL_PLUGINS 2>/dev/null || true)
 [ -d "$QT_PLUGINS/platforms" ] || { echo "Qt plugins not found at $QT_PLUGINS" >&2; exit 1; }
 
 # Base-system libraries that every desktop has and that must come from the host
-# (glibc family, GPU/X server client libs, fontconfig, glib/dbus/systemd).
+# (glibc family, GPU/X server client libs, fontconfig/freetype and their deps, glib/dbus/systemd).
 # Modelled on the AppImage project's excludelist.
-EXCLUDE='^(ld-linux.*|linux-vdso.*|libc|libm|libdl|libpthread|librt|libresolv|libutil|libanl|libnsl|libstdc\+\+|libgcc_s|libX11|libX11-xcb|libxcb|libXau|libXdmcp|libGL|libGLX|libGLdispatch|libEGL|libOpenGL|libGLESv2|libdrm|libgbm|libwayland-client|libwayland-cursor|libwayland-egl|libfontconfig|libfreetype|libexpat|libz|libglib-2\.0|libgobject-2\.0|libgio-2\.0|libgmodule-2\.0|libgthread-2\.0|libdbus-1|libsystemd|libudev|libselinux|libmount|libblkid|libffi|libpcre2-8|libcap|libgcrypt|libgpg-error|liblzma|liblz4|libICE|libSM|libuuid|libbsd|libmd|libasound|libpulse)\.so'
+EXCLUDE='^(ld-linux.*|linux-vdso.*|libc|libm|libdl|libpthread|librt|libresolv|libutil|libanl|libnsl|libstdc\+\+|libgcc_s|libX11|libX11-xcb|libxcb|libXau|libXdmcp|libGL|libGLX|libGLdispatch|libEGL|libOpenGL|libGLESv2|libdrm|libgbm|libwayland-client|libwayland-cursor|libwayland-egl|libfontconfig|libfreetype|libexpat|libz|libglib-2\.0|libgobject-2\.0|libgio-2\.0|libgmodule-2\.0|libgthread-2\.0|libdbus-1|libsystemd|libudev|libselinux|libmount|libblkid|libffi|libpcre2-8|libcap|libgcrypt|libgpg-error|liblzma|liblz4|libICE|libSM|libuuid|libbsd|libmd|libasound|libpulse|libatomic|libbz2|libbrotlicommon|libbrotlidec|libpng16|libharfbuzz|libgraphite2)\.so'
 
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR/lib" "$OUT_DIR/plugins/platforms"
