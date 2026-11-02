@@ -202,5 +202,28 @@
     return `local ${addrs('local-candidate')} | remote ${addrs('remote-candidate')} | pairs ${pairs} | checks ${sent} sent, ${answered} answered`;
   }
 
-  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary };
+  // One log line on where the time goes, every 10 s of a session. Averages since the start.
+  // Sender: "send 1920x1080 58fps enc MediaFoundationVideoEncodeAccelerator hw 4.1ms limit none rtt 6ms"
+  // Receiver: "recv 1920x1080 59fps dec VideoToolbox hw 2.0ms jitter 18ms dropped 0 lost 0 rtt 6ms"
+  function perfLine(stats) {
+    const list = Array.from(stats);
+    const ms = (total, n) => (n ? `${(1000 * total / n).toFixed(1)}ms` : '?');
+    const pair = list.find((r) => r.type === 'candidate-pair' && r.nominated && r.state === 'succeeded');
+    const rtt = pair && typeof pair.currentRoundTripTime === 'number' ? ` rtt ${Math.round(pair.currentRoundTripTime * 1000)}ms` : '';
+    const out = list.find((r) => r.type === 'outbound-rtp' && r.kind === 'video');
+    if (out) {
+      return `send ${out.frameWidth || '?'}x${out.frameHeight || '?'} ${Math.round(out.framesPerSecond || 0)}fps`
+        + ` enc ${out.encoderImplementation || '?'} ${out.powerEfficientEncoder ? 'hw' : 'sw'} ${ms(out.totalEncodeTime, out.framesEncoded)}`
+        + ` limit ${out.qualityLimitationReason || 'none'}${rtt}`;
+    }
+    const inb = list.find((r) => r.type === 'inbound-rtp' && r.kind === 'video');
+    if (inb) {
+      return `recv ${inb.frameWidth || '?'}x${inb.frameHeight || '?'} ${Math.round(inb.framesPerSecond || 0)}fps`
+        + ` dec ${inb.decoderImplementation || '?'} ${inb.powerEfficientDecoder ? 'hw' : 'sw'} ${ms(inb.totalDecodeTime, inb.framesDecoded)}`
+        + ` jitter ${ms(inb.jitterBufferDelay, inb.jitterBufferEmittedCount)} dropped ${inb.framesDropped || 0} lost ${inb.packetsLost || 0}${rtt}`;
+    }
+    return 'no video yet';
+  }
+
+  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine };
 }));

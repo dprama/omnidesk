@@ -43,7 +43,8 @@ function validSignal(p) {
 function createScreen({
   log = () => {}, platform, media, getPeer,
   newId = () => crypto.randomBytes(8).toString('hex'),
-  startTimeoutMs = 25000, stopTimeoutMs = 6000, requestTimeoutMs = 12000,
+  // start: driver on (~7 s) + waiting for the display (20 s) + capture and connect
+  startTimeoutMs = 45000, stopTimeoutMs = 6000, requestTimeoutMs = 12000,
   watchdogMs = 2000, statsStaleMs = 10000,
   timers = { setTimeout, clearTimeout, setInterval, clearInterval },
 }) {

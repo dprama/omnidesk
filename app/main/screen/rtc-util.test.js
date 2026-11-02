@@ -131,3 +131,16 @@ test('iceSummary: addresses offered and connectivity checks, for the failure log
   assert.equal(line, 'local udp 192.168.1.5 | remote udp 192.168.1.20 tcp fd00::2 | pairs failed 2 | checks 12 sent, 0 answered');
   assert.equal(iceSummary([]), 'local none | remote none | pairs none | checks 0 sent, 0 answered');
 });
+
+test('perfLine: encoder/decoder and per-stage time, for the 10 s log line', () => {
+  const { perfLine } = require('./viewer/rtc-util');
+  const pair = { type: 'candidate-pair', nominated: true, state: 'succeeded', currentRoundTripTime: 0.006 };
+  assert.equal(perfLine([pair, { type: 'outbound-rtp', kind: 'video', frameWidth: 1920, frameHeight: 1080, framesPerSecond: 58.4,
+    encoderImplementation: 'OpenH264', powerEfficientEncoder: false, totalEncodeTime: 1.2, framesEncoded: 100, qualityLimitationReason: 'cpu' }]),
+  'send 1920x1080 58fps enc OpenH264 sw 12.0ms limit cpu rtt 6ms');
+  assert.equal(perfLine([pair, { type: 'inbound-rtp', kind: 'video', frameWidth: 1920, frameHeight: 1080, framesPerSecond: 59,
+    decoderImplementation: 'VideoToolbox', powerEfficientDecoder: true, totalDecodeTime: 0.2, framesDecoded: 100,
+    jitterBufferDelay: 1.8, jitterBufferEmittedCount: 100, framesDropped: 2, packetsLost: 0 }]),
+  'recv 1920x1080 59fps dec VideoToolbox hw 2.0ms jitter 18.0ms dropped 2 lost 0 rtt 6ms');
+  assert.equal(perfLine([]), 'no video yet');
+});

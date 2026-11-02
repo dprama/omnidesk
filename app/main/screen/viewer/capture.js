@@ -11,6 +11,7 @@
   let stream = null;
   let statsTimer = null;
   let prevSnap = null;
+  let perfTick = 0;
   let pendingIce = [];
   let codecLogged = false;
 
@@ -95,6 +96,7 @@
         const list = Array.from(report.values());
         const r = U.summarize(list, prevSnap);
         prevSnap = r.snap;
+        if (++perfTick % 10 === 0) send({ type: 'log', message: U.perfLine(list) }); // every 10 s
         if (!codecLogged) { const codec = U.codecInUse(list); if (codec) { codecLogged = true; send({ type: 'log', message: `codec ${codec}` }); } }
         send({ type: 'stats', fps: r.fps, latencyMs: r.latencyMs });
       } catch { /* closed */ }

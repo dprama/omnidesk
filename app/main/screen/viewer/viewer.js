@@ -12,6 +12,7 @@
   let pc = null;
   let statsTimer = null;
   let prevSnap = null;
+  let perfTick = 0;
   const pendingIce = [];
   let playing = false;
 
@@ -64,8 +65,10 @@
     statsTimer = setInterval(async () => {
       if (!pc) return;
       try {
-        const r = U.summarize(Array.from((await pc.getStats()).values()), prevSnap);
+        const list = Array.from((await pc.getStats()).values());
+        const r = U.summarize(list, prevSnap);
         prevSnap = r.snap;
+        if (++perfTick % 10 === 0) send({ type: 'log', message: U.perfLine(list) }); // every 10 s
         send({ type: 'stats', fps: r.fps, latencyMs: r.latencyMs });
       } catch { /* closed */ }
     }, 1000);

@@ -10,6 +10,7 @@
 const os = require('node:os');
 const fs = require('node:fs');
 const path = require('node:path');
+const childProcess = require('node:child_process');
 
 function macMajor(release = os.release()) {
   // Darwin 20 = macOS 11, Darwin 24 = macOS 15.
@@ -64,11 +65,25 @@ function createPlatform({ electron, log = () => {}, isPackaged = false, resource
   }
 
   // Wait for a display that wasn't there before (Windows: the VDD monitor).
+  // Windows remembers an arrangement per set of monitors; if it saved "Duplicate" or "PC
+  // screen only" for this one, the virtual monitor never shows up as its own display.
+  // DisplaySwitch /extend is what Windows + P -> Extend runs. Turning the monitor off again
+  // brings back the single-monitor arrangement by itself.
+  function extendDesktop() {
+    const exe = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'DisplaySwitch.exe');
+    try {
+      childProcess.spawn(exe, ['/extend'], { detached: true, stdio: 'ignore', windowsHide: true }).on('error', (e) => log(`DisplaySwitch: ${e.message}`)).unref();
+      log('virtual display not separate yet: asked Windows to extend the desktop');
+    } catch (e) { log(`DisplaySwitch: ${e.message}`); }
+  }
+
   // 20 s: the first start after install loads the user-mode driver, which can be slow.
-  function waitForNewDisplay(before, { width, height }, timeoutMs = 20000) {
+  function waitForNewDisplay(before, { width, height }, timeoutMs = 20000, { onSlow = null, slowMs = 3000 } = {}) {
     return new Promise((resolve, reject) => {
       const t0 = Date.now();
+      let nudged = false;
       const tick = () => {
+        if (onSlow && !nudged && Date.now() - t0 > slowMs) { nudged = true; onSlow(); }
         const fresh = electronScreen.getAllDisplays().filter((d) => !before.has(d.id));
         const px = (d) => [Math.round(d.size.width * d.scaleFactor), Math.round(d.size.height * d.scaleFactor)];
         const exact = fresh.find((d) => { const [w, h] = px(d); return w === width && h === height; });
@@ -78,7 +93,7 @@ function createPlatform({ electron, log = () => {}, isPackaged = false, resource
           // What Windows reports, for the log: a monitor in Duplicate mode, for example, is no new display.
           const all = electronScreen.getAllDisplays().map((d) => `${d.id} "${d.label || ''}" ${d.size.width}x${d.size.height}@${d.scaleFactor} at ${d.bounds.x},${d.bounds.y}`);
           log(`virtual display missing after ${Math.round(timeoutMs / 1000)}s; displays now: ${all.join('; ')}; before: ${[...before].join(',')}`);
-          return reject(Object.assign(new Error('The virtual display did not appear. If Windows is set to Duplicate these displays, switch it to Extend (Windows key + P).'), { code: 'display-missing' }));
+          return reject(Object.assign(new Error('The virtual display did not appear. Press Windows key + P and choose Extend, then start again.'), { code: 'display-missing' }));
         }
         setTimeout(tick, 200);
       };
@@ -96,7 +111,7 @@ function createPlatform({ electron, log = () => {}, isPackaged = false, resource
       setMarker(true);
       try {
         await vdd.enable({ width, height, refresh });
-        const disp = await waitForNewDisplay(before, { width, height });
+        const disp = await waitForNewDisplay(before, { width, height }, 20000, { onSlow: extendDesktop });
         log(`virtual display ${disp.id} label="${disp.label || ''}" ${disp.size.width}x${disp.size.height}@${disp.scaleFactor}`);
         const gone = new Set();
         const onRemoved = (_e, x) => { if (x && x.id === disp.id) for (const cb of [...gone]) { try { cb(); } catch { /* ignore */ } } };
