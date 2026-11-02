@@ -4,14 +4,15 @@
 
 // electron-builder configuration. Upload is done by CI (`gh release upload`),
 // so publish is always 'never'. Icons and the dmg background come from
-// build/ (owned by the ci/art agents).
+// build/ (owned by the ci/art agents). In this file "no publishing" is null: the string
+// 'never' is only a CLI value and here would be looked up as a publisher plugin.
 
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
   appId: 'app.omnidesk.desktop', // never change: macOS privacy grants attach to it
   productName: 'OmniDesk',
   copyright: 'Copyright (C) 2026 OmniDesk contributors. GPL-2.0-only.',
-  publish: 'never',
+  publish: null,
   artifactName: 'OmniDesk-${version}-${os}-${arch}.${ext}',
   directories: { output: 'dist', buildResources: '../build' },
   asar: true,

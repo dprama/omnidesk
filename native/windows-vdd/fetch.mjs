@@ -55,8 +55,11 @@ async function main() {
 
   const dest = path.join(out, PIN.folder);
   await rm(dest, { recursive: true, force: true });
-  // bsdtar (Windows 10+, macOS, most Linux) extracts zip files.
-  execFileSync('tar', ['-xf', zipPath, '-C', out], { stdio: 'inherit' });
+  // bsdtar (Windows 10+, macOS, most Linux) extracts zip files. On Windows use System32's
+  // bsdtar by full path: Git Bash's GNU tar comes first on PATH, reads "D:\..." as a remote host
+  // and can't open zips anyway.
+  const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe') : 'tar';
+  execFileSync(tar, ['-xf', zipPath, '-C', out], { stdio: 'inherit' });
 
   const present = new Set(await readdir(dest));
   for (const [name, want] of Object.entries(PIN.files)) {
