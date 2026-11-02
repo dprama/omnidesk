@@ -15,7 +15,7 @@ const engineConfig = require('../engine/config');
 const { parseDecision } = require('../engine/decisions');
 const { cleanComputerName } = require('../engine/paths');
 
-const APP_VERSION = '2.5.0';
+const APP_VERSION = require('../../package.json').version; // CI sets it from the release tag
 const CLIP_MAX = 20;
 const MONITORS_RE = /^(\[-?\d{1,6},-?\d{1,6},\d{1,5}x\d{1,5}\]){0,16}$/;
 const PEER_POLL_MS = 2000;
@@ -106,7 +106,7 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
     if (p && !p.__wired && typeof p.onPaired === 'function') {
       p.__wired = true;
       // Both sides (the one showing the code too) must rewrite the engine config.
-      p.onPaired(() => { if (applyEngineConfig()) scheduleRestart(); });
+      p.onPaired(() => { if (!syncRole() && applyEngineConfig()) scheduleRestart(); });
     }
     return p;
   };
@@ -118,6 +118,7 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
       peerInst = make({ engine, devices, log: log.child('peer') });
       log('peer module loaded');
       peerInst.on('engine.monitors', (from, payload) => onPeerMonitors(from, payload));
+      peerInst.on('engine.controller', (from, payload) => onPeerController(from, payload));
     } catch (e) {
       log.error(`peer channel: ${e && e.stack ? e.stack : e}`);
       peerInst = null;
@@ -167,6 +168,77 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
     if (t.unref) t.unref();
     timers.push(t);
     pollPeers();
+  }
+
+  // ---- whose keyboard and mouse: one engine server, every other computer a client ----
+  // settings.engine.controller is 'this', a paired device id, or '' (not chosen yet).
+  // controllerAt (epoch ms) orders choices made on different computers: the newest wins.
+  function pairedPeers() { return devices.list().filter((d) => !d.thisDevice && d.paired); }
+  function controllerId() {
+    const c = settings.get('engine').controller;
+    const peers = pairedPeers();
+    if (c === 'this' || peers.some((d) => d.id === c)) return c;
+    if (!peers.length) return 'this';
+    // Not chosen yet: every computer picks the same one, the first engine name in sort order.
+    const ids = new Set(['this', ...peers.map((d) => d.id)]);
+    const recs = devices.records().filter((r) => ids.has(r.id));
+    recs.sort((a, b) => String(a.engineName).toLowerCase().localeCompare(String(b.engineName).toLowerCase()));
+    return recs.length ? recs[0].id : 'this';
+  }
+  function addressOf(id) {
+    const d = discovery();
+    if (d && d.linkFor) { try { const l = d.linkFor(id); if (l && l.address) return l.address; } catch { /* fall back */ } }
+    const r = devices.record(id);
+    return (r && r.host) || '';
+  }
+  // Sets engine.role/serverDeviceId/serverHost from the controller; restarts the engine when
+  // they change (restart=false at startup, before the first engine.start).
+  function syncRole({ restart = true } = {}) {
+    const eng = settings.get('engine');
+    if (eng.role === 'off') return false;
+    const c = controllerId();
+    const next = c === 'this'
+      ? { role: 'server', serverDeviceId: '', serverHost: '' }
+      : { role: 'client', serverDeviceId: c, serverHost: addressOf(c) };
+    if (next.role === 'client' && !next.serverHost) return false; // no address yet: keep what runs
+    if (eng.role === next.role && (eng.serverDeviceId || '') === next.serverDeviceId && (eng.serverHost || '') === next.serverHost) return false;
+    settings.patch('engine', next);
+    log(`engine role=${next.role}${next.serverDeviceId ? ` server=${next.serverDeviceId} host=${next.serverHost}` : ''}`);
+    applyEngineConfig();
+    if (restart) engine.restart(next.role).catch((e) => log.error(`engine restart: ${e.message}`));
+    emitStatus();
+    return true;
+  }
+  // payload.controller: 'sender' | 'receiver' | <device id>, so ids never need translating.
+  function tellController(ids) {
+    const p = peer();
+    const eng = settings.get('engine');
+    if (!p || !eng.controller || !eng.controllerAt) return;
+    for (const id of ids) {
+      const controller = eng.controller === 'this' ? 'sender' : eng.controller === id ? 'receiver' : eng.controller;
+      Promise.resolve(p.send(id, 'engine.controller', { controller, at: eng.controllerAt }))
+        .catch((e) => log.warn(`engine.controller to ${id}: ${e.message}`));
+    }
+  }
+  function setController(id) {
+    if (id !== 'this' && !pairedPeers().some((d) => d.id === id)) throw new ApiError('not-found', 'That computer is not paired.');
+    settings.patch('engine', { controller: id, controllerAt: Date.now() });
+    log(`keyboard and mouse from ${id}`);
+    tellController(pairedPeers().map((d) => d.id));
+    if (!syncRole()) emitStatus();
+  }
+  function onPeerController(from, payload) {
+    if (!payload || typeof payload.controller !== 'string' || !Number.isFinite(payload.at)) return;
+    const eng = settings.get('engine');
+    if ((eng.controllerAt || 0) >= payload.at) {
+      if ((eng.controllerAt || 0) > payload.at) tellController([from]); // ours is newer: correct them
+      return;
+    }
+    const id = payload.controller === 'sender' ? from : payload.controller === 'receiver' ? 'this' : payload.controller;
+    if (id !== 'this' && !devices.record(id)) return;
+    settings.patch('engine', { controller: id, controllerAt: payload.at });
+    log(`keyboard and mouse from ${id} (chosen on ${from})`);
+    if (!syncRole()) emitStatus();
   }
 
   // ---- clipboard history: engine (text/image) + files module, one list ----
@@ -237,6 +309,7 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
       }
     }
     for (const id of state.peerUp) if (!devices.record(id)) state.peerUp.delete(id);
+    if (up.length) tellController(up);
     return up.length ? shareMonitors(up) : Promise.resolve();
   }
   // The engine forgets peerMonitors when it restarts: replay on every IPC connect.
@@ -275,6 +348,7 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
     const tls = engine.readSetting('security/tlsEnabled');
     return {
       role: settings.get('engine').role === 'off' ? 'off' : es.running ? es.mode : 'off',
+      controller: controllerId(), // whose keyboard and mouse: 'this' or a device id
       // docs/API.md: total = paired devices including this one;
       // connected = this device + online paired devices.
       connected: 1 + online.length,
@@ -411,6 +485,7 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
   function startPolling() {
     pollBattery();
     timers.push(setInterval(pollBattery, 60000), setInterval(pollPing, 5000));
+    timers.push(setInterval(() => syncRole(), 5000)); // follows the controller's address
     discovery();
   }
 
@@ -444,10 +519,11 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
       return true;
     } },
 
-    'mouse.get': { args: [], run: () => settings.get('mouse') },
+    'mouse.get': { args: [], run: () => ({ ...settings.get('mouse'), controller: controllerId() }) },
     'mouse.set': {
-      args: [t.obj({ enabled: t.bool, cooldownMs: t.int(0, 5000), arrivalGuardMs: t.int(0, 5000), locked: t.bool, lockHotkey: t.oneOf('Ctrl+Alt+L') }, { partial: true })],
-      run: (patch) => {
+      args: [t.obj({ enabled: t.bool, cooldownMs: t.int(0, 5000), arrivalGuardMs: t.int(0, 5000), locked: t.bool, lockHotkey: t.oneOf('Ctrl+Alt+L'), controller: t.id }, { partial: true })],
+      run: ({ controller, ...patch }) => {
+        if (controller !== undefined) setController(controller);
         const { before, next } = patchable('mouse')(patch);
         if (before.enabled !== next.enabled) engine.send('mouseSharing', next.enabled ? 'on' : 'off').catch(() => {});
         if (before.locked !== next.locked) engine.send('lockCursor', next.locked ? 'on' : 'off').catch(() => {});
@@ -455,7 +531,7 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
           if (applyEngineConfig()) scheduleRestart();
         }
         emitDevices();
-        return next;
+        return { ...next, controller: controllerId() };
       },
     },
 
@@ -577,6 +653,7 @@ function createApi({ settings, log, engine, shell, security, broadcast, getScree
     devices,
     status,
     applyEngineConfig,
+    syncRole,
     startPolling,
     startModules,
     monitorsChanged,

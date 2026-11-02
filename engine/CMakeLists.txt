@@ -79,6 +79,19 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
     endif()
     unset(GITREV)
   endif()
+elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../.git)
+  # OmniDesk: the engine lives in engine/ of the OmniDesk repo. Take only the commit id from
+  # it (the IPC hello id is <version>+<sha>); the version stays the engine's own, since the
+  # repo's v* tags are OmniDesk versions.
+  find_package(Git)
+  if(GIT_FOUND)
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} rev-parse --short=8 HEAD
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      OUTPUT_VARIABLE GIT_SHA_SHORT
+      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  endif()
 endif()
 
 #generate vcpkg file if needed

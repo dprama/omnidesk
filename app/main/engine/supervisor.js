@@ -50,9 +50,10 @@ function run(bin, args, timeoutMs = 5000, env = process.env) {
 }
 
 // `deskflow-core --ipc-version` prints exactly one line `<kVersion>+<sha>`;
-// trim it (\n or \r\n) before using it as the hello id.
+// trim it (\n or \r\n) before using it as the hello id. The sha is empty when the engine
+// was built without git metadata (2.5.0's release engines print `1.27.0.0+`).
 function parseIpcVersion(out) {
-  const re = /^\d[\w.-]*\+[0-9A-Za-z]+$/;
+  const re = /^\d[\w.-]*\+[0-9A-Za-z]*$/;
   return String(out || '').split(/\r?\n/).map((l) => l.trim()).find((l) => re.test(l)) || null;
 }
 

@@ -9,8 +9,8 @@ did and what happened. At the end, send the two log files and the screenshots.
 ## 0. Install
 
 **MacBook (Intel)**
-1. Download `OmniDesk-2.5.0-mac-x64.dmg` from the website's Download button
-   (https://dprama.github.io/omnidesk/). It should offer the Mac file and say 2.5.0.  ☐
+1. Download `OmniDesk-<version>-mac-x64.dmg` from the website's Download button
+   (https://dprama.github.io/omnidesk/). It should offer the Mac file and the newest version.  ☐
 2. Drag OmniDesk to Applications, then in Terminal:
    `xattr -dr com.apple.quarantine /Applications/OmniDesk.app`
 3. Open OmniDesk. In System Settings → Privacy & Security, turn on OmniDesk under
@@ -19,7 +19,7 @@ did and what happened. At the end, send the two log files and the screenshots.
 4. The status bar must not show "Engine stopped". If it does, click it and note the reason.  ☐
 
 **Windows PC (x64)**
-1. Open the same website on the PC: it should offer `OmniDesk-2.5.0-win-x64.exe`.  ☐
+1. Open the same website on the PC: it should offer `OmniDesk-<version>-win-x64.exe`.  ☐
 2. Run it. SmartScreen: **More info → Run anyway**. Accept the admin prompt (it adds the
    firewall rules and the virtual display driver). If it says to restart, restart.
 3. Open OmniDesk. No "Engine stopped" in the status bar.  ☐
@@ -29,7 +29,9 @@ did and what happened. At the end, send the two log files and the screenshots.
 2. PC: **Connection → Type a code**, pick the MacBook, type the 6 digits.
 3. Both show the other device as connected, the status bar says "2 of 2 devices connected", and
    it says "Encrypted".  ☐
-4. **Screen layout**: drag the MacBook to the side where it actually sits next to the PC's
+4. **Mouse & keyboard → Keyboard and mouse from**: pick the computer you sit at (its keyboard
+   and mouse control the other one). Both status bars then show "2 of 2 devices connected".  ☐
+5. **Screen layout**: drag the MacBook to the side where it actually sits next to the PC's
    monitor.  ☐
 
 ## 2. Mouse and keyboard
@@ -43,7 +45,7 @@ did and what happened. At the end, send the two log files and the screenshots.
 | 2.6 | Cross, then immediately push back | Stays briefly (cooldown) rather than bouncing | ☐ |
 | 2.7 | If the PC has two monitors: push into the edge **between** them | Moves to the other monitor, never to the Mac | ☐ |
 | 2.8 | Push into an edge with nothing beyond it | Nothing happens; Mouse page shows the reason | ☐ |
-| 2.9 | Start from the Mac trackpad toward the PC | Pointer goes to the PC; Mac keyboard types on the PC | ☐ |
+| 2.9 | Mouse & keyboard → Keyboard and mouse from → MacBook, then push the Mac pointer toward the PC | Both show connected again within a few seconds; the Mac trackpad and keyboard now drive the PC | ☐ |
 
 ## 3. Clipboard (both ways)
 | # | Do this | Expect | ✓/✗ |

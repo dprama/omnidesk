@@ -231,7 +231,7 @@
   }
   const dev = (id) => devices.find((d) => d.id === id);
 
-  const mouse = { enabled: true, cooldownMs: 300, arrivalGuardMs: 150, lockHotkey: 'Ctrl+Alt+L', locked: false };
+  const mouse = { enabled: true, cooldownMs: 300, arrivalGuardMs: 150, lockHotkey: 'Ctrl+Alt+L', locked: false, controller: 'this' };
   const clip = { enabled: true, maxFileMB: 100, files: true };
   const multi = { enabled: scenario !== 'empty' };
   // shared = this device shares its camera; liveDeviceId = whose camera is shared (one at a time).
@@ -275,7 +275,8 @@
   function statusView() {
     const p = mainPeer();
     return {
-      role: 'server',
+      role: mouse.controller === 'this' ? 'server' : 'client',
+      controller: mouse.controller,
       connected: 1 + peers().filter(online).length,   // this device + online paired devices
       total: 1 + peers().length,                     // paired devices including this one
       cursorOn,
@@ -722,6 +723,7 @@
           enabled: bool('Mouse sharing'), locked: bool('Cursor lock'),
           cooldownMs: ms('Cooldown'), arrivalGuardMs: ms('Arrival guard'),
           lockHotkey: (v) => (typeof v === 'string' && v.trim() ? null : 'Pick a hotkey for locking the cursor.'),
+          controller: (v) => (v === 'this' || peers().some((d) => d.id === v) ? null : 'That computer is not paired.'),
         }, 'mouse');
         if (bad) return invalid(bad);
         Object.assign(mouse, patch);

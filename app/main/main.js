@@ -106,6 +106,7 @@ function main() {
     if (SMOKE) return smokeTest(win, engine, log, api);
 
     api.startPolling();
+    api.syncRole({ restart: false }); // server or client, before the first start
     api.applyEngineConfig();
     const role = settings.get('engine').role;
     if (role === 'server' || role === 'client') engine.start(role).catch((e) => log.error(`engine start: ${e.message}`));

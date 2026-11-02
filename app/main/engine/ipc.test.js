@@ -124,6 +124,8 @@ test('--ipc-version output is trimmed and queries may end in ?', () => {
   assert.equal(parseIpcVersion('1.25.0+abc1234\r\n\n'), '1.25.0+abc1234');
   assert.equal(parseIpcVersion('\nqt.qpa: warning\n1.25.0+abc1234\n'), '1.25.0+abc1234');
   assert.equal(parseIpcVersion('deskflow v1.25.0, protocol v1.8'), null);
+  // engines built without git metadata (the 2.5.0 release) print an empty sha
+  assert.equal(parseIpcVersion('1.27.0.0+\r\n'), '1.27.0.0+');
   const { formatMessage } = require('./ipc');
   assert.equal(formatMessage('monitors?'), 'monitors?\n');
   assert.throws(() => formatMessage('mon?itors'));

@@ -119,8 +119,15 @@ export default {
     const shareErr = h('p.err', { role: 'alert', hidden: true });
     const r0 = h('div.row', null, h('div', null, h('b', null, 'Share mouse & keyboard'), shareDesc), swShare);
     css(r0, { 'padding-top': '0' });
+    // Whose keyboard and mouse: that computer runs the engine as server, the others follow it.
+    const fromSeg = h('div.seg', { role: 'group', 'aria-label': 'Use the keyboard and mouse of' });
+    const fromDesc = h('div.d', null, 'The computer you sit at. The cursor leaves it at the outer edge to reach the others.');
+    const fromRow = h('div.row', null, h('b', null, 'Keyboard and mouse from'), fromDesc, fromSeg);
+    css(fromRow, { display: 'block' });
+    css(fromSeg, { 'margin-top': '10px' });
     const cardShare = h('section.card', null,
       r0,
+      fromRow,
       h('div.row', null,
         h('div', null, h('b', null, 'Lock cursor to this screen'),
           h('div.d', null, 'Hotkey ', hotkey, '. Works anywhere, even in full-screen games.')),
@@ -289,6 +296,27 @@ export default {
         ? `Move past the outer edge to control ${peerName} from here.`
         : 'Off. The cursor and keyboard stay on this computer.');
       hotkey.replaceChildren(...keys(cfg ? cfg.lockHotkey : '…'));
+      fromRow.hidden = !peers.length;
+      const ctl = cfg ? cfg.controller || 'this' : null;
+      const opts = [{ id: 'this', name: 'This computer' }, ...peers.map((d) => ({ id: d.id, name: d.name }))];
+      const sig = JSON.stringify([ctl, opts, disabled || S.busy.has('controller')]);
+      if (fromSeg.dataset.sig !== sig) {
+        fromSeg.dataset.sig = sig;
+        const had = fromSeg.contains(document.activeElement) ? document.activeElement.dataset.id : null;
+        fromSeg.replaceChildren(...opts.map((o) => {
+          const b = h('button', { type: 'button', 'data-id': o.id, 'aria-pressed': String(ctl === o.id) }, o.name);
+          b.disabled = disabled || S.busy.has('controller');
+          b.addEventListener('click', () => {
+            if (!S.cfg || (S.cfg.controller || 'this') === o.id) return;
+            setPatch({ controller: o.id }, shareErr, 'controller').then(() => {
+              if (alive && S.cfg && S.cfg.controller === o.id) shell.toast(o.id === 'this' ? 'Using this computer\u2019s keyboard and mouse' : `Using ${o.name}\u2019s keyboard and mouse`);
+            });
+          });
+          return b;
+        }));
+        if (had) { const f = fromSeg.querySelector(`[data-id="${had}"]`); if (f && !f.disabled) f.focus(); }
+      }
+      if (cfg && cfg.enabled && ctl && ctl !== 'this') setText(shareDesc, `Use ${nameOf(ctl)}\u2019s keyboard and mouse. Move its cursor past the outer edge to control this computer.`);
       for (const s of [cool, guard]) {
         s.input.disabled = disabled;
         if (cfg && document.activeElement !== s.input && !s.dragging) s.input.value = String(cfg[s.key]);

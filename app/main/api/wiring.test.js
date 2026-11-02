@@ -192,3 +192,58 @@ test('camera.watch / unwatch are routed to the camera module', async () => {
   assert.ok(s.api.methods['camera.unwatch']);
   s.api.stop();
 });
+
+// ---- whose keyboard and mouse: exactly one engine server ----
+function roleSetup() {
+  const s = setup();
+  s.restarts = [];
+  s.engine.restart = async (role) => { s.restarts.push(role); return true; };
+  s.engine.readSetting = (k) => (k === 'core/computerName' ? 'PC' : undefined);
+  s.settings.set('devices', {
+    mac: { id: 'mac', name: 'MacBook', engineName: 'MacBook', os: 'macos', paired: true, host: '192.168.1.20', screens: [{ x: 0, y: 0, w: 1440, h: 900 }] },
+  });
+  return s;
+}
+
+test('controller not chosen: every computer picks the first engine name (MacBook < PC)', () => {
+  const s = roleSetup();
+  assert.equal(s.api.status().controller, 'mac');
+  assert.equal(s.api.syncRole({ restart: false }), true);
+  assert.deepEqual(s.settings.get('engine'), { role: 'client', serverHost: '192.168.1.20', serverDeviceId: 'mac' });
+  assert.deepEqual(s.restarts, []);
+  assert.equal(s.api.syncRole(), false); // nothing changed, no restart
+  s.api.stop();
+});
+
+test('choosing this computer makes it the server and tells the peer, newest choice wins', async () => {
+  const s = roleSetup();
+  s.api.syncRole({ restart: false });
+  s.api.startModules();
+  const v = await s.api.methods['mouse.set'].run({ controller: 'this' });
+  assert.equal(v.controller, 'this');
+  assert.equal(s.settings.get('engine').role, 'server');
+  assert.deepEqual(s.restarts, ['server']);
+  const msg = s.peerSent.find((m) => m.type === 'engine.controller');
+  assert.equal(msg.id, 'mac');
+  assert.equal(msg.payload.controller, 'sender');
+  // an older choice from the Mac is ignored (and answered with ours)
+  s.peerSent.length = 0;
+  s.peer.deliver('engine.controller', 'mac', { controller: 'sender', at: msg.payload.at - 1000 });
+  assert.equal(s.settings.get('engine').role, 'server');
+  assert.equal(s.peerSent.at(-1).payload.controller, 'sender');
+  // a newer one from the Mac: the Mac's keyboard and mouse, so this one becomes its client
+  s.peer.deliver('engine.controller', 'mac', { controller: 'sender', at: msg.payload.at + 1000 });
+  assert.equal(s.api.status().controller, 'mac');
+  assert.deepEqual(s.settings.get('engine'), { role: 'client', serverHost: '192.168.1.20', serverDeviceId: 'mac', controller: 'mac', controllerAt: msg.payload.at + 1000 });
+  assert.deepEqual(s.restarts, ['server', 'client']);
+  // 'receiver' means this computer
+  s.peer.deliver('engine.controller', 'mac', { controller: 'receiver', at: msg.payload.at + 2000 });
+  assert.equal(s.settings.get('engine').role, 'server');
+  s.api.stop();
+});
+
+test('controller must be this or a paired device', async () => {
+  const s = roleSetup();
+  await assert.rejects(async () => s.api.methods['mouse.set'].run({ controller: 'nope' }), (e) => e.code === 'not-found');
+  s.api.stop();
+});

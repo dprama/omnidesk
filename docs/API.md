@@ -32,6 +32,7 @@ type Device = {
 
 type Status = {
   role: 'server' | 'client' | 'off';      // engine mode this device runs in
+  controller: 'this' | string;            // whose keyboard and mouse (see mouse.get)
   connected: number; total: number;        // see "connected / total" below
   cursorOn: string;                        // device id where the cursor is now
   clipboard: boolean; mouse: boolean;
@@ -61,9 +62,13 @@ type Status = {
 - `devices.rename(id, name)`, `devices.forget(id)`.
 
 ### mouse (mouse & keyboard sharing)
-- `mouse.get()` → `{ enabled, cooldownMs, arrivalGuardMs, lockHotkey: 'Ctrl+Alt+L', locked }`
+- `mouse.get()` → `{ enabled, cooldownMs, arrivalGuardMs, lockHotkey: 'Ctrl+Alt+L', locked, controller }`
   The button-held rule is always on; it isn't a setting.
-- `mouse.set(patch)`.
+  `controller` is whose keyboard and mouse are used: `'this'` or a paired device id. That computer
+  runs the engine as server; every other paired computer runs it as client and connects to it.
+  Until someone chooses, every computer picks the same one (first engine name in sort order).
+- `mouse.set(patch)`. `patch.controller` also tells the other computers (peer message
+  `engine.controller`, newest choice wins) and restarts the engine in its new role.
 - `mouse.onCursor(cb)` → `{ deviceId, x, y }` at most 20 per second (for the live map).
 - `mouse.onDecision(cb)` → one line per crossing decision, exactly the engine's log format:
   `HH:MM:SS cross edge=right pos=(4479,640) to=MacBook cooldown=300ms`
