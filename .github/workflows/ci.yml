@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # CI on every push and pull request: app unit tests, mock-backend tests, the renderer
 # test window (every page against the mock backend in headless Chrome), engine unit tests
-# on Linux, and a check that the CI-owned build assets still render.
+# on Linux, a check that the CI-owned build assets still render, and a real install of the
+# Windows virtual display driver (the runner is an administrator, like the NSIS installer).
 #
 # Every third-party action is pinned to a full commit SHA (version in the trailing comment).
 # Nothing in this workflow commits to the repo.
@@ -150,3 +151,76 @@ jobs:
             build/icons/png/*.png
             build/icons/icon.ico
           retention-days: 7
+
+  vdd-windows:
+    name: virtual display driver install (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Same layout as the installed app: <res>\vdd\{scripts, VirtualDisplayDriver\}.
+      - name: Lay out resources\vdd like the installer
+        shell: pwsh
+        run: |
+          node native/windows-vdd/fetch.mjs native/windows-vdd/dist
+          $res = Join-Path $env:RUNNER_TEMP 'res\vdd'
+          New-Item -ItemType Directory -Force $res | Out-Null
+          Copy-Item native/windows-vdd/install-vdd.ps1, native/windows-vdd/vdd-task.ps1, native/windows-vdd/vdd-devices.cs $res
+          Copy-Item -Recurse native/windows-vdd/dist/VirtualDisplayDriver (Join-Path $res 'VirtualDisplayDriver')
+          "VDD_RES=$res" >> $env:GITHUB_ENV
+
+      # Twice: the second run must find the first device, not add another monitor.
+      - name: Install twice, expect exactly one device, switched off
+        shell: pwsh
+        run: |
+          $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" # what NSIS runs
+          foreach ($n in 1, 2) {
+            & $ps -NoProfile -ExecutionPolicy Bypass -File "$env:VDD_RES\install-vdd.ps1" -Action install -DriverDir "$env:VDD_RES\VirtualDisplayDriver" -TaskScript "$env:VDD_RES\vdd-task.ps1"
+            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 3010) { Get-Content "$env:ProgramData\OmniDesk\vdd-install.log"; throw "install $n exited $LASTEXITCODE" }
+          }
+          Get-Content "$env:ProgramData\OmniDesk\vdd-install.log"
+          Add-Type -Path "$env:VDD_RES\vdd-devices.cs"
+          $ids = @([OmniVdd]::Find(@('Root\MttVDD', 'MttVDD')))
+          $ids | ForEach-Object { "$_ -> $([OmniVdd]::State($_))" }
+          if ($ids.Count -ne 1) { throw "expected 1 VDD device, found $($ids.Count)" }
+          $m = Get-Content -Raw "$env:ProgramData\OmniDesk\vdd\installed.json" | ConvertFrom-Json
+          if ($m.instanceId -ne $ids[0]) { throw "installed.json names $($m.instanceId), device is $($ids[0])" }
+          if ([OmniVdd]::State($ids[0]) -ne 'disabled') { throw 'the monitor should be off after install' }
+
+      # What the app does: write request.json, run the task, read status.json. Server
+      # runners may not start a display driver, so this step reports instead of failing.
+      - name: Monitor on and off through the scheduled task
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $root = "$env:ProgramData\OmniDesk\vdd"
+          foreach ($action in 'on', 'off') {
+            $nonce = -join ((1..32) | ForEach-Object { '{0:x}' -f (Get-Random -Max 16) })
+            @{ nonce = $nonce; action = $action; width = 1920; height = 1080; refresh = 60 } | ConvertTo-Json | Set-Content "$root\request\request.json"
+            schtasks /Run /TN '\OmniDesk\VirtualDisplay' | Out-Host
+            $st = $null
+            foreach ($i in 1..60) { Start-Sleep -Milliseconds 500; try { $st = Get-Content -Raw "$root\status\status.json" | ConvertFrom-Json } catch { }; if ($st.nonce -eq $nonce) { break } }
+            "$action -> $($st | ConvertTo-Json -Compress)"
+            if (-not $st.ok) { throw "monitor $action failed" }
+          }
+
+      - name: Uninstall removes the device, the task and the folder
+        shell: pwsh
+        run: |
+          $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+          & $ps -NoProfile -ExecutionPolicy Bypass -File "$env:VDD_RES\install-vdd.ps1" -Action uninstall
+          if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 3010) { throw "uninstall exited $LASTEXITCODE" }
+          Get-Content "$env:ProgramData\OmniDesk\vdd-install.log" -Tail 15
+          Add-Type -Path "$env:VDD_RES\vdd-devices.cs"
+          $left = @([OmniVdd]::Find(@('Root\MttVDD', 'MttVDD')) | Where-Object { [OmniVdd]::State($_) -ne 'absent' })
+          if ($left.Count) { throw "devices left: $($left -join ', ')" }
+          if (Test-Path "$env:ProgramData\OmniDesk\vdd") { throw 'vdd folder left behind' }

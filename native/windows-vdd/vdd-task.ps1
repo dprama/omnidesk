@@ -16,6 +16,13 @@ $ReqFile = Join-Path $Root 'request\request.json'
 $StatusFile = Join-Path $Root 'status\status.json'
 $Settings = Join-Path $Root 'driver\vdd_settings.xml'
 $HwId = 'Root\MttVDD'
+Add-Type -Path (Join-Path $PSScriptRoot 'vdd-devices.cs') # SetupAPI lookup + state, copied here by install-vdd.ps1
+
+function Set-Vdd([string]$id, [bool]$on) {
+  $verb = if ($on) { '/enable-device' } else { '/disable-device' }
+  $out = & pnputil.exe $verb "$id" 2>&1
+  if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 3010) { throw "pnputil $verb failed ($LASTEXITCODE): $($out -join ' ')" }
+}
 
 function Answer($nonce, [bool]$ok, $err, $state) {
   $o = [ordered]@{ nonce = $nonce; ok = $ok; error = $err; state = $state; at = (Get-Date -Format o) }
@@ -35,11 +42,15 @@ try {
   $action = [string]$req.action
   if ($action -ne 'on' -and $action -ne 'off') { throw 'bad action' }
 
-  $dev = @(Get-PnpDevice -ErrorAction SilentlyContinue | Where-Object { $_.HardwareID -contains $HwId -or $_.HardwareID -contains 'MttVDD' })[0]
-  if (-not $dev) { throw 'driver-missing' }
+  # The device install-vdd.ps1 recorded, else the first one SetupAPI finds.
+  $ids = @([OmniVdd]::Find(@($HwId, 'MttVDD')))
+  $id = $null
+  try { $id = [string](Get-Content -Raw (Join-Path $Root 'installed.json') | ConvertFrom-Json).instanceId } catch { }
+  if (-not $id -or $ids -notcontains $id) { $id = if ($ids.Count) { $ids[0] } else { $null } }
+  if (-not $id) { throw 'driver-missing' }
 
   if ($action -eq 'off') {
-    if ($dev.Status -eq 'OK') { Disable-PnpDevice -InstanceId $dev.InstanceId -Confirm:$false }
+    if ([OmniVdd]::State($id) -eq 'started') { Set-Vdd $id $false }
     Answer $nonce $true $null 'off'
     exit 0
   }
@@ -67,17 +78,17 @@ try {
   [IO.File]::WriteAllText($Settings, $xml, (New-Object Text.UTF8Encoding $false))
 
   # The driver reads its settings when the device starts: restart it if it is on.
-  if ($dev.Status -eq 'OK') {
-    Disable-PnpDevice -InstanceId $dev.InstanceId -Confirm:$false
+  if ([OmniVdd]::State($id) -eq 'started') {
+    Set-Vdd $id $false
     Start-Sleep -Milliseconds 500
   }
-  Enable-PnpDevice -InstanceId $dev.InstanceId -Confirm:$false
+  Set-Vdd $id $true
   $deadline = (Get-Date).AddSeconds(10)
   do {
     Start-Sleep -Milliseconds 250
-    $st = (Get-PnpDevice -InstanceId $dev.InstanceId).Status
-  } while ($st -ne 'OK' -and (Get-Date) -lt $deadline)
-  if ($st -ne 'OK') { throw "device status $st" }
+    $st = [OmniVdd]::State($id)
+  } while ($st -ne 'started' -and (Get-Date) -lt $deadline)
+  if ($st -ne 'started') { throw "device status $st" }
   Answer $nonce $true $null 'on'
   exit 0
 } catch {

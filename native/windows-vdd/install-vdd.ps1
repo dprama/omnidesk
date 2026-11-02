@@ -11,10 +11,11 @@
 # What install does (no devcon needed):
 #   1. pnputil /add-driver MttVDD.inf (the driver store keeps the signed package).
 #   2. Creates the root-enumerated device Root\MttVDD with SetupAPI (what
-#      `devcon install` does) unless one already exists, then disables it so no
-#      monitor shows until OmniDesk asks for one.
+#      `devcon install` does) unless one already exists, removes extra copies left by
+#      earlier failed installs, then disables it so no monitor shows until OmniDesk
+#      asks for one. Devices are found with SetupAPI (vdd-devices.cs), not Get-PnpDevice.
 #   3. %ProgramData%\OmniDesk\vdd\
-#        bin\vdd-task.ps1      admin-only; the only code that runs as SYSTEM
+#        bin\vdd-task.ps1      admin-only; the only code that runs as SYSTEM (+ vdd-devices.cs)
 #        driver\vdd_settings.xml  admin-only; HKLM\SOFTWARE\MikeTheTech\VirtualDisplayDriver\VDDPATH points here
 #        request\              users may write request.json here; the task validates it
 #        status\               admin-only write; the task's answer (status.json) for the app
@@ -50,57 +51,15 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
   Log 'error: must run elevated'; exit 1
 }
 
-Add-Type -Language CSharp -TypeDefinition @'
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using System.Text;
+Add-Type -Path (Join-Path $PSScriptRoot 'vdd-devices.cs')
 
-public static class OmniVddSetup {
-  [StructLayout(LayoutKind.Sequential)]
-  struct SP_DEVINFO_DATA { public int cbSize; public Guid ClassGuid; public int DevInst; public IntPtr Reserved; }
+# Instance ids, running or not. Callers wrap it in @(): an empty result comes back as $null.
+function Get-VddIds { [OmniVdd]::Find(@($HwId, 'MttVDD')) }
 
-  [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-  static extern bool SetupDiGetINFClassW(string infName, out Guid classGuid, StringBuilder className, int classNameSize, out int requiredSize);
-  [DllImport("setupapi.dll", SetLastError = true)]
-  static extern IntPtr SetupDiCreateDeviceInfoList(ref Guid classGuid, IntPtr hwndParent);
-  [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-  static extern bool SetupDiCreateDeviceInfoW(IntPtr set, string deviceName, ref Guid classGuid, string description, IntPtr hwnd, int flags, ref SP_DEVINFO_DATA data);
-  [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-  static extern bool SetupDiSetDeviceRegistryPropertyW(IntPtr set, ref SP_DEVINFO_DATA data, int property, byte[] buffer, int size);
-  [DllImport("setupapi.dll", SetLastError = true)]
-  static extern bool SetupDiCallClassInstaller(int installFunction, IntPtr set, ref SP_DEVINFO_DATA data);
-  [DllImport("setupapi.dll", SetLastError = true)]
-  static extern bool SetupDiDestroyDeviceInfoList(IntPtr set);
-  [DllImport("newdev.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-  static extern bool UpdateDriverForPlugAndPlayDevicesW(IntPtr hwnd, string hardwareId, string infPath, int flags, out bool reboot);
-
-  const int DICD_GENERATE_ID = 1, SPDRP_HARDWAREID = 1, DIF_REGISTERDEVICE = 0x19, INSTALLFLAG_FORCE = 1;
-
-  // Same steps as `devcon install <inf> <hwid>`. Returns true if a reboot is needed.
-  public static bool CreateRootDevice(string inf, string hwid) {
-    Guid cls; var name = new StringBuilder(256); int req;
-    if (!SetupDiGetINFClassW(inf, out cls, name, name.Capacity, out req)) throw new Win32Exception();
-    IntPtr set = SetupDiCreateDeviceInfoList(ref cls, IntPtr.Zero);
-    if (set == new IntPtr(-1)) throw new Win32Exception();
-    try {
-      var d = new SP_DEVINFO_DATA(); d.cbSize = Marshal.SizeOf(typeof(SP_DEVINFO_DATA));
-      if (!SetupDiCreateDeviceInfoW(set, name.ToString(), ref cls, null, IntPtr.Zero, DICD_GENERATE_ID, ref d)) throw new Win32Exception();
-      byte[] ids = Encoding.Unicode.GetBytes(hwid + "\0\0");
-      if (!SetupDiSetDeviceRegistryPropertyW(set, ref d, SPDRP_HARDWAREID, ids, ids.Length)) throw new Win32Exception();
-      if (!SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, ref d)) throw new Win32Exception();
-    } finally { SetupDiDestroyDeviceInfoList(set); }
-    bool reboot;
-    if (!UpdateDriverForPlugAndPlayDevicesW(IntPtr.Zero, hwid, inf, INSTALLFLAG_FORCE, out reboot)) throw new Win32Exception();
-    return reboot;
-  }
-}
-'@
-
-function Get-VddDevices {
-  @(Get-PnpDevice -PresentOnly:$false -ErrorAction SilentlyContinue | Where-Object {
-      $_.HardwareID -and ($_.HardwareID -contains $HwId -or $_.HardwareID -contains 'MttVDD')
-    })
+function Set-VddEnabled([string]$id, [bool]$on) {
+  $verb = if ($on) { '/enable-device' } else { '/disable-device' }
+  & pnputil.exe $verb "$id" | ForEach-Object { Log "  $_" }
+  Log "$verb $id -> $([OmniVdd]::State($id))"
 }
 
 # Folder ACL: SYSTEM + Administrators full; Users read (or modify for request\).
@@ -207,26 +166,36 @@ try {
     & pnputil.exe /add-driver "$inf" | ForEach-Object { Log "  $_" }
 
     $reboot = $false
-    $existing = Get-VddDevices
-    $weCreated = $false
-    if ($existing.Count -eq 0) {
+    $ids = @(Get-VddIds)
+    $marker = $null
+    try { $marker = Get-Content -Raw (Join-Path $Root 'installed.json') | ConvertFrom-Json } catch { }
+    # Ours if a marker says so, or if an earlier (failed) OmniDesk install created it.
+    $weCreated = [bool]($marker -and $marker.weCreated) -or (Select-String -Quiet -SimpleMatch -Pattern "creating device $HwId" -Path $LogFile -ErrorAction SilentlyContinue)
+    if ($ids.Count -eq 0) {
       Log "creating device $HwId"
-      $reboot = [OmniVddSetup]::CreateRootDevice($inf, $HwId)
+      $id = [OmniVdd]::CreateRootDevice($inf, $HwId, [ref]$reboot)
       $weCreated = $true
-      Start-Sleep -Seconds 2
+      Log "created $id"
     } else {
-      Log "device already present: $($existing[0].InstanceId)"
+      $id = $ids[0]
+      Log "device already present: $id ($($ids.Count) found)"
     }
-    $dev = (Get-VddDevices)[0]
-    if (-not $dev) { throw 'device was not created' }
+    if (-not $id) { throw 'device was not created' }
+    # Earlier failed installs each added a monitor: keep one.
+    foreach ($x in $ids) {
+      if ($x -eq $id) { continue }
+      Log "removing extra device $x"
+      & pnputil.exe /remove-device "$x" | ForEach-Object { Log "  $_" }
+    }
     # Off until OmniDesk asks for a monitor.
-    try { Disable-PnpDevice -InstanceId $dev.InstanceId -Confirm:$false } catch { Log "disable failed: $($_.Exception.Message)" }
+    try { Set-VddEnabled $id $false } catch { Log "disable failed: $($_.Exception.Message)" }
 
+    Copy-Item -Force (Join-Path $PSScriptRoot 'vdd-devices.cs') (Join-Path $Root 'bin\vdd-devices.cs')
     Register-VddTask (Join-Path $Root 'bin\vdd-task.ps1')
 
-    $marker = @{ version = '25.7.23'; instanceId = $dev.InstanceId; weCreated = $weCreated; oldVddPath = $(if ($hadPath) { [string]$hadPath.VDDPATH } else { '' }); installedAt = (Get-Date -Format o) } | ConvertTo-Json
+    $marker = @{ version = '25.7.23'; instanceId = $id; weCreated = $weCreated; oldVddPath = $(if ($hadPath) { [string]$hadPath.VDDPATH } else { '' }); installedAt = (Get-Date -Format o) } | ConvertTo-Json
     [IO.File]::WriteAllText((Join-Path $Root 'installed.json'), $marker, (New-Object Text.UTF8Encoding $false))
-    Log "installed (instance $($dev.InstanceId))"
+    Log "installed (instance $id)"
     if ($reboot) { exit 3010 } else { exit 0 }
   }
 
@@ -235,9 +204,9 @@ try {
   try { $marker = Get-Content -Raw (Join-Path $Root 'installed.json') | ConvertFrom-Json } catch { }
   Unregister-VddTask
   if ($marker -and $marker.weCreated) {
-    foreach ($d in Get-VddDevices) {
-      Log "removing device $($d.InstanceId)"
-      & pnputil.exe /remove-device "$($d.InstanceId)" | ForEach-Object { Log "  $_" }
+    foreach ($d in @(Get-VddIds)) {
+      Log "removing device $d"
+      & pnputil.exe /remove-device "$d" | ForEach-Object { Log "  $_" }
     }
     $pkgs = @()
     try { $pkgs = @(Get-WindowsDriver -Online | Where-Object { $_.OriginalFileName -like '*\mttvdd.inf' } | ForEach-Object { $_.Driver }) } catch { }
@@ -252,7 +221,7 @@ try {
   }
   if ($marker -and -not $marker.weCreated) {
     # Someone else installed VDD before us: leave the driver, just switch the monitor back on.
-    foreach ($d in Get-VddDevices) { try { Enable-PnpDevice -InstanceId $d.InstanceId -Confirm:$false } catch { } }
+    foreach ($d in @(Get-VddIds)) { try { Set-VddEnabled $d $true } catch { } }
   }
   Remove-Item -Recurse -Force $Root -ErrorAction SilentlyContinue
   Log 'uninstalled'

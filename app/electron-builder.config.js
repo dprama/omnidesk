@@ -44,7 +44,7 @@ module.exports = {
     // build/installer.nsh runs vdd/install-vdd.ps1 elevated.
     extraResources: [
       { from: '../native/windows-vdd/dist/VirtualDisplayDriver', to: 'vdd/VirtualDisplayDriver', filter: ['**/*'] },
-      { from: '../native/windows-vdd', to: 'vdd', filter: ['install-vdd.ps1', 'vdd-task.ps1', 'LICENSE-VirtualDisplayDriver.txt'] },
+      { from: '../native/windows-vdd', to: 'vdd', filter: ['install-vdd.ps1', 'vdd-task.ps1', 'vdd-devices.cs', 'LICENSE-VirtualDisplayDriver.txt'] },
     ],
   },
   nsis: {
