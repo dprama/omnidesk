@@ -178,9 +178,22 @@ jobs:
           Copy-Item -Recurse native/windows-vdd/dist/VirtualDisplayDriver (Join-Path $res 'VirtualDisplayDriver')
           "VDD_RES=$res" >> $env:GITHUB_ENV
 
+      # Test runner only: on a desktop, Windows asks once "Would you like to install this device
+      # software?" for a publisher it doesn't trust yet; a headless runner can't answer, so
+      # pnputil waits forever. Trust the driver catalog's signer here. The installer never does.
+      - name: Trust the driver's publisher (test runner only)
+        shell: pwsh
+        run: |
+          $sig = Get-AuthenticodeSignature "$env:VDD_RES\VirtualDisplayDriver\mttvdd.cat"
+          "signature: $($sig.Status) $($sig.SignerCertificate.Subject)"
+          if (-not $sig.SignerCertificate) { throw 'mttvdd.cat has no signer certificate' }
+          $store = New-Object System.Security.Cryptography.X509Certificates.X509Store('TrustedPublisher', 'LocalMachine')
+          $store.Open('ReadWrite'); $store.Add($sig.SignerCertificate); $store.Close()
+
       # Twice: the second run must find the first device, not add another monitor.
       - name: Install twice, expect exactly one device, switched off
         shell: pwsh
+        timeout-minutes: 8
         run: |
           $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" # what NSIS runs
           foreach ($n in 1, 2) {
