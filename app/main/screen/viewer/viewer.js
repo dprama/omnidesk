@@ -87,7 +87,8 @@
         } catch { /* SDP order from the offer is used */ }
       }
       const answer = await pc.createAnswer();
-      const sdp = U.preferCodecsInSdp(U.hostOnlySdp(answer.sdp), order);
+      // Same rate hints as the sender's offer: the sender takes them from this answer.
+      const sdp = U.withBitrateFloor(U.preferCodecsInSdp(U.hostOnlySdp(answer.sdp), order), U.videoKbps(data.sdp) || 12000);
       await pc.setLocalDescription({ type: 'answer', sdp });
       send({ type: 'signal', kind: 'answer', data: { type: 'answer', sdp } });
       for (const c of pendingIce.splice(0)) await pc.addIceCandidate(c).catch(() => {});

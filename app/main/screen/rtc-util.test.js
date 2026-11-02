@@ -161,3 +161,21 @@ test('codecOrderFromSdp: the sender\'s order, without rtx/red/ulpfec', () => {
   assert.deepEqual(codecOrderFromSdp(preferCodecsInSdp(OFFER)).slice(0, 2), ['H264', 'VP8']);
   assert.deepEqual(codecOrderFromSdp('v=0\r\n'), ['H264', 'VP8']);
 });
+
+test('withBitrateFloor: start/min/max hints on every media codec, not on rtx', () => {
+  const { withBitrateFloor, videoKbps, setVideoBitrate } = require('./viewer/rtc-util');
+  const out = withBitrateFloor(OFFER, 12000);
+  const fmtp = out.split('\r\n').filter((l) => l.startsWith('a=fmtp:'));
+  const hint = 'x-google-start-bitrate=6000;x-google-min-bitrate=3000;x-google-max-bitrate=12000';
+  for (const l of fmtp) {
+    if (/apt=/.test(l)) assert.ok(!l.includes('x-google'), l);
+    else assert.ok(l.endsWith(hint), l);
+  }
+  // codecs without an fmtp line (VP8 here) get one
+  const vp8 = /a=rtpmap:(\d+) VP8\//.exec(out)[1];
+  assert.ok(out.includes(`a=fmtp:${vp8} ${hint}`));
+  // applying twice doesn't stack
+  assert.equal(withBitrateFloor(out, 12000), out);
+  assert.equal(videoKbps(setVideoBitrate(OFFER, 6000000)), 6000);
+  assert.equal(videoKbps(OFFER), null);
+});

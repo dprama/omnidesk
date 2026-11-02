@@ -153,6 +153,43 @@
     return joinLines(lines);
   }
 
+  // LAN only, so don't let WebRTC's bandwidth estimate start at ~300 kbit/s and stay there
+  // while a mostly still desktop gives it nothing to measure (seen on a real PC: 320x180 at
+  // 1-4 fps, 0 loss, 4 ms rtt). Start at half the maximum, never below a quarter. Chrome
+  // takes these from the answer, so the receiver adds them too. Values in kbit/s.
+  function withBitrateFloor(sdp, maxKbps) {
+    const max = Math.max(500, Math.round(maxKbps));
+    const hint = `x-google-start-bitrate=${Math.round(max / 2)};x-google-min-bitrate=${Math.round(max / 4)};x-google-max-bitrate=${max}`;
+    const lines = splitLines(sdp);
+    for (const sec of sections(lines).filter((x) => x.kind === 'video').reverse()) {
+      const codecOf = {};
+      const hasFmtp = new Set();
+      for (let i = sec.start + 1; i < sec.end; i++) {
+        let m = /^a=rtpmap:(\d+) ([^/]+)\//.exec(lines[i]);
+        if (m) codecOf[m[1]] = m[2];
+        m = /^a=fmtp:(\d+) /.exec(lines[i]);
+        if (m) hasFmtp.add(m[1]);
+      }
+      const media = (pt) => /^(H264|VP8|VP9|AV1)$/i.test(codecOf[pt] || '');
+      for (let i = sec.end - 1; i > sec.start; i--) {
+        let m = /^a=fmtp:(\d+) (.*)$/.exec(lines[i]);
+        if (m && media(m[1])) { lines[i] = `a=fmtp:${m[1]} ${m[2].split(';').filter((kv) => !/^x-google-(start|min|max)-bitrate=/.test(kv)).concat(hint).join(';')}`; continue; }
+        m = /^a=rtpmap:(\d+) /.exec(lines[i]);
+        if (m && media(m[1]) && !hasFmtp.has(m[1])) lines.splice(i + 1, 0, `a=fmtp:${m[1]} ${hint}`);
+      }
+    }
+    return joinLines(lines);
+  }
+
+  // The video b=AS of an SDP in kbit/s (what setVideoBitrate wrote), or null.
+  function videoKbps(sdp) {
+    const lines = splitLines(sdp);
+    const sec = sections(lines).find((x) => x.kind === 'video');
+    if (!sec) return null;
+    for (let i = sec.start + 1; i < sec.end; i++) { const m = /^b=AS:(\d+)/.exec(lines[i]); if (m) return Number(m[1]); }
+    return null;
+  }
+
   // Drop every a=candidate line that is not a host candidate.
   function hostOnlySdp(sdp) {
     return joinLines(splitLines(sdp).filter((l) => !l.startsWith('a=candidate:') || isHostCandidate(l.slice(2))));
@@ -256,5 +293,5 @@
     return 'no video yet';
   }
 
-  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine, chooseCodecOrder, codecOrderFromSdp };
+  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine, chooseCodecOrder, codecOrderFromSdp, withBitrateFloor, videoKbps };
 }));

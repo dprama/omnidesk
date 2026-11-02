@@ -95,7 +95,7 @@
     } catch { /* not supported everywhere */ }
 
     const offer = await pc.createOffer();
-    const sdp = U.setVideoBitrate(U.preferCodecsInSdp(U.hostOnlySdp(offer.sdp), order), preset.maxBitrate);
+    const sdp = U.withBitrateFloor(U.setVideoBitrate(U.preferCodecsInSdp(U.hostOnlySdp(offer.sdp), order), preset.maxBitrate), preset.maxBitrate / 1000);
     await pc.setLocalDescription({ type: 'offer', sdp });
     send({ type: 'signal', kind: 'offer', data: { type: 'offer', sdp } });
 
