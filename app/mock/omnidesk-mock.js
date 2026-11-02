@@ -294,7 +294,7 @@
     if (why) can.why = why;
     return {
       sessions: clone(screen.sessions), can,
-      options: { resolutions: ['1920x1080', '2560x1600'], refresh: [60], quality: ['latency', 'balanced', 'sharp'] },
+      options: { resolutions: ['1440x900', '1680x1050', '1920x1080', '2560x1600'], refresh: [60], quality: ['latency', 'balanced', 'sharp'] },
     };
   }
   const layoutDevs = () => devices.map((d) => ({ id: d.id, screens: d.screens }));
@@ -783,7 +783,7 @@
         if (sourceId === targetId || (sourceId !== 'this' && targetId !== 'this')) return invalid('One side of a second screen must be this computer.');
         const e = needPeer(sourceId === 'this' ? targetId : sourceId); if (e) return e;
         const o = screenView().options;
-        if (!o.resolutions.includes(resolution)) return invalid('Pick 1920×1080 or 2560×1600.');
+        if (!o.resolutions.includes(resolution)) return invalid(`Pick one of ${o.resolutions.join(', ').replace(/x/g, '×')}.`);
         if (!o.refresh.includes(refresh)) return invalid('Second screen runs at 60 Hz.');
         if (!o.quality.includes(quality)) return invalid('Pick latency, balanced or sharp.');
         if (screen.sessions.some((s) => s.targetId === targetId || s.sourceId === sourceId)) {

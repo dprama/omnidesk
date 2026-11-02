@@ -19,7 +19,9 @@
 
 const crypto = require('node:crypto');
 
-const OPTIONS = Object.freeze({ resolutions: ['1920x1080', '2560x1600'], refresh: [60], quality: ['latency', 'balanced', 'sharp'] });
+// 16:10 sizes too: a MacBook screen is 16:10, so a 16:9 monitor would get black bars and cost
+// pixels the encoder has to work through for nothing.
+const OPTIONS = Object.freeze({ resolutions: ['1440x900', '1680x1050', '1920x1080', '2560x1600'], refresh: [60], quality: ['latency', 'balanced', 'sharp'] });
 const ID_RE = /^[0-9a-f]{16,32}$/;
 const MAX_SDP = 64 * 1024;
 

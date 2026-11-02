@@ -13,6 +13,10 @@
   let prevSnap = null;
   let perfTick = 0;
   let order = U.CODEC_ORDER;
+  let encoder = { hardware: false };
+  let scale = 1;
+  let sender = null;
+  let encSnap = null; // { frames, time } at the last step-down check
   let pendingIce = [];
   let codecLogged = false;
 
@@ -69,21 +73,29 @@
       }
     };
 
+    // Which codec this computer encodes in hardware, and at what frame rate (see chooseEncoder).
+    const probes = [];
+    for (const codec of ['H264', 'VP8']) {
+      for (const fps of [...new Set([c.refresh, 30])]) {
+        try {
+          const r = await navigator.mediaCapabilities.encodingInfo({ type: 'webrtc', video: { contentType: `video/${codec}`, width: c.width, height: c.height, bitrate: preset.maxBitrate, framerate: fps } });
+          probes.push({ codec, fps, supported: !!r.supported, powerEfficient: !!r.powerEfficient });
+        } catch { /* not answerable here */ }
+      }
+    }
+    const pick = U.chooseEncoder(probes, c.refresh);
+    order = pick.order;
+    encoder = pick;
+    scale = preset.scaleResolutionDownBy;
+    send({ type: 'log', message: `encoder probes ${probes.map((p) => `${p.codec}@${p.fps}:${p.powerEfficient ? 'hw' : p.supported ? 'sw' : 'no'}`).join(' ')}` });
+    send({ type: 'log', message: `codec order ${order.join(' > ')} (${pick.why})` });
+
     const tr = pc.addTransceiver(track, {
       direction: 'sendonly',
       streams: [stream],
-      sendEncodings: [{ maxBitrate: preset.maxBitrate, maxFramerate: Math.min(preset.maxFramerate, c.refresh), scaleResolutionDownBy: preset.scaleResolutionDownBy }],
+      sendEncodings: [{ maxBitrate: preset.maxBitrate, maxFramerate: Math.min(preset.maxFramerate, c.refresh, pick.maxFramerate), scaleResolutionDownBy: scale }],
     });
-    // H.264 only if this computer encodes it in hardware, else VP8 (see chooseCodecOrder).
-    const info = {};
-    for (const name of ['H264', 'VP8']) {
-      try {
-        info[name] = await navigator.mediaCapabilities.encodingInfo({ type: 'webrtc', video: { contentType: `video/${name}`, width: c.width, height: c.height, bitrate: preset.maxBitrate, framerate: c.refresh } });
-      } catch { info[name] = null; }
-    }
-    const pick = U.chooseCodecOrder(info);
-    order = pick.order;
-    send({ type: 'log', message: `codec order ${order.join(' > ')} (${pick.why})` });
+    sender = tr.sender;
     try {
       const caps = RTCRtpSender.getCapabilities('video');
       if (caps && tr.setCodecPreferences) tr.setCodecPreferences(U.sortCodecs(caps.codecs, order));
@@ -107,6 +119,22 @@
         const r = U.summarize(list, prevSnap);
         prevSnap = r.snap;
         if (++perfTick % 10 === 0) send({ type: 'log', message: U.perfLine(list) }); // every 10 s
+        // Every 5 s: software encoding that can't keep up steps the resolution down.
+        if (perfTick % 5 === 0) {
+          const out = list.find((x) => x.type === 'outbound-rtp' && x.kind === 'video');
+          if (out && out.framesEncoded) {
+            const avg = encSnap && out.framesEncoded > encSnap.frames ? 1000 * (out.totalEncodeTime - encSnap.time) / (out.framesEncoded - encSnap.frames) : null;
+            encSnap = { frames: out.framesEncoded, time: out.totalEncodeTime };
+            const next = avg === null ? null : U.nextScale(scale, avg, encoder.hardware || !!out.powerEfficientEncoder);
+            if (next && sender) {
+              const p = sender.getParameters();
+              if (p.encodings && p.encodings[0]) {
+                p.encodings[0].scaleResolutionDownBy = next;
+                sender.setParameters(p).then(() => { scale = next; send({ type: 'log', message: `encoding ${avg.toFixed(0)}ms a frame in software: resolution / ${next}` }); }).catch(() => {});
+              }
+            }
+          }
+        }
         if (!codecLogged) { const codec = U.codecInUse(list); if (codec) { codecLogged = true; send({ type: 'log', message: `codec ${codec}` }); } }
         send({ type: 'stats', fps: r.fps, latencyMs: r.latencyMs });
       } catch { /* closed */ }

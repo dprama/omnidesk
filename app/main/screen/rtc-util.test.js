@@ -145,14 +145,27 @@ test('perfLine: encoder/decoder and per-stage time, for the 10 s log line', () =
   assert.equal(perfLine([]), 'no video yet');
 });
 
-test('chooseCodecOrder: H.264 only when it is encoded in hardware', () => {
-  const { chooseCodecOrder } = require('./viewer/rtc-util');
-  const sw = { supported: true, powerEfficient: false };
-  const hw = { supported: true, powerEfficient: true };
-  assert.deepEqual(chooseCodecOrder({ H264: hw, VP8: sw }).order, ['H264', 'VP8']);
-  assert.deepEqual(chooseCodecOrder({ H264: sw, VP8: sw }), { order: ['VP8', 'H264'], why: 'no hardware encoder: VP8 in software' });
-  assert.deepEqual(chooseCodecOrder({ H264: sw, VP8: hw }).order, ['VP8', 'H264']);
-  assert.deepEqual(chooseCodecOrder({}).order, ['VP8', 'H264']);
+test('chooseEncoder: hardware first, at the highest rate it takes; else VP8 in software', () => {
+  const { chooseEncoder } = require('./viewer/rtc-util');
+  const p = (codec, fps, powerEfficient) => ({ codec, fps, supported: true, powerEfficient });
+  // a 2016 Intel GPU: H.264 in hardware at 30 fps but not 60
+  assert.deepEqual(chooseEncoder([p('H264', 60, false), p('H264', 30, true), p('VP8', 60, false), p('VP8', 30, false)]),
+    { order: ['H264', 'VP8'], maxFramerate: 30, hardware: true, why: 'H.264 in hardware at 30 fps' });
+  assert.equal(chooseEncoder([p('H264', 60, true), p('H264', 30, true)]).maxFramerate, 60);
+  assert.deepEqual(chooseEncoder([p('H264', 60, false), p('VP8', 30, true)]).order, ['VP8', 'H264']);
+  assert.deepEqual(chooseEncoder([p('H264', 60, false), p('VP8', 60, false)], 60),
+    { order: ['VP8', 'H264'], maxFramerate: 60, hardware: false, why: 'no hardware encoder: VP8 in software' });
+  assert.equal(chooseEncoder([]).hardware, false);
+});
+
+test('nextScale: software encoding over budget steps 1 -> 1.5 -> 2, never for hardware', () => {
+  const { nextScale } = require('./viewer/rtc-util');
+  assert.equal(nextScale(1, 42, false), 1.5);
+  assert.equal(nextScale(1.5, 30, false), 2);
+  assert.equal(nextScale(2, 40, false), null);
+  assert.equal(nextScale(1, 18, false), null);
+  assert.equal(nextScale(1, 42, true), null);
+  assert.equal(nextScale(1, null, false), null);
 });
 
 test('codecOrderFromSdp: the sender\'s order, without rtx/red/ulpfec', () => {

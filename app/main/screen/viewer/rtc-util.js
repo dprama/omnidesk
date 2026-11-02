@@ -21,15 +21,28 @@
 
   const CODEC_ORDER = Object.freeze(['H264', 'VP8']);
 
-  // Codec order for the sender from mediaCapabilities.encodingInfo answers
-  // ({ H264: { supported, powerEfficient }, VP8: {...} }). H.264 only when it is encoded in
-  // hardware: software H.264 (OpenH264) managed 2-17 fps at 1080p on a real PC and in a
-  // test here, where software VP8 kept ~58 fps at 12 ms a frame.
-  function chooseCodecOrder(info) {
-    const hw = (c) => !!(info && info[c] && info[c].supported && info[c].powerEfficient);
-    if (hw('H264')) return { order: ['H264', 'VP8'], why: 'H.264 in hardware' };
-    if (hw('VP8')) return { order: ['VP8', 'H264'], why: 'VP8 in hardware' };
-    return { order: ['VP8', 'H264'], why: 'no hardware encoder: VP8 in software' };
+  // Encoder for the sender from mediaCapabilities.encodingInfo probes:
+  // [{ codec: 'H264', fps: 60, supported, powerEfficient }, ...]. Hardware first: H.264, then
+  // VP8, each at the highest probed rate the hardware takes (many 2015-2017 encoders do
+  // 1080p30, not 60). Without hardware: VP8 in software, which kept ~58 fps at 1080p where
+  // OpenH264 managed 2 (measured; a real PC: 17 fps falling to 1-3).
+  function chooseEncoder(probes, fullFps = 60) {
+    const hw = (codec) => (probes || []).filter((p) => p && p.codec === codec && p.supported && p.powerEfficient)
+      .sort((x, y) => y.fps - x.fps)[0];
+    const h264 = hw('H264');
+    if (h264) return { order: ['H264', 'VP8'], maxFramerate: h264.fps, hardware: true, why: `H.264 in hardware at ${h264.fps} fps` };
+    const vp8 = hw('VP8');
+    if (vp8) return { order: ['VP8', 'H264'], maxFramerate: vp8.fps, hardware: true, why: `VP8 in hardware at ${vp8.fps} fps` };
+    return { order: ['VP8', 'H264'], maxFramerate: fullFps, hardware: false, why: 'no hardware encoder: VP8 in software' };
+  }
+
+  // Software encoding that can't keep up: next resolution step (1 -> 1.5 -> 2) when frames
+  // average more than budgetMs to encode, else null. Never steps back up within a session.
+  function nextScale(scale, avgEncodeMs, hardware, budgetMs = 25) {
+    if (hardware || !(avgEncodeMs > budgetMs)) return null;
+    if (scale < 1.5) return 1.5;
+    if (scale < 2) return 2;
+    return null;
   }
 
   // Video codec names in the order of the first m=video line, e.g. ['VP8', 'rtx', 'H264', ...]
@@ -293,5 +306,5 @@
     return 'no video yet';
   }
 
-  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine, chooseCodecOrder, codecOrderFromSdp, withBitrateFloor, videoKbps };
+  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine, chooseEncoder, nextScale, codecOrderFromSdp, withBitrateFloor, videoKbps };
 }));

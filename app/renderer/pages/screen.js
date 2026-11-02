@@ -17,6 +17,23 @@ const css = (el, props) => {
 };
 const errText = (e) => (e && typeof e.message === 'string' && e.message) || 'Something went wrong. Try again.';
 const resLabel = (r) => String(r).replace('x', '×');
+// Of the offered sizes, the one with the other screen's shape (aspect within 5 %) and the closest
+// area to it; null if none has that shape. Screens are reported in points.
+export function fitResolution(options, device) {
+  const scr = device && Array.isArray(device.screens) && device.screens[0];
+  if (!scr || !(scr.w > 0) || !(scr.h > 0)) return null;
+  const want = scr.w / scr.h;
+  let best = null;
+  for (const r of options || []) {
+    const m = /^(\d+)x(\d+)$/.exec(r);
+    if (!m) continue;
+    const w = +m[1], h = +m[2];
+    if (Math.abs(w / h - want) / want > 0.05) continue;
+    const d = Math.abs(w * h - scr.w * scr.h);
+    if (!best || d < best.d) best = { r, d };
+  }
+  return best ? best.r : null;
+}
 const QUALITY = { latency: 'Lowest latency', balanced: 'Balanced', sharp: 'Sharpest' };
 const QUALITY_HINT = {
   latency: 'Fastest response. Text can look a little soft while things move.',
@@ -218,7 +235,10 @@ export default {
           await api.screen.stop(s.id);
           if (alive) shell.toast('Second screen stopped');
         } else {
-          await api.screen.start({ sourceId: d.src.id, targetId: d.dst.id, resolution: S.opts.resolution, refresh: S.opts.refresh, quality: S.opts.quality });
+          // Not picked by hand: fit the screen that shows the picture (the target), per direction.
+          const offered = (S.scr && S.scr.options && S.scr.options.resolutions) || [];
+          const resolution = (!S.resChosen && fitResolution(offered, d.dst)) || S.opts.resolution;
+          await api.screen.start({ sourceId: d.src.id, targetId: d.dst.id, resolution, refresh: S.opts.refresh, quality: S.opts.quality });
           if (alive) shell.toast(`Starting second screen on ${d.dst.name}`);
         }
       } catch (e) {
@@ -232,7 +252,9 @@ export default {
     let optSig = '';
     function renderOptions() {
       const o = (S.scr && S.scr.options) || { resolutions: ['1920x1080', '2560x1600'], refresh: [60], quality: ['latency', 'balanced', 'sharp'] };
-      if (!o.resolutions.includes(S.opts.resolution)) S.opts.resolution = o.resolutions[0];
+      // Until you pick one: the size that fits the other computer's screen (same shape, closest size).
+      if (!S.resChosen) S.opts.resolution = fitResolution(o.resolutions, peer()) || S.opts.resolution;
+      if (!o.resolutions.includes(S.opts.resolution)) S.opts.resolution = o.resolutions.includes('1920x1080') ? '1920x1080' : o.resolutions[0];
       if (!o.refresh.includes(S.opts.refresh)) S.opts.refresh = o.refresh[0];
       if (!o.quality.includes(S.opts.quality)) S.opts.quality = o.quality.includes('balanced') ? 'balanced' : o.quality[0];
       const sig = JSON.stringify([o, S.opts]);
@@ -243,7 +265,7 @@ export default {
       const focused = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.opt : null;
       const seg = (box, key, values, label) => box.replaceChildren(...values.map((v) => {
         const b = h('button', { type: 'button', 'aria-pressed': String(S.opts[key] === v), 'data-opt': key + ':' + v }, label(v));
-        b.addEventListener('click', () => { S.opts[key] = v; renderOptions(); });
+        b.addEventListener('click', () => { S.opts[key] = v; if (key === 'resolution') S.resChosen = true; renderOptions(); });
         return b;
       }));
       seg(resSeg, 'resolution', o.resolutions, resLabel);

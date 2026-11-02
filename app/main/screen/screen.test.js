@@ -123,7 +123,7 @@ test('get() has the API shape', () => {
   const t = pair();
   const v = t.pc.get();
   assert.deepEqual(Object.keys(v).sort(), ['can', 'options', 'sessions']);
-  assert.deepEqual(v.options, { resolutions: ['1920x1080', '2560x1600'], refresh: [60], quality: ['latency', 'balanced', 'sharp'] });
+  assert.deepEqual(v.options, { resolutions: ['1440x900', '1680x1050', '1920x1080', '2560x1600'], refresh: [60], quality: ['latency', 'balanced', 'sharp'] });
   assert.deepEqual(v.can, { extendThis: true, showHere: true });
   return t.done();
 });
