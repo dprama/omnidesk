@@ -15,25 +15,32 @@
   const PRESETS = Object.freeze({
     latency: Object.freeze({ scaleResolutionDownBy: 1.5, maxFramerate: 60, maxBitrate: 6000000, degradationPreference: 'maintain-framerate', contentHint: 'motion' }),
     // 'motion', not 'detail': with 'detail' WebRTC keeps resolution and lets the frame rate fall.
-    balanced: Object.freeze({ scaleResolutionDownBy: 1, maxFramerate: 60, maxBitrate: 12000000, degradationPreference: 'balanced', contentHint: 'motion' }),
+    // Under pressure: lower sharpness, keep the frame rate (dropped frames are what feels slow).
+    balanced: Object.freeze({ scaleResolutionDownBy: 1, maxFramerate: 60, maxBitrate: 12000000, degradationPreference: 'maintain-framerate', contentHint: 'motion' }),
     sharp: Object.freeze({ scaleResolutionDownBy: 1, maxFramerate: 60, maxBitrate: 25000000, degradationPreference: 'maintain-resolution', contentHint: 'text' }),
   });
 
   const CODEC_ORDER = Object.freeze(['H264', 'VP8']);
 
-  // Encoder for the sender from mediaCapabilities.encodingInfo probes:
-  // [{ codec: 'H264', fps: 60, supported, powerEfficient }, ...]. Hardware first: H.264, then
-  // VP8, each at the highest probed rate the hardware takes (many 2015-2017 encoders do
-  // 1080p30, not 60). Without hardware: VP8 in software, which kept ~58 fps at 1080p where
-  // OpenH264 managed 2 (measured; a real PC: 17 fps falling to 1-3).
+  // Encoder plan for the sender from mediaCapabilities.encodingInfo probes:
+  // [{ codec: 'H264', fps: 60, supported, powerEfficient }, ...]. H.264 is always tried first:
+  // the probe can say "no hardware" on a PC that has it, so the sender checks the encoder it
+  // really gets once frames flow and switches to VP8 if it is software (shouldUseVp8).
+  // A hardware probe that only says yes at a lower rate (1080p30 encoders) caps the frame rate.
   function chooseEncoder(probes, fullFps = 60) {
     const hw = (codec) => (probes || []).filter((p) => p && p.codec === codec && p.supported && p.powerEfficient)
       .sort((x, y) => y.fps - x.fps)[0];
     const h264 = hw('H264');
     if (h264) return { order: ['H264', 'VP8'], maxFramerate: h264.fps, hardware: true, why: `H.264 in hardware at ${h264.fps} fps` };
-    const vp8 = hw('VP8');
-    if (vp8) return { order: ['VP8', 'H264'], maxFramerate: vp8.fps, hardware: true, why: `VP8 in hardware at ${vp8.fps} fps` };
-    return { order: ['VP8', 'H264'], maxFramerate: fullFps, hardware: false, why: 'no hardware encoder: VP8 in software' };
+    return { order: ['H264', 'VP8'], maxFramerate: fullFps, hardware: false, why: 'trying H.264, VP8 if the encoder turns out to be software' };
+  }
+
+  // After the first frames: true when H.264 runs in software (OpenH264 managed 2-17 fps at
+  // 1080p on a real PC; VP8 in software ~58 fps in a test). out: the video outbound-rtp stats,
+  // codec: its codec stats.
+  function shouldUseVp8(out, codec) {
+    if (!out || !codec || !/h264/i.test(codec.mimeType || '') || !(out.framesEncoded >= 10)) return false;
+    return out.powerEfficientEncoder === false || /openh264/i.test(out.encoderImplementation || '');
   }
 
   // Software encoding that can't keep up: next resolution step (1 -> 1.5 -> 2) when frames
@@ -73,15 +80,16 @@
     return /(^|\s)typ\s+host(\s|$)/.test(candidate);
   }
 
-  // H.264 ranking: packetization-mode=1 first, then constrained baseline
-  // (42e0xx, widest hardware support), then high (640cxx), then the rest.
+  // H.264 ranking: packetization-mode=1 first, then High (64xxxx), Main (4dxxxx), Constrained
+  // Baseline (42e0xx), Baseline (4200xx). High first: it is what a hardware encoder does best,
+  // and the software encoder (OpenH264) can't do it, so asking for it favours the hardware.
   function h264Rank(fmtp) {
     const f = (fmtp || '').toLowerCase();
     let r = 0;
     if (!/packetization-mode=1/.test(f)) r += 10;
     const m = /profile-level-id=([0-9a-f]{6})/.exec(f);
-    const p = m ? m[1].slice(0, 4) : '';
-    if (p === '42e0') r += 0; else if (p === '640c') r += 1; else if (p === '4d00') r += 2; else r += 3;
+    const p = m ? m[1] : '';
+    if (p.startsWith('64')) r += 0; else if (p.startsWith('4d')) r += 1; else if (p.startsWith('42e0')) r += 2; else if (p.startsWith('42')) r += 3; else r += 4;
     return r;
   }
 
@@ -306,5 +314,5 @@
     return 'no video yet';
   }
 
-  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine, chooseEncoder, nextScale, codecOrderFromSdp, withBitrateFloor, videoKbps };
+  return { PRESETS, CODEC_ORDER, RTC_CONFIG, isHostCandidate, sortCodecs, preferCodecsInSdp, setVideoBitrate, hostOnlySdp, codecInUse, summarize, h264Rank, iceSummary, perfLine, chooseEncoder, shouldUseVp8, nextScale, codecOrderFromSdp, withBitrateFloor, videoKbps };
 }));

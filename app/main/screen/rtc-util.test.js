@@ -28,9 +28,9 @@ const OFFER = [
 
 const mLine = (sdp) => sdp.split('\r\n').find((l) => l.startsWith('m=video'));
 
-test('preferCodecsInSdp: H.264 (pm=1 baseline, then high, then pm=0) with rtx, then VP8, rest kept', () => {
+test('preferCodecsInSdp: H.264 (pm=1 High, then pm=1 baseline, then pm=0) with rtx, then VP8, rest kept', () => {
   const out = U.preferCodecsInSdp(OFFER);
-  assert.equal(mLine(out), 'm=video 9 UDP/TLS/RTP/SAVPF 102 103 104 105 100 101 96 97 98 99 106 107');
+  assert.equal(mLine(out), 'm=video 9 UDP/TLS/RTP/SAVPF 104 105 102 103 100 101 96 97 98 99 106 107');
   assert.equal(out.split('\r\n').length, OFFER.split('\r\n').length, 'no lines added or removed');
   assert.ok(out.endsWith('\r\n'));
 });
@@ -44,7 +44,7 @@ test('preferCodecsInSdp leaves audio sections alone', () => {
   const sdp = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111 0\r\na=rtpmap:111 opus/48000/2\r\n' + OFFER.split('\r\n').slice(5).join('\r\n');
   const out = U.preferCodecsInSdp(sdp);
   assert.ok(out.includes('m=audio 9 UDP/TLS/RTP/SAVPF 111 0'));
-  assert.ok(mLine(out).startsWith('m=video 9 UDP/TLS/RTP/SAVPF 102 103'));
+  assert.ok(mLine(out).startsWith('m=video 9 UDP/TLS/RTP/SAVPF 104 105'));
 });
 
 test('hostOnlySdp drops srflx and relay candidates', () => {
@@ -78,8 +78,8 @@ test('sortCodecs for setCodecPreferences', () => {
   ];
   const out = U.sortCodecs(caps).map((c) => `${c.mimeType} ${c.sdpFmtpLine || ''}`.trim());
   assert.deepEqual(out, [
-    'video/H264 packetization-mode=1;profile-level-id=42e01f',
     'video/H264 packetization-mode=1;profile-level-id=640c1f',
+    'video/H264 packetization-mode=1;profile-level-id=42e01f',
     'video/H264 packetization-mode=0;profile-level-id=42e01f',
     'video/VP8', 'video/rtx', 'video/VP9 profile-id=0', 'video/red', 'video/ulpfec',
   ]);
@@ -145,17 +145,24 @@ test('perfLine: encoder/decoder and per-stage time, for the 10 s log line', () =
   assert.equal(perfLine([]), 'no video yet');
 });
 
-test('chooseEncoder: hardware first, at the highest rate it takes; else VP8 in software', () => {
+test('chooseEncoder: always H.264 first; a hardware probe caps the rate', () => {
   const { chooseEncoder } = require('./viewer/rtc-util');
   const p = (codec, fps, powerEfficient) => ({ codec, fps, supported: true, powerEfficient });
-  // a 2016 Intel GPU: H.264 in hardware at 30 fps but not 60
-  assert.deepEqual(chooseEncoder([p('H264', 60, false), p('H264', 30, true), p('VP8', 60, false), p('VP8', 30, false)]),
+  assert.deepEqual(chooseEncoder([p('H264', 60, false), p('H264', 30, true)]),
     { order: ['H264', 'VP8'], maxFramerate: 30, hardware: true, why: 'H.264 in hardware at 30 fps' });
   assert.equal(chooseEncoder([p('H264', 60, true), p('H264', 30, true)]).maxFramerate, 60);
-  assert.deepEqual(chooseEncoder([p('H264', 60, false), p('VP8', 30, true)]).order, ['VP8', 'H264']);
   assert.deepEqual(chooseEncoder([p('H264', 60, false), p('VP8', 60, false)], 60),
-    { order: ['VP8', 'H264'], maxFramerate: 60, hardware: false, why: 'no hardware encoder: VP8 in software' });
-  assert.equal(chooseEncoder([]).hardware, false);
+    { order: ['H264', 'VP8'], maxFramerate: 60, hardware: false, why: 'trying H.264, VP8 if the encoder turns out to be software' });
+});
+
+test('shouldUseVp8: H.264 that turned out to be software (OpenH264), after 10 frames', () => {
+  const { shouldUseVp8 } = require('./viewer/rtc-util');
+  const h264 = { mimeType: 'video/H264' };
+  assert.equal(shouldUseVp8({ framesEncoded: 30, encoderImplementation: 'OpenH264', powerEfficientEncoder: false }, h264), true);
+  assert.equal(shouldUseVp8({ framesEncoded: 30, encoderImplementation: 'OpenH264' }, h264), true);
+  assert.equal(shouldUseVp8({ framesEncoded: 30, encoderImplementation: 'MediaFoundationVideoEncodeAccelerator', powerEfficientEncoder: true }, h264), false);
+  assert.equal(shouldUseVp8({ framesEncoded: 5, encoderImplementation: 'OpenH264' }, h264), false);
+  assert.equal(shouldUseVp8({ framesEncoded: 30, encoderImplementation: 'libvpx', powerEfficientEncoder: false }, { mimeType: 'video/VP8' }), false);
 });
 
 test('nextScale: software encoding over budget steps 1 -> 1.5 -> 2, never for hardware', () => {

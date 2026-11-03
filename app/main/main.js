@@ -29,6 +29,9 @@ app.setName('OmniDesk');
 // session then ends with "connection failed". Only OmniDesk's own pages (strict CSP, no
 // remote content) can read these addresses.
 app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns');
+// Every sent frame asks to be shown at once (RTP playout delay 0/0), and FlexFEC repairs a lost
+// packet without waiting a round trip for a resend (it only costs bandwidth while packets are lost).
+app.commandLine.appendSwitch('force-fieldtrials', 'WebRTC-ForceSendPlayoutDelay/min_ms:0,max_ms:0/WebRTC-FlexFEC-03/Enabled/WebRTC-FlexFEC-03-Advertised/Enabled/');
 app.setPath('userData', SMOKE ? fs.mkdtempSync(path.join(os.tmpdir(), 'omnidesk-smoke-')) : path.join(app.getPath('appData'), 'OmniDesk'));
 
 security.registerScheme(protocol);

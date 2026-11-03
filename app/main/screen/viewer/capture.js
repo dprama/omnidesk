@@ -17,6 +17,8 @@
   let scale = 1;
   let sender = null;
   let encSnap = null; // { frames, time } at the last step-down check
+  let switchedToVp8 = false;
+  let encoderLogged = false;
   let pendingIce = [];
   let codecLogged = false;
 
@@ -37,8 +39,8 @@
         mandatory: {
           chromeMediaSource: 'desktop',
           chromeMediaSourceId: c.chromeMediaSourceId,
-          minWidth: c.width, maxWidth: c.width,
-          minHeight: c.height, maxHeight: c.height,
+          // Maximum only: with min = max Chromium may scale every frame to hit the exact size.
+          maxWidth: c.width, maxHeight: c.height,
           maxFrameRate: c.refresh,
         },
       },
@@ -93,7 +95,10 @@
     const tr = pc.addTransceiver(track, {
       direction: 'sendonly',
       streams: [stream],
-      sendEncodings: [{ maxBitrate: preset.maxBitrate, maxFramerate: Math.min(preset.maxFramerate, c.refresh, pick.maxFramerate), scaleResolutionDownBy: scale }],
+      sendEncodings: [{
+        maxBitrate: preset.maxBitrate, maxFramerate: Math.min(preset.maxFramerate, c.refresh, pick.maxFramerate), scaleResolutionDownBy: scale,
+        priority: 'high', networkPriority: 'high', // DSCP marking: Wi-Fi sends these in its video queue
+      }],
     });
     sender = tr.sender;
     try {
@@ -119,6 +124,26 @@
         const r = U.summarize(list, prevSnap);
         prevSnap = r.snap;
         if (++perfTick % 10 === 0) send({ type: 'log', message: U.perfLine(list) }); // every 10 s
+        // H.264 turned out to be software here: switch to VP8 without reconnecting.
+        if (!switchedToVp8 && sender) {
+          const out = list.find((x) => x.type === 'outbound-rtp' && x.kind === 'video');
+          if (U.shouldUseVp8(out, out && list.find((x) => x.id === out.codecId))) {
+            switchedToVp8 = true;
+            const p = sender.getParameters();
+            const vp8 = (p.codecs || []).find((x) => /vp8/i.test(x.mimeType));
+            if (vp8 && p.encodings && p.encodings[0]) {
+              p.encodings[0].codec = vp8;
+              sender.setParameters(p).then(() => {
+                encoder = { hardware: false };
+                encSnap = null;
+                send({ type: 'log', message: `H.264 encoder is software here (${out.encoderImplementation || '?'}): switched to VP8` });
+              }).catch((e) => send({ type: 'log', message: `switching to VP8 failed: ${e && e.message ? e.message : e}` }));
+            }
+          } else if (out && out.framesEncoded >= 10 && !encoderLogged) {
+            encoderLogged = true;
+            send({ type: 'log', message: `encoder ${out.encoderImplementation || '?'} ${out.powerEfficientEncoder ? 'hardware' : 'software'}` });
+          }
+        }
         // Every 5 s: software encoding that can't keep up steps the resolution down.
         if (perfTick % 5 === 0) {
           const out = list.find((x) => x.type === 'outbound-rtp' && x.kind === 'video');
