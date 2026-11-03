@@ -101,7 +101,9 @@
   display: inline-flex; align-items: center; gap: 7px;
   font-size: var(--fs-xs); font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--a);
 }
-.kick i { width: 7px; height: 7px; border-radius: 50%; background: var(--a); animation: beat 2.6s ease-out infinite; }
+/* Pulses 3 times when the page opens, then stays lit: any never-ending animation makes Chromium
+   recomposite the whole glass window every frame (this dot alone was ~23 % CPU on a 2018 MacBook). */
+.kick i { width: 7px; height: 7px; border-radius: 50%; background: var(--a); animation: beat 2.6s ease-out 3; }
 @keyframes beat {
   0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--a) 60%, transparent); }
   70%, 100% { box-shadow: 0 0 0 9px transparent; }
@@ -349,7 +351,7 @@
 [data-page="connection"] .codein { max-width: 220px; font: 500 24px var(--mono); letter-spacing: .32em; padding: 10px 14px; }
 [data-page="connection"] .searching { display: flex; gap: 10px; align-items: center; padding: 14px; margin-top: 10px; border-radius: 13px;
   border: 1px dashed var(--line-2); color: var(--ink-3); font-size: 13px; }
-[data-page="connection"] .searching i { width: 8px; height: 8px; border-radius: 50%; background: var(--a); flex: none; animation: conn-ping 1.8s ease-out infinite; }
+[data-page="connection"] .searching i { width: 8px; height: 8px; border-radius: 50%; background: var(--a); flex: none; animation: conn-ping 1.8s ease-out 4; /* a few pings, not forever (see .kick i) */ }
 @keyframes conn-ping { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--a) 60%, transparent); } 80%, 100% { box-shadow: 0 0 0 10px transparent; } }
 [data-page="connection"] .ok-msg { display: flex; gap: 10px; align-items: center; margin-top: 14px; color: var(--good); font-weight: 600; }
 [data-page="connection"] .ok-msg svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }

@@ -36,13 +36,16 @@ kbd {
 .spectrum {
   position: fixed; inset: -25%; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(38% 30% at 22% 28%, rgba(95, 212, 232, .30), transparent 70%),
-    radial-gradient(34% 32% at 74% 22%, rgba(169, 139, 255, .30), transparent 70%),
-    radial-gradient(40% 34% at 64% 78%, rgba(82, 214, 170, .22), transparent 70%),
-    radial-gradient(30% 26% at 30% 80%, rgba(244, 131, 166, .20), transparent 70%),
-    radial-gradient(26% 22% at 88% 60%, rgba(242, 184, 96, .16), transparent 70%);
-  filter: blur(40px) saturate(115%);
-  animation: drift 90s ease-in-out infinite alternate;
+    radial-gradient(44% 36% at 22% 28%, rgba(95, 212, 232, .28), transparent 72%),
+    radial-gradient(40% 38% at 74% 22%, rgba(169, 139, 255, .28), transparent 72%),
+    radial-gradient(46% 40% at 64% 78%, rgba(82, 214, 170, .20), transparent 72%),
+    radial-gradient(36% 32% at 30% 80%, rgba(244, 131, 166, .18), transparent 72%),
+    radial-gradient(32% 28% at 88% 60%, rgba(242, 184, 96, .15), transparent 72%);
+  /* No filter: the gradients are soft already, and an animated blur of a layer this size made
+     Chromium re-blur it, and every glass panel above it, on every frame. Moves by transform
+     only, one small step every 3 s: each step makes the glass above re-blur once, so stepping
+     costs ~1-2 % CPU on a 2018 MacBook where 2 steps a second cost ~6 %. */
+  animation: drift 90s steps(30) infinite alternate;
 }
 .frost {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -51,9 +54,9 @@ kbd {
     repeating-linear-gradient(115deg, rgba(255, 255, 255, .012) 0 2px, transparent 2px 7px);
 }
 @keyframes drift {
-  0% { transform: translate3d(0, 0, 0) rotate(0) scale(1); filter: blur(40px) hue-rotate(0deg); }
-  50% { transform: translate3d(4%, -3%, 0) rotate(8deg) scale(1.06); filter: blur(46px) hue-rotate(25deg); }
-  100% { transform: translate3d(-3%, 4%, 0) rotate(-6deg) scale(1.02); filter: blur(40px) hue-rotate(-20deg); }
+  0% { transform: translate3d(0, 0, 0) rotate(0) scale(1); }
+  50% { transform: translate3d(4%, -3%, 0) rotate(8deg) scale(1.06); }
+  100% { transform: translate3d(-3%, 4%, 0) rotate(-6deg) scale(1.02); }
 }
 
 /* ---------- app frame ---------- */
